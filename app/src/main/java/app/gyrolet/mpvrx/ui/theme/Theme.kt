@@ -351,6 +351,14 @@ internal fun resolveAppColorScheme(
   customTheme?.let { definition ->
     if (useDarkTheme) definition.darkColorScheme() else definition.lightColorScheme()
   } ?: when {
+    // reelPaper theme: override Default with paper & cinnabar palette
+    appTheme == AppTheme.Default -> {
+      when {
+        useDarkTheme && amoledMode -> amoledReelPaperColorScheme()
+        useDarkTheme -> darkReelPaperColorScheme()
+        else -> lightReelPaperColorScheme()
+      }
+    }
     appTheme.isDynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
       when {
         useDarkTheme && amoledMode -> {

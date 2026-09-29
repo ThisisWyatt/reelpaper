@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reelPaper UI 重构方案对比</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"PingFang SC","MiSans","Microsoft YaHei",system-ui,sans-serif;background:#1a1a1a;color:#e0e0e0;padding:32px}
+h1{text-align:center;font-size:28px;color:#F3EDE0;margin-bottom:8px}
+h1 span{color:#B23129}
+.subtitle{text-align:center;color:#888;font-size:13px;letter-spacing:3px;margin-bottom:36px}
+.approaches{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
+.approach{flex:1;min-width:380px;max-width:520px;background:#242424;border:1px solid #3a3a3a;border-radius:16px;padding:24px;position:relative}
+.approach.recommended{border-color:#B23129;box-shadow:0 0 0 1px #B23129,0 8px 32px rgba(178,49,41,.15)}
+.badge{position:absolute;top:-10px;left:20px;background:linear-gradient(180deg,#D65444,#B23129);color:#FBEFE1;font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 12px;border-radius:8px}
+.approach h2{font-size:20px;color:#EDE5D0;margin-bottom:4px}
+.approach .tagline{font-size:12px;color:#8F8471;letter-spacing:1px;margin-bottom:16px}
+.section-title{font-size:12px;color:#8F8471;letter-spacing:3px;font-weight:700;margin:18px 0 8px;text-transform:uppercase}
+.desc{font-size:13.5px;color:#B4AA92;line-height:1.7}
+.pros{list-style:none;padding:0}
+.pros li{font-size:13px;color:#7B9460;line-height:1.8;padding-left:18px;position:relative}
+.pros li::before{content:"✓";position:absolute;left:0;color:#7B9460;font-weight:700}
+.cons{list-style:none;padding:0}
+.cons li{font-size:13px;color:#D65444;line-height:1.8;padding-left:18px;position:relative}
+.cons li::before{content:"✗";position:absolute;left:0;color:#D65444;font-weight:700}
+.est{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+.est-item{background:#2a2a2a;border:1px solid #3a3a3a;border-radius:10px;padding:8px 14px;font-size:12px;color:#B4AA92}
+.est-item b{color:#EDE5D0;font-weight:700}
+.compare{margin-top:40px;background:#242424;border:1px solid #3a3a3a;border-radius:16px;padding:24px;overflow-x:auto}
+.compare h2{font-size:18px;color:#EDE5D0;margin-bottom:16px}
+.compare table{width:100%;border-collapse:collapse;font-size:13px}
+.compare th{text-align:left;padding:10px 14px;background:#2a2a2a;color:#8F8471;font-size:11px;letter-spacing:2px;border-bottom:1px solid #3a3a3a}
+.compare td{padding:10px 14px;border-bottom:1px solid #2a2a2a;color:#B4AA92}
+.compare td:first-child{color:#EDE5D0;font-weight:600}
+.compare tr:hover td{background:#2a2a2a}
+.highlight-cell{color:#7B9460!important;font-weight:600}
+.warn-cell{color:#D65444!important}
+</style>
+</head>
+<body>
+
+<h1>reel<span>Paper</span> UI 重构方案对比</h1>
+<p class="subtitle">可行性评估 · 三种实现路径</p>
+
+<div class="approaches">
+
+<!-- 方案 A -->
+<div class="approach recommended">
+  <span class="badge">推荐</span>
+  <h2>方案 A：分层渐进重构</h2>
+  <p class="tagline">主题层先行 → 组件层逐页替换 → 导航层收尾</p>
+
+  <div class="section-title">策略</div>
+  <p class="desc">
+    第一阶段搭建拟物主题引擎（配色、海拔系统、纸纹噪点），将「纸与朱砂」注入 ColorScheme；第二阶段按页面优先级逐个替换组件（主页→播放列表→网络→设置→弹窗表单）；第三阶段重构导航系统为悬浮纸坞。
+  </p>
+
+  <div class="section-title">优势</div>
+  <ul class="pros">
+    <li>每个阶段可独立验证，风险可控</li>
+    <li>主题层完成后即可看到配色效果，团队反馈快</li>
+    <li>组件替换期间 Material3 与拟物组件可短暂共存</li>
+    <li>随时可暂停，不阻塞主线开发</li>
+  </ul>
+
+  <div class="section-title">劣势</div>
+  <ul class="cons">
+    <li>过渡期存在短暂的风格混搭（约 2-3 周）</li>
+    <li>需要定义清晰的组件替换顺序和接口</li>
+  </ul>
+
+  <div class="est">
+    <div class="est-item"><b>工作量</b> ~120-160 工时</div>
+    <div class="est-item"><b>周期</b> 4-6 周</div>
+    <div class="est-item"><b>风险</b> 低</div>
+  </div>
+</div>
+
+<!-- 方案 B -->
+<div class="approach">
+  <h2>方案 B：全量一步重构</h2>
+  <p class="tagline">一次性替换全部组件和导航系统</p>
+
+  <div class="section-title">策略</div>
+  <p class="desc">
+    在一个长特性分支上同时开发主题引擎、所有自定义组件和悬浮纸坞导航，完成后一次性合并。开发期间主线继续迭代，最终通过 rebase 合入。
+  </p>
+
+  <div class="section-title">优势</div>
+  <ul class="pros">
+    <li>不存在风格混搭期</li>
+    <li>组件设计可全局统筹，一致性最高</li>
+    <li>用户感知到的变化完整、无中间态</li>
+  </ul>
+
+  <div class="section-title">劣势</div>
+  <ul class="cons">
+    <li>长分支与主线分歧大，rebase 冲突风险高</li>
+    <li>无法阶段性验证，出问题难定位</li>
+    <li>阻塞其他 UI 相关功能开发</li>
+    <li>如果中途发现设计不可行，沉没成本大</li>
+  </ul>
+
+  <div class="est">
+    <div class="est-item"><b>工作量</b> ~100-140 工时</div>
+    <div class="est-item"><b>周期</b> 3-5 周（连续）</div>
+    <div class="est-item"><b>风险</b> 高</div>
+  </div>
+</div>
+
+<!-- 方案 C -->
+<div class="approach">
+  <h2>方案 C：双包并行</h2>
+  <p class="tagline">新建独立 activity/模块，两套 UI 并行运行</p>
+
+  <div class="section-title">策略</div>
+  <p class="desc">
+    在同一 app 内新建一套完整的拟物 UI（独立 Activity 或导航子图），通过设置中的开关切换。新旧 UI 共享同一套 ViewModel/Repository/Database 层。
+  </p>
+
+  <div class="section-title">优势</div>
+  <ul class="pros">
+    <li>零风险——旧 UI 完全不动</li>
+    <li>可同时对比两种风格</li>
+    <li>用户可选，平滑过渡</li>
+  </ul>
+
+  <div class="section-title">劣势</div>
+  <ul class="cons">
+    <li>APK 体积显著增加（双套组件代码）</li>
+    <li>维护成本翻倍——每个功能需同时改两套 UI</li>
+    <li>长期共存违背「完全替换」的决策</li>
+    <li>最终还是要删除旧 UI，等于多做了一遍</li>
+  </ul>
+
+  <div class="est">
+    <div class="est-item"><b>工作量</b> ~180-240 工时</div>
+    <div class="est-item"><b>周期</b> 6-8 周</div>
+    <div class="est-item"><b>风险</b> 低（但维护成本高）</div>
+  </div>
+</div>
+
+</div>
+
+<!-- 对比表格 -->
+<div class="compare">
+  <h2>关键维度对比</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>维度</th>
+        <th>A 分层渐进</th>
+        <th>B 全量一步</th>
+        <th>C 双包并行</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>风格混搭期</td>
+        <td class="warn-cell">短暂存在（2-3周）</td>
+        <td class="highlight-cell">无</td>
+        <td class="highlight-cell">无（独立运行）</td>
+      </tr>
+      <tr>
+        <td>主线开发阻塞</td>
+        <td class="highlight-cell">不阻塞</td>
+        <td class="warn-cell">严重阻塞</td>
+        <td class="highlight-cell">不阻塞</td>
+      </tr>
+      <tr>
+        <td>可暂停/回滚</td>
+        <td class="highlight-cell">每阶段可独立回滚</td>
+        <td class="warn-cell">必须一次性完成</td>
+        <td class="highlight-cell">随时可放弃新 UI</td>
+      </tr>
+      <tr>
+        <td>APK 体积影响</td>
+        <td class="highlight-cell">最终净减（移除11+主题）</td>
+        <td class="highlight-cell">最终净减</td>
+        <td class="warn-cell">显著增加</td>
+      </tr>
+      <tr>
+        <td>长期维护成本</td>
+        <td class="highlight-cell">低（单一 UI）</td>
+        <td class="highlight-cell">低</td>
+        <td class="warn-cell">翻倍</td>
+      </tr>
+      <tr>
+        <td>与「完全替换」决策一致性</td>
+        <td class="highlight-cell">完全一致</td>
+        <td class="highlight-cell">完全一致</td>
+        <td class="warn-cell">违背——最终仍需删除旧 UI</td>
+      </tr>
+      <tr>
+        <td>总体工作量</td>
+        <td>120-160 工时</td>
+        <td>100-140 工时</td>
+        <td class="warn-cell">180-240 工时</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

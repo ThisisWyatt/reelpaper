@@ -263,3 +263,35 @@ val surfaceContainerLowPureBlack = Color(0xFF0A0A0A)
 val surfaceContainerPureBlack = Color(0xFF121212)
 val surfaceContainerHighPureBlack = Color(0xFF1A1A1A)
 val surfaceContainerHighestPureBlack = Color(0xFF222222)
+
+// ============================================================================
+// reelPaper Colors
+// ============================================================================
+
+val rpPaper = Color(0xFFF3EDE0)
+val rpPaperInset = Color(0xFFEAE2CD)
+val rpCardPaper = Color(0xFFFBF7EC)
+val rpCardLine = Color(0xFFE6DCC3)
+val rpInk = Color(0xFF3C362C)
+val rpInk2 = Color(0xFF8F8471)
+val rpInk3 = Color(0xFFB7AC92)
+val rpLine = Color(0xFFE4DBC5)
+val rpCinnabar = Color(0xFFB23129)
+val rpCinnabarHi = Color(0xFFD65444)
+val rpCinnabarDk = Color(0xFF7E211B)
+val rpMossGreen = Color(0xFF5F7A4A)
+
+val rpDarkPaper = Color(0xFF2A2620)
+val rpDarkPaperInset = Color(0xFF211E18)
+val rpDarkCard = Color(0xFF343028)
+val rpDarkCardLine = Color(0xFF423D31)
+val rpDarkInk = Color(0xFFEAE2CD)
+val rpDarkInk2 = Color(0xFFA89D85)
+val rpDarkInk3 = Color(0xFF7E7663)
+val rpDarkLine = Color(0xFF3A352B)
+
+val rpAmoledPaper = Color(0xFF050505)
+val rpAmoledPaperInset = Color(0xFF101010)
+val rpAmoledCard = Color(0xFF0B0B0B)
+val rpAmoledCardLine = Color(0xFF2A2A2A)
+val rpAmoledLine = Color(0xFF1D1D1D)
