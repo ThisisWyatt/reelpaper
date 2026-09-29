@@ -40,8 +40,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import app.gyrolet.mpvrx.ui.utils.NavigationPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -70,6 +72,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -115,6 +118,10 @@ import app.gyrolet.mpvrx.ui.utils.navigationDurationMillis
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import app.gyrolet.mpvrx.ui.theme.CardPaper
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink3
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -706,12 +713,25 @@ internal fun ExpressivePillNavigationBar(
   val indicatorLeft = androidx.compose.ui.unit.lerp(tabOffsets[pageFloor], tabOffsets[pageCeil], pageFraction)
   val indicatorWidth = androidx.compose.ui.unit.lerp(tabWidths[pageFloor], tabWidths[pageCeil], pageFraction)
 
-  LiquidGlassSurface(
-    modifier = modifier,
-    shape = CircleShape,
-    style = LiquidGlassStyle.Navigation,
-    glassColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.32f),
-    fallbackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+  // reelPaper floating dock style
+  Box(
+    modifier = modifier
+      .shadow(
+        elevation = 8.dp,
+        shape = RoundedCornerShape(18.dp),
+        spotColor = Color(0xFF604C24).copy(alpha = 0.10f),
+      )
+      .shadow(
+        elevation = 16.dp,
+        shape = RoundedCornerShape(18.dp),
+        spotColor = Color(0xFF604C24).copy(alpha = 0.06f),
+      )
+      .border(
+        width = 1.dp,
+        color = Color(0xFFE6DCC3),
+        shape = RoundedCornerShape(18.dp),
+      )
+      .background(CardPaper, RoundedCornerShape(18.dp)),
   ) {
     Box(
       modifier =
@@ -725,8 +745,21 @@ internal fun ExpressivePillNavigationBar(
             .offset(x = indicatorLeft - startPadding)
             .width(indicatorWidth)
             .height(44.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .clip(RoundedCornerShape(14.dp))
+            .background(PaperInset)
+            .drawBehind {
+              // Inset shadow effect
+              drawRect(
+                color = Color(0xFF604C24).copy(alpha = 0.08f),
+                topLeft = androidx.compose.ui.geometry.Offset.Zero,
+                size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx()),
+              )
+              drawRect(
+                color = Color.White.copy(alpha = 0.35f),
+                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 1.dp.toPx()),
+                size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx()),
+              )
+            },
       )
 
       Row(
@@ -749,8 +782,8 @@ internal fun ExpressivePillNavigationBar(
               }
             val contentColor =
               androidx.compose.ui.graphics.lerp(
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                MaterialTheme.colorScheme.onPrimaryContainer,
+                Ink3,
+                Cinnabar,
                 activeFraction,
               )
 
