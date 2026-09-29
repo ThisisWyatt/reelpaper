@@ -330,9 +330,15 @@ fun MpvrxTheme(
     LocalDarkAppColorScheme provides darkColorScheme,
   ) {
     ThemeTransitionContent {
+      val typography = when {
+        appTheme == AppTheme.Default && !useSystemFont && !localeNeedsSystemFont -> ReelPaperTypography
+        useSystemFont || localeNeedsSystemFont -> SystemTypography
+        else -> AppTypography
+      }
+
       MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = if (useSystemFont || localeNeedsSystemFont) SystemTypography else AppTypography,
+        typography = typography,
         shapes = AppShapes,
         motionScheme = MotionScheme.expressive(),
         content = { app.gyrolet.mpvrx.ui.utils.ProvideAppHaptics(content) },

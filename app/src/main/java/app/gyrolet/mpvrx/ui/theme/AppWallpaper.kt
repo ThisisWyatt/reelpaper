@@ -109,6 +109,15 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
             ),
       )
     }
+    // Paper grain texture overlay (reelPaper theme)
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .paperGrainBackground(
+          isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f,
+        ),
+    )
+
     CompositionLocalProvider(LocalAppWallpaperActive provides wallpaperActive) {
       content()
     }
