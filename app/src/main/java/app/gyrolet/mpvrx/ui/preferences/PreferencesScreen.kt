@@ -64,7 +64,11 @@ import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusGroup
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.tvInitialFocus
 import app.gyrolet.mpvrx.ui.securefolder.SecureFolderGateScreen
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.Ink3
 import app.gyrolet.mpvrx.ui.theme.LocalEmphasizedTypography
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import app.gyrolet.mpvrx.ui.utils.LocalShowSettingsBackArrow
@@ -172,7 +176,7 @@ object PreferencesScreen : Screen {
               Icon(
                 Icons.RoundedFilled.ArrowBack,
                 contentDescription = null,
-                tint = colorScheme.secondary,
+                tint = Ink2,
               )
             }
           },
@@ -399,7 +403,7 @@ private fun SettingsSearchEntry(
         .clip(MaterialTheme.shapes.extraExtraLarge)
         .clickable(onClick = onClick),
     shape = MaterialTheme.shapes.extraExtraLarge,
-    color = MaterialTheme.colorScheme.secondaryContainer,
+    color = PaperInset,
     tonalElevation = 1.dp,
     shadowElevation = 1.dp,
   ) {
@@ -414,7 +418,7 @@ private fun SettingsSearchEntry(
         imageVector = Icons.RoundedFilled.Search,
         contentDescription = null,
         modifier = Modifier.size(28.dp),
-        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+        tint = Ink2,
       )
       Spacer(modifier = Modifier.width(14.dp))
       Column(modifier = Modifier.weight(1f)) {
@@ -422,14 +426,14 @@ private fun SettingsSearchEntry(
           text = stringResource(R.string.settings_search_hint),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSecondaryContainer,
+          color = Ink2,
         )
       }
       Icon(
         imageVector = Icons.RoundedFilled.ChevronRight,
         contentDescription = null,
         modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.72f),
+        tint = Ink2.copy(alpha = 0.72f),
       )
     }
   }
@@ -455,7 +459,7 @@ private fun SettingsSectionBlock(
       Text(
         text = section.title,
         style = emphasizedTypography.titleLarge,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = Ink,
       )
     }
 
@@ -480,7 +484,7 @@ private fun SettingsDestinationGroup(
   Surface(
     modifier = modifier.fillMaxWidth(),
     shape = MaterialTheme.shapes.extraLargeIncreased,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
+    color = PaperInset,
     tonalElevation = 1.dp,
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -511,7 +515,7 @@ private fun SettingsDestinationRow(
 ) {
   val rowBgColor =
     if (isSelected) {
-      MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+      PaperInset.copy(alpha = 0.5f)
     } else {
       Color.Transparent
     }
@@ -549,14 +553,14 @@ private fun SettingsDestinationRow(
         text = item.title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = Ink,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
       Text(
         text = item.summary,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Ink2,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )
@@ -568,7 +572,7 @@ private fun SettingsDestinationRow(
       imageVector = Icons.RoundedFilled.ChevronRight,
       contentDescription = null,
       modifier = Modifier.size(24.dp),
-      tint = MaterialTheme.colorScheme.outline,
+      tint = Ink3,
     )
   }
 }

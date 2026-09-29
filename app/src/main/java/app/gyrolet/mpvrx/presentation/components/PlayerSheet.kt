@@ -93,6 +93,7 @@ import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusGroup
 import app.gyrolet.mpvrx.ui.player.controls.components.tvInitialFocus
 import androidx.compose.ui.focus.focusProperties
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.theme.Ink2
 import app.gyrolet.mpvrx.ui.theme.LocalMotionPolicy
 import app.gyrolet.mpvrx.ui.theme.MotionPolicy
 import kotlinx.coroutines.flow.collectLatest
@@ -336,7 +337,7 @@ fun PlayerSheetDragHandle() {
   Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), contentAlignment = Alignment.Center) {
     Box(
       Modifier.size(width = 34.dp, height = 4.dp)
-        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), RoundedCornerShape(2.dp)),
+        .background(Ink2.copy(alpha = 0.35f), RoundedCornerShape(2.dp)),
     )
   }
 }
@@ -368,7 +369,7 @@ fun PlayerSheetSectionHeader(
     modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp).semantics { heading() },
     style = MaterialTheme.typography.labelLarge,
     fontWeight = FontWeight.SemiBold,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    color = Ink2,
   )
 }
 

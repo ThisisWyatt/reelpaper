@@ -47,6 +47,8 @@ import app.gyrolet.mpvrx.ui.theme.Ink
 import app.gyrolet.mpvrx.ui.theme.Ink2
 import app.gyrolet.mpvrx.ui.theme.Ink3
 import app.gyrolet.mpvrx.ui.theme.Paper
+import app.gyrolet.mpvrx.ui.theme.PressOverlayTint
+import app.gyrolet.mpvrx.ui.theme.ShadowTint
 
 /** ① Cinnabar solid key — primary rectangular action button */
 @Composable
@@ -165,8 +167,8 @@ fun CinnabarFab(
     modifier = modifier
       .size(56.dp)
       .offset(y = -pressOffset)
-      .shadow(elevation = 8.dp, shape = CircleShape, spotColor = Color(0xFF604C24).copy(0.12f))
-      .shadow(elevation = 3.dp, shape = CircleShape, spotColor = Color(0xFF604C24).copy(0.08f))
+      .shadow(elevation = 8.dp, shape = CircleShape, spotColor = ShadowTint.copy(0.12f))
+      .shadow(elevation = 3.dp, shape = CircleShape, spotColor = ShadowTint.copy(0.08f))
       .clip(CircleShape)
       .clickable(
         interactionSource = interactionSource,
@@ -211,7 +213,7 @@ fun IconButtonReelPaper(
       )
       .drawBehind {
         if (isPressed) {
-          drawRect(color = Color(0xFF786030).copy(alpha = 0.07f))
+          drawRect(color = PressOverlayTint.copy(alpha = 0.07f))
         }
       },
     contentAlignment = Alignment.Center,

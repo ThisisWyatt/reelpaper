@@ -40,6 +40,10 @@ import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 
 /**
  * The pill a sheet puts above a long list: a magnifier at the head, a hint
@@ -69,14 +73,14 @@ fun PlayerSheetSearchField(
         .fillMaxWidth()
         // Fixed, so the row does not grow the moment it is typed into.
         .height(46.dp)
-        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(11.dp))
+        .background(PaperInset, RoundedCornerShape(11.dp))
         .padding(start = 8.dp, end = 12.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
       imageVector = Icons.RoundedFilled.Search,
       contentDescription = onSubmit?.let { stringResource(R.string.generic_search) },
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      tint = Ink2,
       modifier =
         Modifier
           .size(32.dp)
@@ -90,7 +94,7 @@ fun PlayerSheetSearchField(
         Text(
           text = placeholder,
           style = MaterialTheme.typography.bodyLarge,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          color = Ink2,
         )
       }
       BasicTextField(
@@ -99,9 +103,9 @@ fun PlayerSheetSearchField(
         singleLine = true,
         textStyle =
           MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Ink,
           ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        cursorBrush = SolidColor(Cinnabar),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { submit() }),
         modifier = Modifier.fillMaxWidth(),
@@ -111,7 +115,7 @@ fun PlayerSheetSearchField(
       Icon(
         imageVector = Icons.RoundedFilled.Close,
         contentDescription = stringResource(R.string.generic_clear),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Ink2,
         modifier =
           Modifier
             .size(28.dp)

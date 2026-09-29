@@ -73,6 +73,7 @@ import app.gyrolet.mpvrx.ui.framecapture.dialogs.SnapshotMoveTargetDialog
 import app.gyrolet.mpvrx.ui.framecapture.dialogs.SnapshotSortDialog
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.Ink2
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
@@ -610,7 +611,7 @@ private fun SectionHeader(
     text = label,
     style = MaterialTheme.typography.titleSmall,
     fontWeight = FontWeight.SemiBold,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    color = Ink2,
     modifier = modifier.fillMaxWidth(),
   )
 }

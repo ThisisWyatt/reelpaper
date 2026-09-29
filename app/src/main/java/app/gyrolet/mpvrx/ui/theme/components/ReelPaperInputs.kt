@@ -54,6 +54,7 @@ import app.gyrolet.mpvrx.ui.theme.Ink3
 import app.gyrolet.mpvrx.ui.theme.Line
 import app.gyrolet.mpvrx.ui.theme.Paper
 import app.gyrolet.mpvrx.ui.theme.PaperInset
+import app.gyrolet.mpvrx.ui.theme.ShadowTint
 
 // ===== Slider =====
 @Composable
@@ -187,7 +188,7 @@ fun ReelPaperSegmentedControl(
             .shadow(
               elevation = if (isSelected) 3.dp else 0.dp,
               shape = RoundedCornerShape(9.dp),
-              spotColor = Color(0xFF604C24).copy(0.06f),
+              spotColor = ShadowTint.copy(0.06f),
             ),
           contentAlignment = Alignment.Center,
         ) {

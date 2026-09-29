@@ -79,6 +79,7 @@ data class VideoOpenAnimationState(
 enum class NavigationAnimStyle(
   val displayName: String,
 ) {
+  Paper("Paper"),
   Default("Slide"),
   Depth("Depth Zoom"),
   FlipFade("Fade through"),

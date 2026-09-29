@@ -118,10 +118,12 @@ import app.gyrolet.mpvrx.ui.utils.navigationDurationMillis
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import app.gyrolet.mpvrx.ui.theme.CardLine
 import app.gyrolet.mpvrx.ui.theme.CardPaper
 import app.gyrolet.mpvrx.ui.theme.Cinnabar
 import app.gyrolet.mpvrx.ui.theme.Ink3
 import app.gyrolet.mpvrx.ui.theme.PaperInset
+import app.gyrolet.mpvrx.ui.theme.ShadowTint
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -719,16 +721,16 @@ internal fun ExpressivePillNavigationBar(
       .shadow(
         elevation = 8.dp,
         shape = RoundedCornerShape(18.dp),
-        spotColor = Color(0xFF604C24).copy(alpha = 0.10f),
+        spotColor = ShadowTint.copy(alpha = 0.10f),
       )
       .shadow(
         elevation = 16.dp,
         shape = RoundedCornerShape(18.dp),
-        spotColor = Color(0xFF604C24).copy(alpha = 0.06f),
+        spotColor = ShadowTint.copy(alpha = 0.06f),
       )
       .border(
         width = 1.dp,
-        color = Color(0xFFE6DCC3),
+        color = CardLine,
         shape = RoundedCornerShape(18.dp),
       )
       .background(CardPaper, RoundedCornerShape(18.dp)),
@@ -750,7 +752,7 @@ internal fun ExpressivePillNavigationBar(
             .drawBehind {
               // Inset shadow effect
               drawRect(
-                color = Color(0xFF604C24).copy(alpha = 0.08f),
+                color = ShadowTint.copy(alpha = 0.08f),
                 topLeft = androidx.compose.ui.geometry.Offset.Zero,
                 size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx()),
               )

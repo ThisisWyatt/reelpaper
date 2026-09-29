@@ -1599,10 +1599,10 @@ private fun ListContent(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.primaryContainer,
+                        app.gyrolet.mpvrx.ui.theme.PaperInset,
                         RoundedCornerShape(8.dp),
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onPrimaryContainer,
+                  color = app.gyrolet.mpvrx.ui.theme.Ink2,
                 )
               }
             } else {

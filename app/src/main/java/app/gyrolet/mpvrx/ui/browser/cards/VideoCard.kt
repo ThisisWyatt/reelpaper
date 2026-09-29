@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -66,6 +67,12 @@ import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.tvContextMenu
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.MossGreen
+import app.gyrolet.mpvrx.ui.theme.Line
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
@@ -337,7 +344,7 @@ fun VideoCard(
                 .fillMaxWidth()
                 .aspectRatio(aspect)
                 .clip(AppShapeScale.medium)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(PaperInset)
                 .combinedClickable(
                   onClick = onThumbClick,
                   onLongClick = onLongClick,
@@ -368,7 +375,7 @@ fun VideoCard(
                     androidx.compose.ui.res
                       .stringResource(app.gyrolet.mpvrx.R.string.ui_play),
                   modifier = Modifier.size(48.dp),
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = Ink2,
                 )
               }
             } else {
@@ -378,7 +385,7 @@ fun VideoCard(
                   androidx.compose.ui.res
                     .stringResource(app.gyrolet.mpvrx.R.string.ui_play),
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = Ink2,
               )
             }
 
@@ -388,7 +395,7 @@ fun VideoCard(
                   Modifier
                     .align(Alignment.TopStart)
                     .padding(6.dp)
-                    .cardOverlay(containerColor = Color(0xFFD32F2F))
+                    .cardOverlay(containerColor = Cinnabar)
                     .padding(horizontal = 8.dp, vertical = 3.dp),
               ) {
                 Text(
@@ -476,7 +483,7 @@ fun VideoCard(
                     Modifier
                       .fillMaxHeight()
                       .fillMaxWidth(progressPercentage)
-                      .background(MaterialTheme.colorScheme.primary),
+                      .background(Cinnabar),
                 )
               }
             }
@@ -499,11 +506,11 @@ fun VideoCard(
               },
             color =
               if (isRecentlyPlayed) {
-                MaterialTheme.colorScheme.tertiary
+                MossGreen
               } else if (isWatched) {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                Ink.copy(alpha = 0.6f)
               } else {
-                MaterialTheme.colorScheme.onSurface
+                Ink
               },
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
@@ -515,7 +522,7 @@ fun VideoCard(
             Text(
               text = sourceSubtitle,
               style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              color = Ink2,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
             )
@@ -535,7 +542,7 @@ fun VideoCard(
                   .spacedBy(4.dp),
             ) {
               if (sourceLabel != null) {
-                SourceChip(label = sourceLabel, color = sourceColor ?: MaterialTheme.colorScheme.surfaceContainerHigh)
+                SourceChip(label = sourceLabel, color = sourceColor ?: PaperInset)
               }
               if (showSubtitleIndicator && !video.isAudio) {
                 if (video.hasEmbeddedSubtitles && video.subtitleCodec.isNotBlank()) {
@@ -546,10 +553,10 @@ fun VideoCard(
                       modifier =
                         Modifier
                           .background(
-                            MaterialTheme.colorScheme.primary,
+                            Cinnabar,
                             AppShapeScale.small,
                           ).padding(horizontal = 8.dp, vertical = 4.dp),
-                      color = MaterialTheme.colorScheme.onPrimary,
+                      color = Color.White,
                     )
                   }
                 }
@@ -561,10 +568,10 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
 
@@ -586,10 +593,10 @@ fun VideoCard(
                     modifier =
                       Modifier
                         .background(
-                          MaterialTheme.colorScheme.surfaceContainerHigh,
+                          PaperInset,
                           AppShapeScale.small,
                         ).padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Ink2,
                   )
                 }
               } else if (!video.isAudio && showFramerateInResolution && hasFps) {
@@ -599,10 +606,10 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
 
@@ -613,10 +620,10 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
             }
@@ -705,7 +712,7 @@ fun VideoCard(
                 .width(thumbWidthDp)
                 .aspectRatio(aspect)
                 .clip(AppShapeScale.medium)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(PaperInset)
                 .combinedClickable(
                   onClick = onThumbClick,
                   onLongClick = onLongClick,
@@ -736,7 +743,7 @@ fun VideoCard(
                     androidx.compose.ui.res
                       .stringResource(app.gyrolet.mpvrx.R.string.ui_play),
                   modifier = Modifier.size(48.dp),
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = Ink2,
                 )
               }
             } else {
@@ -746,7 +753,7 @@ fun VideoCard(
                   androidx.compose.ui.res
                     .stringResource(app.gyrolet.mpvrx.R.string.ui_play),
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = Ink2,
               )
             }
 
@@ -756,7 +763,7 @@ fun VideoCard(
                   Modifier
                     .align(Alignment.TopStart)
                     .padding(6.dp)
-                    .cardOverlay(containerColor = Color(0xFFD32F2F))
+                    .cardOverlay(containerColor = Cinnabar)
                     .padding(horizontal = 8.dp, vertical = 3.dp),
               ) {
                 Text(
@@ -818,7 +825,7 @@ fun VideoCard(
                     Modifier
                       .fillMaxHeight()
                       .fillMaxWidth(progressPercentage)
-                      .background(MaterialTheme.colorScheme.primary),
+                      .background(Cinnabar),
                 )
               }
             }
@@ -844,11 +851,11 @@ fun VideoCard(
                 },
               color =
                 if (isRecentlyPlayed) {
-                  MaterialTheme.colorScheme.tertiary
+                  MossGreen
                 } else if (isWatched) {
-                  MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                  Ink.copy(alpha = 0.6f)
                 } else {
-                  MaterialTheme.colorScheme.onSurface
+                  Ink
                 },
               maxLines = maxLines,
               overflow = TextOverflow.Ellipsis,
@@ -859,7 +866,7 @@ fun VideoCard(
             Text(
               text = sourceSubtitle,
               style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              color = Ink2,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
             )
@@ -874,7 +881,7 @@ fun VideoCard(
                   .spacedBy(4.dp),
             ) {
               if (sourceLabel != null) {
-                SourceChip(label = sourceLabel, color = sourceColor ?: MaterialTheme.colorScheme.surfaceContainerHigh)
+                SourceChip(label = sourceLabel, color = sourceColor ?: PaperInset)
               }
               if (showCodecSupportIndicator && !video.isAudio && video.videoCodec.isNotBlank()) {
                 CodecSupportIndicator(video = video)
@@ -888,10 +895,10 @@ fun VideoCard(
                       modifier =
                         Modifier
                           .background(
-                            MaterialTheme.colorScheme.primary,
+                            Cinnabar,
                             AppShapeScale.small,
                           ).padding(horizontal = 8.dp, vertical = 4.dp),
-                      color = MaterialTheme.colorScheme.onPrimary,
+                      color = Color.White,
                     )
                   }
                 }
@@ -903,10 +910,10 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
               // Resolution and Framerate logic (List view)
@@ -928,10 +935,10 @@ fun VideoCard(
                     modifier =
                       Modifier
                         .background(
-                          MaterialTheme.colorScheme.surfaceContainerHigh,
+                          PaperInset,
                           AppShapeScale.small,
                         ).padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Ink2,
                   )
                 }
               } else if (showFramerateInResolution && hasFps) {
@@ -942,10 +949,10 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
 
@@ -956,14 +963,21 @@ fun VideoCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
             }
           }
+        }
+        if (!isGridMode) {
+          Divider(
+            modifier = Modifier.padding(start = 101.dp, end = 20.dp),
+            color = Line,
+            thickness = 0.5.dp,
+          )
         }
       }
     }
@@ -998,7 +1012,7 @@ private fun CodecSupportIndicator(
       modifier
         .cardOverlay(
           shape = AppShapeScale.small,
-          containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+          containerColor = PaperInset,
         )
         .padding(horizontal = if (compact) 6.dp else 8.dp, vertical = if (compact) 3.dp else 4.dp),
     verticalAlignment = Alignment.CenterVertically,

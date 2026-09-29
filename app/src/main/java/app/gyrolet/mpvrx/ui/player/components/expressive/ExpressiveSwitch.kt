@@ -45,7 +45,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
 import app.gyrolet.mpvrx.ui.theme.ElevationTokens
+import app.gyrolet.mpvrx.ui.theme.Line
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 
 private val dpExpressiveSpring = spring<Dp>(dampingRatio = 0.9f, stiffness = 700f)
 
@@ -96,9 +99,9 @@ fun ExpressiveSwitch(
   ) {
     val trackColor =
       if (checked) {
-        MaterialTheme.colorScheme.primary
+        Cinnabar
       } else {
-        MaterialTheme.colorScheme.surfaceContainerHighest
+        PaperInset
       }
 
     val thumbSize by animateDpAsState(
@@ -138,7 +141,7 @@ fun ExpressiveSwitch(
 
     val density = LocalDensity.current
     val trackRadiusPx = with(density) { SwitchDimensions.trackRadius.toPx() }
-    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+    val borderColor = Line.copy(alpha = 0.5f)
     val borderStrokePx = with(density) { SwitchDimensions.borderStroke.toPx() }
 
     Canvas(
@@ -179,7 +182,7 @@ fun ExpressiveSwitch(
           .scale(iconScale)
           .blur(toggleBlur.value.dp),
       shape = MaterialTheme.shapes.extraLarge,
-      color = if (checked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.outline,
+      color = if (checked) MaterialTheme.colorScheme.onPrimary else Line,
       shadowElevation = ElevationTokens.Level1,
     ) {
       Box(

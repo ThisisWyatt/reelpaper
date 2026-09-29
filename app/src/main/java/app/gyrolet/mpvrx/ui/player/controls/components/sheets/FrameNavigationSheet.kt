@@ -84,6 +84,9 @@ import app.gyrolet.mpvrx.ui.player.screenshot.FrameCaptureUnavailableException
 import app.gyrolet.mpvrx.ui.player.screenshot.ScreenshotSaver
 import app.gyrolet.mpvrx.ui.player.screenshot.ScreenshotSettings
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
+import app.gyrolet.mpvrx.ui.theme.CinnabarDk
+import app.gyrolet.mpvrx.ui.theme.CinnabarHi
+import app.gyrolet.mpvrx.ui.theme.MossGreen
 import app.gyrolet.mpvrx.ui.theme.spacing
 import app.gyrolet.mpvrx.ui.utils.rememberAppHaptics
 import kotlinx.coroutines.Dispatchers
@@ -804,9 +807,9 @@ private fun FrameInfoDisplay(
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = if (frameDelta > 0) {
-              if (darkSurface) Color(0xFF81C784) else Color(0xFF1B5E20)
+              if (darkSurface) MossGreen.copy(alpha = 0.7f) else MossGreen
             } else {
-              if (darkSurface) Color(0xFFEF9A9A) else Color(0xFFB71C1C)
+              if (darkSurface) CinnabarHi.copy(alpha = 0.7f) else CinnabarDk
             },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

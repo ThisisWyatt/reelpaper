@@ -50,6 +50,7 @@ import app.gyrolet.mpvrx.ui.player.controls.components.ControlsButton
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonBorderColor
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContainerColor
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContentColor
+import app.gyrolet.mpvrx.ui.theme.MossGreen
 import app.gyrolet.mpvrx.ui.theme.controlColor
 import app.gyrolet.mpvrx.ui.theme.spacing
 import dev.vivvvek.seeker.Segment
@@ -171,7 +172,7 @@ fun TopLeftPlayerControlsLandscape(
             imageVector = Icons.RoundedFilled.CloudDownload,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.tertiary,
+            tint = MossGreen,
           )
           Text(
             text =
@@ -183,7 +184,7 @@ fun TopLeftPlayerControlsLandscape(
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.tertiary,
+            color = MossGreen,
           )
         }
       }
@@ -202,7 +203,7 @@ fun TopLeftPlayerControlsLandscape(
             imageVector = Icons.RoundedFilled.Translate,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.tertiary,
+            tint = MossGreen,
           )
           Text(
             text =
@@ -214,7 +215,7 @@ fun TopLeftPlayerControlsLandscape(
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.tertiary,
+            color = MossGreen,
           )
         }
       }

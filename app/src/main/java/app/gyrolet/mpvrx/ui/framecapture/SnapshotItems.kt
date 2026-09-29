@@ -51,6 +51,9 @@ import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import java.text.DateFormat
 import java.util.Date
@@ -151,7 +154,7 @@ fun SnapshotGridItem(
       Modifier
         .fillMaxWidth()
         .aspectRatio(1f)
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .background(PaperInset)
         .tvFocusHighlight(AppShapeScale.none, focusedScale = 1.03f)
         .semantics { selected = isSelected }
         .combinedClickable(onClick = onClick, onLongClick = onLongClick),
@@ -170,7 +173,7 @@ fun SnapshotGridItem(
       Icon(
         Icons.RoundedFilled.Image,
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+        tint = Ink2.copy(alpha = 0.4f),
         modifier = Modifier.size(40.dp),
       )
     }
@@ -217,7 +220,7 @@ fun SnapshotFolderGridItem(
         Icons.RoundedFilled.Folder,
         contentDescription = stringResource(R.string.ui_folder),
         modifier = Modifier.fillMaxWidth().aspectRatio(FOLDER_GLYPH_ASPECT),
-        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+        tint = Ink2.copy(alpha = 0.5f),
       )
       Box(modifier = Modifier.matchParentSize().background(selectionTint))
       SelectionIndicator(
@@ -231,7 +234,7 @@ fun SnapshotFolderGridItem(
     Text(
       text = name,
       style = MaterialTheme.typography.titleMedium,
-      color = MaterialTheme.colorScheme.onSurface,
+      color = Ink,
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
       textAlign = TextAlign.Center,
@@ -266,7 +269,7 @@ fun SnapshotFolderListItem(
         Icons.RoundedFilled.Folder,
         contentDescription = stringResource(R.string.ui_folder),
         modifier = Modifier.matchParentSize(),
-        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+        tint = Ink2.copy(alpha = 0.5f),
       )
       Box(modifier = Modifier.matchParentSize().background(selectionTint))
     }
@@ -276,7 +279,7 @@ fun SnapshotFolderListItem(
     Text(
       text = name,
       style = MaterialTheme.typography.titleMedium,
-      color = MaterialTheme.colorScheme.onSurface,
+      color = Ink,
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
       modifier = Modifier.weight(1f),
@@ -326,7 +329,7 @@ fun SnapshotListItem(
         Icon(
           Icons.RoundedFilled.Image,
           contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+          tint = Ink2.copy(alpha = 0.4f),
           modifier = Modifier.size(24.dp),
         )
       }
@@ -337,20 +340,20 @@ fun SnapshotListItem(
       Text(
         text = capture.videoTitle,
         style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = Ink,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
       Text(
         text = capture.formattedPosition,
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Ink2,
         maxLines = 1,
       )
       Text(
         text = capture.formattedCaptureDate,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Ink2,
         maxLines = 1,
       )
     }

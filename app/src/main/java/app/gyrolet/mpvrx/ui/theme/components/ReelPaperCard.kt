@@ -36,6 +36,7 @@ import app.gyrolet.mpvrx.ui.theme.Ink2
 import app.gyrolet.mpvrx.ui.theme.Ink3
 import app.gyrolet.mpvrx.ui.theme.Line
 import app.gyrolet.mpvrx.ui.theme.PaperInset
+import app.gyrolet.mpvrx.ui.theme.ShadowTint
 
 @Composable
 fun ReelPaperListCard(
@@ -45,7 +46,7 @@ fun ReelPaperListCard(
   Column(
     modifier = modifier
       .fillMaxWidth()
-      .shadow(6.dp, RoundedCornerShape(14.dp), spotColor = Color(0xFF604C24).copy(0.08f))
+      .shadow(6.dp, RoundedCornerShape(14.dp), spotColor = ShadowTint.copy(0.08f))
       .background(CardPaper, RoundedCornerShape(14.dp))
       .padding(vertical = 8.dp),
     content = content,
@@ -131,7 +132,7 @@ fun StackedPaperCard(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .shadow(6.dp, RoundedCornerShape(14.dp), spotColor = Color(0xFF604C24).copy(0.10f))
+        .shadow(6.dp, RoundedCornerShape(14.dp), spotColor = ShadowTint.copy(0.10f))
         .background(CardPaper, RoundedCornerShape(14.dp))
         .clickable(onClick = onClick)
         .padding(16.dp),

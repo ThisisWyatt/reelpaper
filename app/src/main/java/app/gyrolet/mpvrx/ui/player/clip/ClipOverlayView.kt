@@ -85,6 +85,8 @@ import app.gyrolet.mpvrx.ui.player.PlaybackSession
 import app.gyrolet.mpvrx.ui.player.PlayerActivity
 import app.gyrolet.mpvrx.ui.player.PlayerViewModel
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.DraggablePanel
+import app.gyrolet.mpvrx.ui.theme.CardPaper
+import app.gyrolet.mpvrx.ui.theme.Line
 import app.gyrolet.mpvrx.ui.theme.MpvrxTheme
 import app.gyrolet.mpvrx.ui.theme.spacing
 import java.util.Locale
@@ -1001,11 +1003,11 @@ private fun ClipCropControls(
 
   Surface(
     shape = CircleShape,
-    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
+    color = CardPaper.copy(alpha = 0.96f),
     contentColor = MaterialTheme.colorScheme.onSurface,
     tonalElevation = 6.dp,
     shadowElevation = 8.dp,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
+    border = BorderStroke(1.dp, Line.copy(alpha = 0.55f)),
   ) {
     Row(
       modifier = Modifier.height(48.dp),
@@ -1025,7 +1027,7 @@ private fun ClipCropControls(
         Modifier
           .width(1.dp)
           .height(24.dp)
-          .background(MaterialTheme.colorScheme.outlineVariant),
+          .background(Line),
       )
       IconButton(
         onClick = onDone,

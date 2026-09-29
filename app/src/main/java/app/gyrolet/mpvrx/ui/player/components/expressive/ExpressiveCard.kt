@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import app.gyrolet.mpvrx.ui.theme.ElevationTokens
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 
 /**
  * Expressive card with spring-animated scale feedback on press and selection.
@@ -54,7 +55,7 @@ fun ExpressiveCard(
     label = "ExpressiveCardScale",
   )
 
-  val selectionColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
+  val selectionColor = PaperInset.copy(alpha = 0.12f)
 
   Card(
     modifier =
@@ -68,7 +69,7 @@ fun ExpressiveCard(
         ),
     colors =
       CardDefaults.cardColors(
-        containerColor = if (selected) selectionColor else MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = if (selected) selectionColor else PaperInset,
       ),
     elevation =
       CardDefaults.cardElevation(
@@ -105,7 +106,7 @@ fun ExpressiveOutlinedCard(
     label = "ExpressiveOutlinedCardScale",
   )
 
-  val selectionColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
+  val selectionColor = PaperInset.copy(alpha = 0.12f)
 
   OutlinedCard(
     modifier =
@@ -119,7 +120,7 @@ fun ExpressiveOutlinedCard(
         ),
     colors =
       CardDefaults.outlinedCardColors(
-        containerColor = if (selected) selectionColor else MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = if (selected) selectionColor else PaperInset,
       ),
   ) {
     content()
@@ -151,7 +152,7 @@ fun ExpressiveElevatedCard(
     label = "ExpressiveElevatedCardScale",
   )
 
-  val selectionColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
+  val selectionColor = PaperInset.copy(alpha = 0.12f)
 
   ElevatedCard(
     modifier =
@@ -165,7 +166,7 @@ fun ExpressiveElevatedCard(
         ),
     colors =
       CardDefaults.elevatedCardColors(
-        containerColor = if (selected) selectionColor else MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = if (selected) selectionColor else PaperInset,
       ),
     elevation =
       CardDefaults.elevatedCardElevation(

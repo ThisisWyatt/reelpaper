@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 // Warm brown shadow tint used across all reelPaper elevations
-private val ShadowTint = Color(0xFF604C24)
+val ShadowTint = Color(0xFF604C24)
+val PressOverlayTint = Color(0xFF786030)
 private val ShadowAmbientAlpha = 0.10f
 private val ShadowSpotAlpha = 0.08f
 private val InsetShadowAlpha = 0.16f
@@ -163,7 +164,7 @@ fun Modifier.reelPaperEnamelBadge(
  * Applies a subtle dark overlay + inset shadow when pressed.
  */
 fun Modifier.reelPaperPressable(
-  pressColor: Color = Color(0xFF786030).copy(alpha = PressOverlayAlpha),
+  pressColor: Color = PressOverlayTint.copy(alpha = PressOverlayAlpha),
 ): Modifier = composed {
   val interactionSource = remember { MutableInteractionSource() }
   val isPressed by interactionSource.collectIsPressedAsState()
@@ -195,7 +196,7 @@ fun Modifier.reelPaperRaisedCard(
     .drawBehind {
       if (isPressed) {
         drawRect(
-          color = Color(0xFF786030).copy(alpha = PressOverlayAlpha),
+          color = PressOverlayTint.copy(alpha = PressOverlayAlpha),
         )
       }
     }

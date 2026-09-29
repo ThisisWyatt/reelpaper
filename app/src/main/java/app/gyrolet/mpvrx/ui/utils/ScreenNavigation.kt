@@ -114,6 +114,16 @@ private fun screenNavTransition(
           (slideOutHorizontally(tween(duration, easing = FastOutSlowInEasing)) { it * direction } +
             fadeOut(tween(duration)))
       }
+    NavigationAnimStyle.Paper ->
+      if (forward) {
+        (slideInHorizontally(tween(duration, easing = FastOutSlowInEasing)) { it * direction / 6 } +
+          fadeIn(tween(duration, easing = FastOutSlowInEasing))) togetherWith
+          fadeOut(tween(duration, easing = FastOutSlowInEasing), targetAlpha = 0.55f)
+      } else {
+        fadeIn(tween(duration, easing = FastOutSlowInEasing), initialAlpha = 0.55f) togetherWith
+          (slideOutHorizontally(tween(duration, easing = FastOutSlowInEasing)) { it * direction / 6 } +
+            fadeOut(tween(duration, easing = FastOutSlowInEasing)))
+      }
     NavigationAnimStyle.Default ->
       if (forward) {
         slideInHorizontally(tween(duration, easing = FastOutSlowInEasing)) { it * direction } togetherWith

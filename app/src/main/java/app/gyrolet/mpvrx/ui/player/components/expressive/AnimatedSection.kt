@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.theme.Ink2
 
 /**
  * Expandable section card with spring-animated icon rotation.
@@ -77,7 +78,7 @@ fun AnimatedSection(
         imageVector = Icons.RoundedFilled.KeyboardArrowDown,
         contentDescription = if (isExpanded) "Collapse" else "Expand",
         modifier = Modifier.rotate(iconRotation),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Ink2,
       )
     }
 
@@ -142,7 +143,7 @@ fun AnimatedSection(
         imageVector = Icons.RoundedFilled.KeyboardArrowDown,
         contentDescription = if (isExpanded) "Collapse" else "Expand",
         modifier = Modifier.rotate(iconRotation),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Ink2,
       )
     }
 

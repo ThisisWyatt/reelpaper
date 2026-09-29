@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,6 +64,12 @@ import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.tvContextMenu
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.MossGreen
+import app.gyrolet.mpvrx.ui.theme.Line
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -151,7 +158,7 @@ fun FolderCard(
   fun PinnedFolderBadge(modifier: Modifier = Modifier) {
     Surface(
       shape = AppShapeScale.full,
-      color = MaterialTheme.colorScheme.primary.copy(alpha = 0.94f),
+      color = Cinnabar.copy(alpha = 0.94f),
       contentColor = MaterialTheme.colorScheme.onPrimary,
       shadowElevation = 3.dp,
       modifier = modifier.rotate(-18f),
@@ -243,7 +250,7 @@ fun FolderCard(
                   androidx.compose.ui.res
                     .stringResource(app.gyrolet.mpvrx.R.string.ui_folder),
                 modifier = placeholderIconSize?.let { Modifier.size(it) } ?: Modifier.fillMaxWidth().aspectRatio(aspect),
-                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                tint = Ink2.copy(alpha = 0.5f),
               )
             }
 
@@ -253,7 +260,7 @@ fun FolderCard(
                   Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                      .cardOverlay(containerColor = Color(0xFFD32F2F))
+                      .cardOverlay(containerColor = Cinnabar)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
               ) {
                 Text(
@@ -375,7 +382,7 @@ fun FolderCard(
                   androidx.compose.ui.res
                     .stringResource(app.gyrolet.mpvrx.R.string.ui_folder),
                 modifier = placeholderIconSize?.let { Modifier.size(it) } ?: Modifier.matchParentSize(),
-                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                tint = Ink2.copy(alpha = 0.5f),
               )
             }
 
@@ -386,7 +393,7 @@ fun FolderCard(
                   Modifier
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
-                      .cardOverlay(containerColor = Color(0xFFD32F2F))
+                      .cardOverlay(containerColor = Cinnabar)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
               ) {
                 Text(
@@ -420,9 +427,9 @@ fun FolderCard(
               style = MaterialTheme.typography.titleMedium,
               color =
                 when {
-                  isActive -> MaterialTheme.colorScheme.primary
-                  isRecentlyPlayed -> MaterialTheme.colorScheme.tertiary
-                  else -> MaterialTheme.colorScheme.onSurface
+                  isActive -> Cinnabar
+                  isRecentlyPlayed -> MossGreen
+                  else -> Ink
                 },
               maxLines = maxLines,
               overflow = TextOverflow.Ellipsis,
@@ -431,7 +438,7 @@ fun FolderCard(
               Text(
                 parentPath,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Ink2,
                 maxLines = maxLines,
                 overflow = TextOverflow.Ellipsis,
               )
@@ -470,10 +477,10 @@ fun FolderCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
                 hasChip = true
               }
@@ -485,10 +492,10 @@ fun FolderCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
                 hasChip = true
               }
@@ -500,10 +507,10 @@ fun FolderCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
                 hasChip = true
               }
@@ -515,13 +522,20 @@ fun FolderCard(
                   modifier =
                     Modifier
                       .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        PaperInset,
                         AppShapeScale.small,
                       ).padding(horizontal = 8.dp, vertical = 4.dp),
-                  color = MaterialTheme.colorScheme.onSurface,
+                  color = Ink2,
                 )
               }
             }
+          }
+          if (!isGridMode) {
+            Divider(
+              modifier = Modifier.padding(start = 79.dp, end = 20.dp),
+              color = Line,
+              thickness = 0.5.dp,
+            )
           }
         }
       }

@@ -38,6 +38,8 @@ import app.gyrolet.mpvrx.ui.player.controls.components.panels.LuaScriptsPanel
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.SubtitleDelayPanel
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.SubtitleSettingsPanel
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.VideoSettingsPanel
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.utils.isAnyMpvOptionOwnedByConfig
 import app.gyrolet.mpvrx.ui.utils.isMpvOptionOwnedByConfig
 
@@ -113,9 +115,9 @@ val panelCardsColors: @Composable () -> CardColors = {
   val alpha = 0.85f
 
   CardDefaults.cardColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = alpha),
-    contentColor = MaterialTheme.colorScheme.onSurface,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = alpha),
-    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+    containerColor = PaperInset.copy(alpha = alpha),
+    contentColor = Ink,
+    disabledContainerColor = PaperInset.copy(alpha = alpha),
+    disabledContentColor = Ink.copy(alpha = 0.38f),
   )
 }

@@ -39,6 +39,10 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpManager
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.MossGreen
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.utils.storage.FileTypeUtils
 import java.io.File
 import kotlinx.coroutines.CancellationException
@@ -180,9 +184,9 @@ fun PlaylistCard(
       val materialTheme = androidx.compose.material3.MaterialTheme.colorScheme
       val (chipColor, chipBgColor) =
         if (playlist.isM3uPlaylist) {
-          Pair(materialTheme.tertiary, materialTheme.tertiaryContainer)
+          Pair(MossGreen, PaperInset)
         } else {
-          Pair(materialTheme.primary, materialTheme.primaryContainer)
+          Pair(Cinnabar, PaperInset)
         }
 
       androidx.compose.material3.Text(
@@ -209,7 +213,7 @@ fun PlaylistCard(
         text = sourceLocation,
         modifier = Modifier.fillMaxWidth(),
         style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Ink2,
         maxLines = 1,
         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
       )

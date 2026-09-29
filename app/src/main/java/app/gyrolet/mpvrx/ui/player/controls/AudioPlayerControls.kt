@@ -135,6 +135,8 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import app.gyrolet.mpvrx.ui.utils.ReorderFeedback
 import app.gyrolet.mpvrx.ui.utils.dragElevation
+import app.gyrolet.mpvrx.ui.theme.Line
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.utils.rememberReorderFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1314,8 +1316,8 @@ fun AudioPlayerControls(
       if (collapsedAudioBadgeLabel.isNotBlank()) {
         Surface(
           shape = RoundedCornerShape(4.dp),
-          color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
-          border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+          color = PaperInset.copy(alpha = 0.6f),
+          border = BorderStroke(0.5.dp, Line.copy(alpha = 0.5f)),
           modifier =
             Modifier.clickable(
               interactionSource = remember { MutableInteractionSource() },

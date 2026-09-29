@@ -60,8 +60,10 @@ import app.gyrolet.mpvrx.domain.seerr.SearchResultItem
 import app.gyrolet.mpvrx.presentation.components.RemoteImage
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.CinnabarDk
 
-private val SeerrWarningContainer = Color(0xFFBF360C)
+private val SeerrWarningContainer = CinnabarDk
 private val SeerrOnWarningContainer = Color(0xFFFFF3E0)
 
 @Composable
@@ -214,7 +216,7 @@ fun SeerrStatusChip(
       R.string.seerr_status_pending,
     )
     MediaStatus.DELETED -> Triple(
-      Color(0xFFD32F2F).copy(alpha = 0.9f),
+      Cinnabar.copy(alpha = 0.9f),
       Color(0xFFFFEBEE),
       R.string.seerr_status_deleted,
     )
@@ -268,12 +270,12 @@ fun SeerrRequestStatusChip(
       R.string.seerr_status_pending,
     )
     RequestStatus.DECLINED -> Triple(
-      Color(0xFFB71C1C).copy(alpha = 0.85f),
+      CinnabarDk.copy(alpha = 0.85f),
       Color(0xFFFFEBEE),
       R.string.seerr_decline,
     )
     RequestStatus.FAILED -> Triple(
-      Color(0xFFB71C1C).copy(alpha = 0.85f),
+      CinnabarDk.copy(alpha = 0.85f),
       Color(0xFFFFEBEE),
       R.string.clip_cancel,
     )

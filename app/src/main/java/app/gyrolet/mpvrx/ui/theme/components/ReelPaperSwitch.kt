@@ -27,6 +27,7 @@ import app.gyrolet.mpvrx.ui.theme.Cinnabar
 import app.gyrolet.mpvrx.ui.theme.CinnabarHi
 import app.gyrolet.mpvrx.ui.theme.Paper
 import app.gyrolet.mpvrx.ui.theme.PaperInset
+import app.gyrolet.mpvrx.ui.theme.ShadowTint
 
 @Composable
 fun ReelPaperSwitch(
@@ -65,7 +66,7 @@ fun ReelPaperSwitch(
       modifier = Modifier
         .padding(start = thumbOffset)
         .size(thumbSize)
-        .shadow(2.dp, CircleShape, spotColor = Color(0xFF604C24).copy(0.10f))
+        .shadow(2.dp, CircleShape, spotColor = ShadowTint.copy(0.10f))
         .clip(CircleShape)
         .background(
           brush = Brush.verticalGradient(listOf(Color(0xFFFFFDF6), Color(0xFFEDE4CE))),

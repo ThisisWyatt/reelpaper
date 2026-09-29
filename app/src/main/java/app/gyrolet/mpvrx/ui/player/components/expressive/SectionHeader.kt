@@ -26,6 +26,8 @@ import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink2
 
 /**
  * Section header with optional leading icon, count badge, and expand toggle.
@@ -56,7 +58,7 @@ fun SectionHeader(
       Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Ink2,
         modifier = Modifier.padding(end = 8.dp),
       )
     }
@@ -64,7 +66,7 @@ fun SectionHeader(
     Text(
       text = title,
       style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      color = Ink2,
       modifier = Modifier.weight(1f),
     )
 
@@ -72,7 +74,7 @@ fun SectionHeader(
       Text(
         text = "$it",
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = Cinnabar,
         modifier = Modifier.padding(horizontal = 4.dp),
       )
     }
@@ -82,7 +84,7 @@ fun SectionHeader(
         imageVector = Icons.RoundedFilled.KeyboardArrowDown,
         contentDescription = null,
         modifier = Modifier.rotate(iconRotation),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Ink2,
       )
     }
   }

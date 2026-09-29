@@ -69,6 +69,9 @@ import app.gyrolet.mpvrx.ui.player.controls.components.LocalHidePlayerButtonsBac
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusGroup
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.DraggablePanel
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.Line
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.theme.controlColor
 import app.gyrolet.mpvrx.ui.theme.spacing
 import app.gyrolet.mpvrx.ui.utils.rememberAppHaptics
@@ -236,10 +239,10 @@ private fun PlayerControlPanel(
     modifier = Modifier.fillMaxSize(),
     header = { PlayerControlPanelHeader(onDismissRequest) },
     shape = RoundedCornerShape(24.dp),
-    containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
+    containerColor = PaperInset.copy(alpha = 0.94f),
     tonalElevation = 2.dp,
     shadowElevation = 10.dp,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+    border = BorderStroke(1.dp, Line.copy(alpha = 0.6f)),
   ) {
     CompositionLocalProvider(
       LocalHidePlayerButtonsBackground provides true,
@@ -335,9 +338,9 @@ private fun PlayerControlTile(
     animateColorAsState(
       targetValue =
         if (active) {
-          MaterialTheme.colorScheme.primaryContainer
+          PaperInset
         } else {
-          MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.78f)
+          PaperInset.copy(alpha = 0.78f)
         },
       animationSpec = tween(durationMillis = 180),
       label = "PlayerControlTileContainer",
@@ -346,9 +349,9 @@ private fun PlayerControlTile(
     animateColorAsState(
       targetValue =
         if (active) {
-          MaterialTheme.colorScheme.onPrimaryContainer
+          Ink2
         } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
+          Ink2
         },
       animationSpec = tween(durationMillis = 180),
       label = "PlayerControlTileContent",

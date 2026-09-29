@@ -120,6 +120,10 @@ import app.gyrolet.mpvrx.ui.torrent.TorrentSelectionScreen
 import app.gyrolet.mpvrx.ui.torrent.TorrentSelectionViewModel
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
+import app.gyrolet.mpvrx.ui.theme.Cinnabar
+import app.gyrolet.mpvrx.ui.theme.Ink
+import app.gyrolet.mpvrx.ui.theme.Ink2
+import app.gyrolet.mpvrx.ui.theme.PaperInset
 import app.gyrolet.mpvrx.ui.utils.rememberTabNavigation
 import app.gyrolet.mpvrx.utils.media.SharedUrlExtractor
 import app.gyrolet.mpvrx.utils.media.MediaUtils
@@ -312,7 +316,7 @@ object NetworkStreamingScreen : Screen {
       } else if (MaterialTheme.colorScheme.background == Color.Black) {
         Color.Black
       } else {
-        MaterialTheme.colorScheme.surfaceContainer
+        PaperInset
       }
 
     Scaffold(
@@ -392,7 +396,7 @@ object NetworkStreamingScreen : Screen {
                       imageVector = Icons.RoundedFilled.Download,
                       contentDescription = stringResource(R.string.downloads_open_downloads),
                       modifier = Modifier.size(24.dp),
-                      tint = MaterialTheme.colorScheme.secondary,
+                      tint = Ink2,
                     )
                   }
                 },
@@ -404,7 +408,7 @@ object NetworkStreamingScreen : Screen {
             selectedTabIndex = pagerState.currentPage.coerceIn(0, (NetworkTab.entries.size - 1).coerceAtLeast(0)),
             edgePadding = 8.dp,
             containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
+            contentColor = Cinnabar,
             divider = {},
           ) {
             val navigateTab = rememberTabNavigation(pagerState)
@@ -703,7 +707,7 @@ private fun AddMediaDialog(
         Text(
           text = "Paste a torrent magnet link, direct video stream (HLS, MP4, MKV), or YouTube URL to save and play.",
           style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          color = Ink2,
         )
         OutlinedTextField(
           value = inputUrl,
@@ -1028,14 +1032,14 @@ private fun EmptyStateCard(
         imageVector = icon,
         contentDescription = null,
         modifier = Modifier.size(52.dp),
-        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+        tint = Cinnabar.copy(alpha = 0.7f),
       )
       Spacer(modifier = Modifier.height(16.dp))
       Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = Ink,
       )
       Spacer(modifier = Modifier.height(8.dp))
       Text(
@@ -1127,7 +1131,7 @@ private fun StreamLinkSection(
             Icon(
               imageVector = Icons.RoundedFilled.Link,
               contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+              tint = Ink2.copy(alpha = 0.5f),
               modifier = Modifier.size(20.dp),
             )
           },
@@ -1157,10 +1161,10 @@ private fun StreamLinkSection(
           shape = RoundedCornerShape(14.dp),
           colors =
             OutlinedTextFieldDefaults.colors(
-              focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+              focusedBorderColor = Cinnabar.copy(alpha = 0.5f),
               unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-              focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-              unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+              focusedContainerColor = PaperInset,
+              unfocusedContainerColor = PaperInset,
             ),
           keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
           keyboardActions =
@@ -1176,7 +1180,7 @@ private fun StreamLinkSection(
           shape = RoundedCornerShape(14.dp),
           colors =
             ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primary,
+              containerColor = Cinnabar,
             ),
           modifier =
             Modifier.semantics {
@@ -1214,14 +1218,14 @@ private fun StreamLinkSection(
           Icon(
             imageVector = Icons.RoundedFilled.Link,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = Cinnabar,
             modifier = Modifier.size(14.dp),
           )
           Text(
             text = stringResource(R.string.ui_recent_streams),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = Cinnabar,
           )
         }
 
@@ -1234,7 +1238,7 @@ private fun StreamLinkSection(
                   linkUrl = entry.canonicalSourceUri
                 },
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = PaperInset,
           ) {
             Row(
               modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
@@ -1262,7 +1266,7 @@ private fun StreamLinkSection(
                 Text(
                   text = entry.canonicalSourceUri,
                   style = MaterialTheme.typography.bodySmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                  color = Ink2.copy(alpha = 0.7f),
                   maxLines = 1,
                   overflow = TextOverflow.Ellipsis,
                 )
@@ -1274,7 +1278,7 @@ private fun StreamLinkSection(
                 Icon(
                   imageVector = Icons.RoundedFilled.Download,
                   contentDescription = stringResource(R.string.downloads_download),
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = Ink2,
                   modifier = Modifier.size(18.dp),
                 )
               }
@@ -1285,7 +1289,7 @@ private fun StreamLinkSection(
                 Icon(
                   imageVector = Icons.RoundedFilled.Delete,
                   contentDescription = stringResource(R.string.delete),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                  tint = Ink2.copy(alpha = 0.6f),
                   modifier = Modifier.size(16.dp),
                 )
               }
@@ -1296,7 +1300,7 @@ private fun StreamLinkSection(
                 Icon(
                   imageVector = Icons.RoundedFilled.PlayArrow,
                   contentDescription = stringResource(R.string.ui_play),
-                  tint = MaterialTheme.colorScheme.primary,
+                  tint = Cinnabar,
                   modifier = Modifier.size(20.dp),
                 )
               }

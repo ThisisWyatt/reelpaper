@@ -304,7 +304,7 @@ class PlayerPreferences(
   val videoOpenAnimation = preferenceStore.getEnum("video_open_animation", VideoOpenAnimation.Default)
 
   /** Screen/pane transition style. None also disables programmatic tab animations. */
-  val appNavStyle = preferenceStore.getEnum("app_nav_style", NavigationAnimStyle.Default)
+  val appNavStyle = preferenceStore.getEnum("app_nav_style", NavigationAnimStyle.Paper)
 
   /** Animation duration multiplier (0.5 = twice as fast, 2.0 = twice as slow). */
   val animationSpeed = preferenceStore.getFloat("animation_speed", 1.0f)
