@@ -34,6 +34,45 @@ import app.gyrolet.mpvrx.ui.browser.music.MusicViewMode
 import app.gyrolet.mpvrx.ui.icons.Icons
 import org.koin.compose.koinInject
 
+/** Localized labels for the sort-type pills, replacing the enums' English display names. */
+@Composable
+private fun folderSortTypeLabels(): Map<FolderSortType, String> =
+  FolderSortType.entries.associateWith { type ->
+    stringResource(
+      when (type) {
+        FolderSortType.Title -> R.string.sort_type_title
+        FolderSortType.Date -> R.string.sort_type_date
+        FolderSortType.Size -> R.string.sort_type_size
+        FolderSortType.VideoCount -> R.string.sort_type_count
+      },
+    )
+  }
+
+@Composable
+private fun videoSortTypeLabels(): Map<VideoSortType, String> =
+  VideoSortType.entries.associateWith { type ->
+    stringResource(
+      when (type) {
+        VideoSortType.Title -> R.string.sort_type_title
+        VideoSortType.Duration -> R.string.ui_duration
+        VideoSortType.Date -> R.string.sort_type_date
+        VideoSortType.Size -> R.string.sort_type_size
+      },
+    )
+  }
+
+@Composable
+private fun networkSortTypeLabels(): Map<NetworkSortType, String> =
+  NetworkSortType.entries.associateWith { type ->
+    stringResource(
+      when (type) {
+        NetworkSortType.Title -> R.string.sort_type_title
+        NetworkSortType.Date -> R.string.sort_type_date
+        NetworkSortType.Size -> R.string.sort_type_size
+      },
+    )
+  }
+
 @Composable
 fun PlaylistSortDialog(
   isOpen: Boolean,
@@ -106,7 +145,7 @@ fun PlaylistSortDialog(
       }
     },
     getLabelForType = { type, _ ->
-      if (type == labels[PlaylistSortType.Name]) "A-Z" to "Z-A" else ascendingLabel to descendingLabel
+      if (type == labels[PlaylistSortType.Name]) "A → Z" to "Z → A" else ascendingLabel to descendingLabel
     },
     layoutModeSelector = ViewModeSelector(
       label = stringResource(R.string.playlist_layout),
@@ -257,7 +296,7 @@ fun RecentSortDialog(
     types = RecentSortType.entries.map(labels::getValue),
     icons = listOf(Icons.RoundedFilled.AccessTime, Icons.RoundedFilled.Title),
     getLabelForType = { type, _ ->
-      if (type == labels[RecentSortType.Name]) "A-Z" to "Z-A" else ascendingLabel to descendingLabel
+      if (type == labels[RecentSortType.Name]) "A → Z" to "Z → A" else ascendingLabel to descendingLabel
     },
     layoutModeSelector = ViewModeSelector(
       label = stringResource(R.string.playlist_layout),
@@ -454,7 +493,7 @@ fun FolderSortDialog(
   val folderGridColumnSelector =
     if (activeLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled && maxFolderColumns > 1) {
       GridColumnSelector(
-        label = "Folder (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.folder_grid_columns),
         currentValue = folderGridColumns.coerceIn(1, maxFolderColumns),
         onValueChange = {
           if (isDualPane) {
@@ -481,7 +520,7 @@ fun FolderSortDialog(
   val videoGridColumnSelector =
     if (activeLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled && maxVideoColumns > 1) {
       GridColumnSelector(
-        label = "Video (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.video_grid_columns),
         currentValue = videoGridColumns.coerceIn(1, maxVideoColumns),
         onValueChange = {
           if (isDualPane) {
@@ -505,27 +544,25 @@ fun FolderSortDialog(
       null
     }
 
+  val folderLabels = folderSortTypeLabels()
+  val folderAscendingLabel = stringResource(R.string.playlist_sort_ascending)
+  val folderDescendingLabel = stringResource(R.string.playlist_sort_descending)
+
   SortDialog(
     isOpen = isOpen,
     onDismiss = onDismiss,
     title = if (isAlbumView) stringResource(R.string.sort_view_options) else stringResource(R.string.ui_view_options),
-    sortType = sortType.displayName,
-    onSortTypeChange = { typeName ->
+    sortType = folderLabels.getValue(sortType),
+    onSortTypeChange = { selected ->
       FolderSortType.entries
-        .find { it.displayName == typeName }
+        .find { folderLabels[it] == selected }
         ?.let(onSortTypeChange)
     },
     sortOrderAsc = sortOrder.isAscending,
     onSortOrderChange = { isAsc ->
       onSortOrderChange(if (isAsc) SortOrder.Ascending else SortOrder.Descending)
     },
-    types =
-      listOf(
-        FolderSortType.Title.displayName,
-        FolderSortType.Date.displayName,
-        FolderSortType.Size.displayName,
-        FolderSortType.VideoCount.displayName,
-      ),
+    types = FolderSortType.entries.map(folderLabels::getValue),
     icons =
       listOf(
         Icons.RoundedFilled.Title,
@@ -534,12 +571,10 @@ fun FolderSortDialog(
         Icons.RoundedFilled.VideoLibrary,
       ),
     getLabelForType = { type, _ ->
-      when (type) {
-        FolderSortType.Title.displayName -> Pair("A-Z", "Z-A")
-        FolderSortType.Date.displayName -> Pair("Oldest", "Newest")
-        FolderSortType.Size.displayName -> Pair("Smallest", "Largest")
-        FolderSortType.VideoCount.displayName -> Pair("Fewest", "Most")
-        else -> Pair("Asc", "Desc")
+      if (type == folderLabels.getValue(FolderSortType.Title)) {
+        "A → Z" to "Z → A"
+      } else {
+        folderAscendingLabel to folderDescendingLabel
       }
     },
     showSortOptions = isAlbumView,
@@ -548,23 +583,23 @@ fun FolderSortDialog(
         null
       } else {
         MultiViewModeSelector(
-          label = "View Mode",
+          label = stringResource(R.string.view_mode_label),
           options =
             listOf(
               ViewModeOption(
-                label = "Folder",
+                label = stringResource(R.string.view_mode_folder),
                 icon = Icons.RoundedFilled.ViewModule,
                 isSelected = folderViewMode == FolderViewMode.AlbumView,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.AlbumView) },
               ),
               ViewModeOption(
-                label = "Tree",
+                label = stringResource(R.string.view_mode_tree),
                 icon = Icons.RoundedFilled.AccountTree,
                 isSelected = folderViewMode == FolderViewMode.FileManager,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.FileManager) },
               ),
               ViewModeOption(
-                label = "Library",
+                label = stringResource(R.string.view_mode_library),
                 icon = Icons.RoundedFilled.VideoLibrary,
                 isSelected = folderViewMode == FolderViewMode.MediaLibrary,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.MediaLibrary) },
@@ -574,9 +609,9 @@ fun FolderSortDialog(
       },
     layoutModeSelector = if (fixedLayoutMode == null) {
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = activeLayoutMode == MediaLayoutMode.LIST,
@@ -673,7 +708,7 @@ fun FolderSortDialog(
       },
     manualGridToggle =
       VisibilityToggle(
-        label = "Manual Grid",
+        label = stringResource(R.string.playlist_manual_grid),
         checked = manualGridColumnsEnabled,
         onCheckedChange = { enabled ->
           if (enabled) {
@@ -813,7 +848,7 @@ fun VideoSortDialog(
       manualGridColumnsEnabled && maxFolderColumns > 1
     ) {
       GridColumnSelector(
-        label = "Folder (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.folder_grid_columns),
         currentValue = folderGridColumns.coerceIn(1, maxFolderColumns),
         onValueChange = {
           if (isDualPane) {
@@ -840,7 +875,7 @@ fun VideoSortDialog(
   val videoGridColumnSelector =
     if (activeLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled && maxVideoColumns > 1) {
       GridColumnSelector(
-        label = "Video (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.video_grid_columns),
         currentValue = videoGridColumns.coerceIn(1, maxVideoColumns),
         onValueChange = {
           if (isDualPane) {
@@ -864,25 +899,23 @@ fun VideoSortDialog(
       null
     }
 
+  val videoLabels = videoSortTypeLabels()
+  val videoAscendingLabel = stringResource(R.string.playlist_sort_ascending)
+  val videoDescendingLabel = stringResource(R.string.playlist_sort_descending)
+
   SortDialog(
     isOpen = isOpen,
     onDismiss = onDismiss,
     title = stringResource(R.string.sort_view_options),
-    sortType = sortType.displayName,
-    onSortTypeChange = { typeName ->
-      VideoSortType.entries.find { it.displayName == typeName }?.let(onSortTypeChange)
+    sortType = videoLabels.getValue(sortType),
+    onSortTypeChange = { selected ->
+      VideoSortType.entries.find { videoLabels[it] == selected }?.let(onSortTypeChange)
     },
     sortOrderAsc = sortOrder.isAscending,
     onSortOrderChange = { isAsc ->
       onSortOrderChange(if (isAsc) SortOrder.Ascending else SortOrder.Descending)
     },
-    types =
-      listOf(
-        VideoSortType.Title.displayName,
-        VideoSortType.Duration.displayName,
-        VideoSortType.Date.displayName,
-        VideoSortType.Size.displayName,
-      ),
+    types = VideoSortType.entries.map(videoLabels::getValue),
     icons =
       listOf(
         Icons.RoundedFilled.Title,
@@ -891,34 +924,32 @@ fun VideoSortDialog(
         Icons.RoundedFilled.SwapVert,
       ),
     getLabelForType = { type, _ ->
-      when (type) {
-        VideoSortType.Title.displayName -> Pair("A-Z", "Z-A")
-        VideoSortType.Duration.displayName -> Pair("Shortest", "Longest")
-        VideoSortType.Date.displayName -> Pair("Oldest", "Newest")
-        VideoSortType.Size.displayName -> Pair("Smallest", "Biggest")
-        else -> Pair("Asc", "Desc")
+      if (type == videoLabels.getValue(VideoSortType.Title)) {
+        "A → Z" to "Z → A"
+      } else {
+        videoAscendingLabel to videoDescendingLabel
       }
     },
     viewModeSelector =
       if (enableViewModeOptions)
         MultiViewModeSelector(
-          label = "View Mode",
+          label = stringResource(R.string.view_mode_label),
           options =
             listOf(
               ViewModeOption(
-                label = "Folder",
+                label = stringResource(R.string.view_mode_folder),
                 icon = Icons.RoundedFilled.ViewModule,
                 isSelected = folderViewMode == FolderViewMode.AlbumView,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.AlbumView) },
               ),
               ViewModeOption(
-                label = "Tree",
+                label = stringResource(R.string.view_mode_tree),
                 icon = Icons.RoundedFilled.AccountTree,
                 isSelected = folderViewMode == FolderViewMode.FileManager,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.FileManager) },
               ),
               ViewModeOption(
-                label = "Library",
+                label = stringResource(R.string.view_mode_library),
                 icon = Icons.RoundedFilled.VideoLibrary,
                 isSelected = folderViewMode == FolderViewMode.MediaLibrary,
                 onClick = { browserPreferences.folderViewMode.set(FolderViewMode.MediaLibrary) },
@@ -929,9 +960,9 @@ fun VideoSortDialog(
     layoutModeSelector =
       if (enableLayoutModeOptions && fixedLayoutMode == null)
         ViewModeSelector(
-          label = "Layout",
-          firstOptionLabel = "List",
-          secondOptionLabel = "Grid",
+          label = stringResource(R.string.playlist_layout),
+          firstOptionLabel = stringResource(R.string.playlist_view_list),
+          secondOptionLabel = stringResource(R.string.playlist_view_grid),
           firstOptionIcon = Icons.RoundedFilled.ViewList,
           secondOptionIcon = Icons.RoundedFilled.GridView,
           isFirstOptionSelected = activeLayoutMode == MediaLayoutMode.LIST,
@@ -1074,7 +1105,7 @@ fun VideoSortDialog(
       },
     manualGridToggle =
       VisibilityToggle(
-        label = "Manual Grid",
+        label = stringResource(R.string.playlist_manual_grid),
         checked = manualGridColumnsEnabled,
         onCheckedChange = { enabled ->
           if (enabled) {
@@ -1200,7 +1231,7 @@ fun FileSystemSortDialog(
   val folderGridColumnSelector =
     if (mediaLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled) {
       GridColumnSelector(
-        label = "Folder (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.folder_grid_columns),
         currentValue = folderGridColumns.coerceIn(1, maxFolderColumns),
         onValueChange = {
           if (isLandscape) {
@@ -1221,7 +1252,7 @@ fun FileSystemSortDialog(
       coverArtSizeSelector(musicCoverArtSize) { browserPreferences.musicCoverArtSize.set(it) }
     } else if (mediaLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled) {
       GridColumnSelector(
-        label = "Video (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.video_grid_columns),
         currentValue = videoGridColumns.coerceIn(1, maxVideoColumns),
         onValueChange = {
           if (isLandscape) {
@@ -1237,13 +1268,17 @@ fun FileSystemSortDialog(
       null
     }
 
+  val fileSystemLabels = folderSortTypeLabels()
+  val fileSystemAscendingLabel = stringResource(R.string.playlist_sort_ascending)
+  val fileSystemDescendingLabel = stringResource(R.string.playlist_sort_descending)
+
   SortDialog(
     isOpen = isOpen,
     onDismiss = onDismiss,
     title = stringResource(R.string.sort_view_options),
-    sortType = folderSortType.displayName,
-    onSortTypeChange = { typeName ->
-      FolderSortType.entries.find { it.displayName == typeName }?.let {
+    sortType = fileSystemLabels.getValue(folderSortType),
+    onSortTypeChange = { selected ->
+      FolderSortType.entries.find { fileSystemLabels[it] == selected }?.let {
         browserPreferences.folderSortType.set(it)
       }
     },
@@ -1259,10 +1294,10 @@ fun FileSystemSortDialog(
     },
     types =
       listOf(
-        FolderSortType.Title.displayName,
-        FolderSortType.Date.displayName,
-        FolderSortType.Size.displayName,
-      ),
+        FolderSortType.Title,
+        FolderSortType.Date,
+        FolderSortType.Size,
+      ).map(fileSystemLabels::getValue),
     icons =
       listOf(
         Icons.RoundedFilled.Title,
@@ -1270,33 +1305,32 @@ fun FileSystemSortDialog(
         Icons.RoundedFilled.SwapVert,
       ),
     getLabelForType = { type, _ ->
-      when (type) {
-        FolderSortType.Title.displayName -> Pair("A-Z", "Z-A")
-        FolderSortType.Date.displayName -> Pair("Oldest", "Newest")
-        FolderSortType.Size.displayName -> Pair("Smallest", "Largest")
-        else -> Pair("Asc", "Desc")
+      if (type == fileSystemLabels.getValue(FolderSortType.Title)) {
+        "A → Z" to "Z → A"
+      } else {
+        fileSystemAscendingLabel to fileSystemDescendingLabel
       }
     },
     showSortOptions = true,
     viewModeSelector =
       MultiViewModeSelector(
-        label = "View Mode",
+        label = stringResource(R.string.view_mode_label),
         options =
           listOf(
             ViewModeOption(
-              label = "Folder",
+              label = stringResource(R.string.view_mode_folder),
               icon = Icons.RoundedFilled.ViewModule,
               isSelected = folderViewMode == FolderViewMode.AlbumView,
               onClick = { browserPreferences.folderViewMode.set(FolderViewMode.AlbumView) },
             ),
             ViewModeOption(
-              label = "Tree",
+              label = stringResource(R.string.view_mode_tree),
               icon = Icons.RoundedFilled.AccountTree,
               isSelected = folderViewMode == FolderViewMode.FileManager,
               onClick = { browserPreferences.folderViewMode.set(FolderViewMode.FileManager) },
             ),
             ViewModeOption(
-              label = "Library",
+              label = stringResource(R.string.view_mode_library),
               icon = Icons.RoundedFilled.VideoLibrary,
               isSelected = folderViewMode == FolderViewMode.MediaLibrary,
               onClick = { browserPreferences.folderViewMode.set(FolderViewMode.MediaLibrary) },
@@ -1305,9 +1339,9 @@ fun FileSystemSortDialog(
       ),
     layoutModeSelector =
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = mediaLayoutMode == MediaLayoutMode.LIST,
@@ -1466,7 +1500,7 @@ fun FileSystemSortDialog(
       },
     manualGridToggle =
       VisibilityToggle(
-        label = "Manual Grid",
+        label = stringResource(R.string.playlist_manual_grid),
         checked = manualGridColumnsEnabled,
         onCheckedChange = { enabled ->
           if (enabled) {
@@ -1536,7 +1570,7 @@ fun NetworkSortDialog(
   val videoGridColumnSelector =
     if (networkLayoutMode == MediaLayoutMode.GRID && manualGridColumnsEnabled) {
       GridColumnSelector(
-        label = "Grid Columns (${if (isLandscape) "Landscape" else "Portrait"})",
+        label = stringResource(R.string.video_grid_columns),
         currentValue = videoGridColumns.coerceIn(1, maxVideoColumns),
         onValueChange = {
           if (isLandscape) {
@@ -1552,13 +1586,17 @@ fun NetworkSortDialog(
       null
     }
 
+  val networkLabels = networkSortTypeLabels()
+  val networkAscendingLabel = stringResource(R.string.playlist_sort_ascending)
+  val networkDescendingLabel = stringResource(R.string.playlist_sort_descending)
+
   SortDialog(
     isOpen = isOpen,
     onDismiss = onDismiss,
     title = stringResource(R.string.sort_view_options),
-    sortType = networkSortType.displayName,
-    onSortTypeChange = { typeName ->
-      NetworkSortType.entries.find { it.displayName == typeName }?.let {
+    sortType = networkLabels.getValue(networkSortType),
+    onSortTypeChange = { selected ->
+      NetworkSortType.entries.find { networkLabels[it] == selected }?.let {
         browserPreferences.networkSortType.set(it)
       }
     },
@@ -1568,12 +1606,7 @@ fun NetworkSortDialog(
         if (isAsc) SortOrder.Ascending else SortOrder.Descending,
       )
     },
-    types =
-      listOf(
-        NetworkSortType.Title.displayName,
-        NetworkSortType.Date.displayName,
-        NetworkSortType.Size.displayName,
-      ),
+    types = NetworkSortType.entries.map(networkLabels::getValue),
     icons =
       listOf(
         Icons.RoundedFilled.Title,
@@ -1581,19 +1614,18 @@ fun NetworkSortDialog(
         Icons.RoundedFilled.SwapVert,
       ),
     getLabelForType = { type, _ ->
-      when (type) {
-        NetworkSortType.Title.displayName -> Pair("A-Z", "Z-A")
-        NetworkSortType.Date.displayName -> Pair("Oldest", "Newest")
-        NetworkSortType.Size.displayName -> Pair("Smallest", "Largest")
-        else -> Pair("Asc", "Desc")
+      if (type == networkLabels.getValue(NetworkSortType.Title)) {
+        "A → Z" to "Z → A"
+      } else {
+        networkAscendingLabel to networkDescendingLabel
       }
     },
     showSortOptions = true,
     layoutModeSelector =
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = networkLayoutMode == MediaLayoutMode.LIST,
@@ -1608,13 +1640,13 @@ fun NetworkSortDialog(
     mediaTypeToggles =
       listOf(
         VisibilityToggle(
-          label = "Videos",
+          label = stringResource(R.string.ui_videos),
           checked = true,
           onCheckedChange = { },
           enabled = false,
         ),
         VisibilityToggle(
-          label = "Images",
+          label = stringResource(R.string.ui_images),
           checked = includeImages,
           onCheckedChange = { browserPreferences.includeImagesInBrowser.set(it) },
         ),
@@ -1671,7 +1703,7 @@ fun NetworkSortDialog(
       },
     manualGridToggle =
       VisibilityToggle(
-        label = "Manual Grid",
+        label = stringResource(R.string.playlist_manual_grid),
         checked = manualGridColumnsEnabled,
         onCheckedChange = { enabled ->
           if (enabled) {
@@ -1769,9 +1801,9 @@ fun MusicSortDialog(
     },
     layoutModeSelector =
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = viewMode == MusicViewMode.LIST,
@@ -1784,7 +1816,7 @@ fun MusicSortDialog(
         coverArtSizeSelector(musicCoverArtSize, browserPreferences.musicCoverArtSize::set)
       } else {
         GridColumnSelector(
-          label = "Cover Art Size",
+          label = stringResource(R.string.cover_art_size),
           currentValue = musicGridCoverArtSize,
           onValueChange = { browserPreferences.musicGridCoverArtSize.set(it) },
           valueRange = 100f..260f,
@@ -1864,9 +1896,9 @@ fun JellyfinSortDialog(
       ),
     layoutModeSelector =
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = layoutMode == MediaLayoutMode.LIST,
@@ -1924,9 +1956,9 @@ fun AudiobookSortDialog(
     },
     layoutModeSelector =
       ViewModeSelector(
-        label = "Layout",
-        firstOptionLabel = "List",
-        secondOptionLabel = "Grid",
+        label = stringResource(R.string.playlist_layout),
+        firstOptionLabel = stringResource(R.string.playlist_view_list),
+        secondOptionLabel = stringResource(R.string.playlist_view_grid),
         firstOptionIcon = Icons.RoundedFilled.ViewList,
         secondOptionIcon = Icons.RoundedFilled.GridView,
         isFirstOptionSelected = layoutMode == MediaLayoutMode.LIST,

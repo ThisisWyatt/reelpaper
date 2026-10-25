@@ -115,9 +115,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import app.gyrolet.mpvrx.R
+import app.gyrolet.mpvrx.ui.theme.paper.PaperDock
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
-import app.gyrolet.mpvrx.preferences.MediaServerPreferences
-import app.gyrolet.mpvrx.preferences.MusicSourceProvider
 import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -135,6 +134,7 @@ import app.gyrolet.mpvrx.ui.browser.music.MusicTab
 import app.gyrolet.mpvrx.ui.browser.networkstreaming.NetworkStreamingScreen
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.icons.PaperIcons
 import app.gyrolet.mpvrx.ui.player.controls.components.rememberTvInitialFocusRequester
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.tvInitialFocus
@@ -171,9 +171,8 @@ import org.koin.compose.koinInject
 object MainScreen : Screen {
   internal enum class MainTab {
     HOME,
-    MUSIC,
+    LIBRARY,
     NETWORK,
-    JELLYFIN,
     PROFILE,
   }
 
@@ -222,16 +221,10 @@ object MainScreen : Screen {
     val duration = navigationDurationMillis(animSpeed)
     val reduceMotion = AppMotion.shouldReduceMotion()
     var persistentSelectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-    val mediaServerPreferences = koinInject<MediaServerPreferences>()
-    val musicSourceProvider by mediaServerPreferences.musicSourceProvider.collectAsState()
-    val musicLibraryViewModel: MusicLibraryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val localMusicTabs by musicLibraryViewModel.visibleTabs.collectAsStateWithLifecycle()
-    val showMusicTab by appearancePreferences.showMusicTab.collectAsState()
+    val showLibraryTab by appearancePreferences.showLibraryTab.collectAsState()
     val showProfileTab by appearancePreferences.showProfileTab.collectAsState()
     val showNetworkTab by appearancePreferences.showNetworkTab.collectAsState()
-    val showJellyfinTab by appearancePreferences.showJellyfinTab.collectAsState()
     val liquidGlassEnabled by appearancePreferences.liquidGlassEnabled.collectAsState()
-    val legacyNavigationBar by appearancePreferences.legacyNavigationBar.collectAsState()
     val progressiveNavigationBlur by appearancePreferences.progressiveNavigationBlur.collectAsState()
     val appBackgroundBackdrop = LocalAppBackgroundBackdrop.current
     val backdropBackgroundColor = MaterialTheme.colorScheme.background
@@ -255,12 +248,11 @@ object MainScreen : Screen {
 
     val bottomNavigationOrder by appearancePreferences.bottomNavigationOrder.collectAsState()
     val visibleTabs =
-      remember(showMusicTab, showProfileTab, showNetworkTab, showJellyfinTab, bottomNavigationOrder) {
+      remember(showLibraryTab, showProfileTab, showNetworkTab, bottomNavigationOrder) {
         mainNavigationTabs(
-          showMusic = showMusicTab,
+          showLibrary = showLibraryTab,
           showProfile = showProfileTab,
           showNetwork = showNetworkTab,
-          showJellyfin = showJellyfinTab,
           order = bottomNavigationOrder,
         )
       }
@@ -285,8 +277,7 @@ object MainScreen : Screen {
       NavigationBarState.isNavBarVisible =
         !isTelevision &&
           backStack.lastOrNull() == MainScreen && !hideNavigationBar && navigationTabs.isNotEmpty() && !isPermissionDenied
-      NavigationBarState.navigationBarBottomSpacing =
-        if (legacyNavigationBar) 0.dp else NavigationBarState.floatingBarSpacing
+      NavigationBarState.navigationBarBottomSpacing = NavigationBarState.floatingBarSpacing
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -350,12 +341,6 @@ object MainScreen : Screen {
 
     val targetPage = pagerState.targetPage.coerceIn(0, (visibleTabs.size - 1).coerceAtLeast(0))
     val selectedTab = visibleTabs.getOrNull(targetPage) ?: visibleTabs.firstOrNull() ?: MainTab.HOME
-
-    LaunchedEffect(persistentSelectedTab) {
-      if (persistentSelectedTab == MainTab.MUSIC) {
-        musicLibraryViewModel.setTab(localMusicTabs.firstOrNull() ?: MusicTab.SONGS)
-      }
-    }
 
     val onTabSelected: (MainScreen.MainTab) -> Unit = { tab ->
       val targetIndex = visibleTabs.indexOf(tab)
@@ -454,28 +439,15 @@ object MainScreen : Screen {
     val navigationBackdrop = rememberHazeState()
 
     val mainNavBar = @Composable { modifier: Modifier ->
-      if (legacyNavigationBar) {
-        LegacyMaterialNavigationBar(
-          visibleTabs = navigationTabs,
-          selectedTab = selectedTab,
-          onTabSelected = onTabSelected,
-          modifier = modifier,
-        )
-      } else {
-        ExpressivePillNavigationBar(
-          visibleTabs = navigationTabs,
-          selectedTab = selectedTab,
-          onTabSelected = onTabSelected,
-          pagerState = pagerState,
-          hazeBackdrop = navigationBackdrop.takeIf { progressiveNavigationBlur },
-          kyantBackdrop = liquidNavigationBackdrop,
-          liquidGlassEnabled = liquidGlassEnabled,
-          modifier = modifier,
-        )
-      }
+      PaperDock(
+        visibleTabs = navigationTabs,
+        selectedTab = selectedTab,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+      )
     }
 
-    val isDualPaneLayout = !legacyNavigationBar && !isPermissionDenied &&
+    val isDualPaneLayout = !isPermissionDenied &&
       isDualPaneFolderSelected && selectedTab == MainTab.HOME
     SideEffect {
       NavigationBarState.isDualPaneLayout = backStack.lastOrNull() == MainScreen && isDualPaneLayout
@@ -487,21 +459,6 @@ object MainScreen : Screen {
         else -> NavigationBarState.bottomOverlayClearance
       }
     val tvContentStartPadding = if (showTvRail) TvSideNavigationDefaults.CollapsedWidth else 0.dp
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val jellyfinViewModel: app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinViewModel =
-      androidx.lifecycle.viewmodel.compose.viewModel(
-        factory =
-          app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinViewModel.factory(
-            context.applicationContext as android.app.Application,
-          ),
-      )
-    val navidromeViewModel: app.gyrolet.mpvrx.ui.browser.navidrome.NavidromeViewModel =
-      androidx.lifecycle.viewmodel.compose.viewModel(
-        factory =
-          app.gyrolet.mpvrx.ui.browser.navidrome.NavidromeViewModel.factory(
-            context.applicationContext as android.app.Application,
-          ),
-      )
     // Scaffold with bottom navigation bar
     Scaffold(
       modifier = Modifier.fillMaxSize(),
@@ -517,7 +474,7 @@ object MainScreen : Screen {
                 .then(
                     when {
                       liquidGlassEnabled -> Modifier.layerBackdrop(liquidLayerBackdrop)
-                      !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
+                      progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
                       else -> Modifier
                     },
                   ),
@@ -548,7 +505,7 @@ object MainScreen : Screen {
                   .then(
                     when {
                       liquidGlassEnabled -> Modifier.layerBackdrop(liquidLayerBackdrop)
-                      !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
+                      progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
                       else -> Modifier
                     },
                   ),
@@ -559,193 +516,8 @@ object MainScreen : Screen {
               val tab = visibleTabs.getOrNull(page) ?: return@NavigationPager
               when (tab) {
                 MainTab.HOME -> FolderListScreen.Content()
-                MainTab.MUSIC -> {
-                  if (musicSourceProvider == MusicSourceProvider.JELLYFIN) {
-                    val jellyfinUiState by jellyfinViewModel.uiState.collectAsStateWithLifecycle()
-                    if (jellyfinUiState.activeServer == null) {
-                      Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center,
-                      ) {
-                        androidx.compose.material3.Card(
-                          shape = MaterialTheme.shapes.extraLarge,
-                          colors =
-                            androidx.compose.material3.CardDefaults.cardColors(
-                              containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                        ) {
-                          Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                          ) {
-                            androidx.compose.material3.Icon(
-                              painter = painterResource(R.drawable.ic_jellyfin),
-                              contentDescription = null,
-                              modifier = Modifier.size(56.dp),
-                              tint = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                              text = stringResource(R.string.music_source_jellyfin),
-                              style = MaterialTheme.typography.titleLarge,
-                              fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                              text = stringResource(R.string.pref_jellyfin_no_server),
-                              style = MaterialTheme.typography.bodyMedium,
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                              textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                            androidx.compose.material3.FilledTonalButton(
-                              onClick = {
-                                backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.MediaServersPreferencesScreen)
-                              },
-                            ) {
-                              Text(stringResource(R.string.generic_configure))
-                            }
-                            androidx.compose.material3.TextButton(
-                              onClick = {
-                                mediaServerPreferences.musicSourceProvider.set(MusicSourceProvider.LOCAL)
-                              },
-                            ) {
-                              Text(stringResource(R.string.music_source_local))
-                            }
-                          }
-                        }
-                      }
-                    } else if (!jellyfinUiState.isLoading && !jellyfinUiState.hasMusicLibrary && jellyfinUiState.libraries.isNotEmpty()) {
-                      Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center,
-                      ) {
-                        androidx.compose.material3.Card(
-                          shape = MaterialTheme.shapes.extraLarge,
-                          colors =
-                            androidx.compose.material3.CardDefaults.cardColors(
-                              containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                        ) {
-                          Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                          ) {
-                            androidx.compose.material3.Icon(
-                              painter = painterResource(R.drawable.ic_jellyfin),
-                              contentDescription = null,
-                              modifier = Modifier.size(56.dp),
-                              tint = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                              text = stringResource(R.string.music_source_jellyfin),
-                              style = MaterialTheme.typography.titleLarge,
-                              fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                              text = stringResource(R.string.jellyfin_no_music_library),
-                              style = MaterialTheme.typography.bodyMedium,
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                              textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                            androidx.compose.material3.FilledTonalButton(
-                              onClick = {
-                                mediaServerPreferences.musicSourceProvider.set(MusicSourceProvider.LOCAL)
-                              },
-                            ) {
-                              Text(stringResource(R.string.music_source_local))
-                            }
-                            androidx.compose.material3.TextButton(
-                              onClick = {
-                                backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.MediaServersPreferencesScreen)
-                              },
-                            ) {
-                              Text(stringResource(R.string.generic_configure))
-                            }
-                          }
-                        }
-                      }
-                    } else {
-                      LaunchedEffect(jellyfinUiState.libraries) {
-                        jellyfinViewModel.ensureMusicDataLoaded()
-                      }
-                      app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinContent(
-                        viewModel = jellyfinViewModel,
-                        isMusicOnlyMode = true,
-                      )
-                    }
-                  } else if (musicSourceProvider == MusicSourceProvider.NAVIDROME) {
-                    val navidromeUiState by navidromeViewModel.uiState.collectAsStateWithLifecycle()
-                    if (navidromeUiState.activeServer == null) {
-                      Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center,
-                      ) {
-                        androidx.compose.material3.Card(
-                          shape = MaterialTheme.shapes.extraLarge,
-                          colors =
-                            androidx.compose.material3.CardDefaults.cardColors(
-                              containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                        ) {
-                          Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                          ) {
-                            androidx.compose.material3.Icon(
-                              painter = painterResource(R.drawable.ic_navidrome),
-                              contentDescription = null,
-                              modifier = Modifier.size(56.dp),
-                              tint = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                              text = stringResource(R.string.music_source_navidrome),
-                              style = MaterialTheme.typography.titleLarge,
-                              fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                              text = stringResource(R.string.pref_navidrome_no_server),
-                              style = MaterialTheme.typography.bodyMedium,
-                              color = MaterialTheme.colorScheme.onSurfaceVariant,
-                              textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                            androidx.compose.material3.FilledTonalButton(
-                              onClick = {
-                                backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.MediaServersPreferencesScreen)
-                              },
-                            ) {
-                              Text(stringResource(R.string.generic_configure))
-                            }
-                            androidx.compose.material3.TextButton(
-                              onClick = {
-                                mediaServerPreferences.musicSourceProvider.set(MusicSourceProvider.LOCAL)
-                              },
-                            ) {
-                              Text(stringResource(R.string.music_source_local))
-                            }
-                          }
-                        }
-                      }
-                    } else {
-                      app.gyrolet.mpvrx.ui.browser.navidrome.NavidromeContent(
-                        viewModel = navidromeViewModel,
-                        isMusicOnlyMode = true,
-                      )
-                    }
-                  } else if (musicSourceProvider == MusicSourceProvider.AUDIOBOOKS) {
-                    app.gyrolet.mpvrx.ui.browser.audiobooks.AudiobookLibraryContent(
-                      isMusicTabMode = true,
-                    )
-                  } else {
-                    MusicLibraryContent(
-                      musicViewModel = musicLibraryViewModel,
-                      jellyfinViewModel = jellyfinViewModel,
-                      navidromeViewModel = navidromeViewModel,
-                    )
-                  }
-                }
+                MainTab.LIBRARY -> app.gyrolet.mpvrx.ui.browser.library.LibraryScreen.Content()
                 MainTab.NETWORK -> NetworkStreamingScreen.Content()
-                MainTab.JELLYFIN -> app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinContent(viewModel = jellyfinViewModel)
                 MainTab.PROFILE -> app.gyrolet.mpvrx.ui.browser.profile.ProfileScreen.Content()
               }
             }
@@ -786,103 +558,20 @@ object MainScreen : Screen {
                 .fillMaxWidth()
                 .align(Alignment.BottomStart),
           ) {
-            Box(Modifier.fillMaxWidth()) {
-              // The legacy bar is edge-to-edge, but its controls must stay above the system
-              // navigation area. Paint that bottom inset with the same surface as the bar
-              // so content cannot peek through below it (gesture and 3-button modes).
-              if (legacyNavigationBar) {
-                Spacer(
-                  modifier =
-                    Modifier
-                      .align(Alignment.BottomCenter)
-                      .fillMaxWidth()
-                      .windowInsetsBottomHeight(WindowInsets.safeDrawing)
-                      .background(NavigationBarDefaults.containerColor),
+            Box(
+              Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(
+                  WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
                 )
-              }
-              Box(Modifier.matchParentSize()) {
-                // Haze only runs while its navigation surface is visible.
-                if (!liquidGlassEnabled && progressiveNavigationBlur && !legacyNavigationBar) {
-                  ProgressiveNavigationBackdrop(
-                    state = navigationBackdrop,
-                    modifier =
-                      Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(if (isDualPaneFolderSelected && selectedTab == MainTab.HOME) 0.4f else 1f)
-                        .align(Alignment.BottomStart),
-                  )
-                }
-              }
-              BoxWithConstraints(
-                modifier =
-                  Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                    .padding(
-                      top = 24.dp,
-                      bottom = if (legacyNavigationBar) 0.dp else NavigationBarState.floatingBarSpacing,
-                    ),
-              ) {
-                if (legacyNavigationBar) {
-                  LegacyMaterialNavigationBar(
-                    visibleTabs = navigationTabs,
-                    selectedTab = selectedTab,
-                    onTabSelected = onTabSelected,
-                    modifier = Modifier.fillMaxWidth(),
-                  )
-                } else {
-                  val horizontalMargin by animateDpAsState(
-                    targetValue = NavigationBarState.navigationPillMaxMargin - 30.dp * NavigationBarState.navLabelVisibility,
-                    animationSpec = if (navStyle == NavigationAnimStyle.None) snap() else tween(300, easing = NavigationBarEasing),
-                    label = "navigation_margin",
-                  )
-                  val centerFraction = animateFloatAsState(
-                    targetValue = when {
-                      isDualPaneFolderSelected && selectedTab == MainTab.HOME -> 0.2f
-                      isMiniPlayerVisible && NavigationBarState.canPlaceMiniPlayerBesideNavigation(maxWidth) -> 0f
-                      else -> 0.5f
-                    },
-                    animationSpec = if (navStyle == NavigationAnimStyle.None) snap() else tween(duration, easing = FastOutSlowInEasing),
-                    label = "pill_alignment",
-                  )
-
-                  val navModifier = Modifier
-                    .layout { measurable, constraints ->
-                      val margin = horizontalMargin.roundToPx()
-                      val paneWidth =
-                        if (isDualPaneFolderSelected && selectedTab == MainTab.HOME) {
-                          (constraints.maxWidth * 0.4f).roundToInt()
-                        } else {
-                          constraints.maxWidth
-                        }
-                      val availableWidth = (paneWidth - margin * 2).coerceAtLeast(0)
-                      val maxNuvioWidth = minOf(NavigationBarState.navigationPillMaxWidth.roundToPx(), availableWidth)
-                      val placeable =
-                        measurable.measure(
-                          constraints.copy(minWidth = 0, maxWidth = maxNuvioWidth),
-                        )
-                      layout(constraints.maxWidth, placeable.height) {
-                        val desired =
-                          (constraints.maxWidth * centerFraction.value - placeable.width / 2f)
-                            .roundToInt()
-                        val maxStart = (paneWidth - margin - placeable.width).coerceAtLeast(margin)
-                        val start = desired.coerceIn(margin, maxStart)
-                        placeable.placeRelative(start, 0)
-                      }
-                    }
-
-                  ExpressivePillNavigationBar(
-                    visibleTabs = navigationTabs,
-                    selectedTab = selectedTab,
-                    onTabSelected = onTabSelected,
-                    pagerState = pagerState,
-                    hazeBackdrop = navigationBackdrop.takeIf { progressiveNavigationBlur },
-                    kyantBackdrop = liquidNavigationBackdrop,
-                    liquidGlassEnabled = liquidGlassEnabled,
-                    modifier = navModifier,
-                  )
-                }
-              }
+                .padding(bottom = NavigationBarState.floatingBarSpacing),
+            ) {
+              PaperDock(
+                visibleTabs = navigationTabs,
+                selectedTab = selectedTab,
+                onTabSelected = onTabSelected,
+                modifier = Modifier.align(Alignment.Center),
+              )
             }
           }
         }
@@ -920,312 +609,14 @@ private fun ProgressiveNavigationBackdrop(
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-internal fun ExpressivePillNavigationBar(
-  visibleTabs: List<MainScreen.MainTab>,
-  selectedTab: MainScreen.MainTab,
-  onTabSelected: (MainScreen.MainTab) -> Unit,
-  modifier: Modifier = Modifier,
-  pagerState: PagerState? = null,
-  hazeBackdrop: HazeState? = null,
-  kyantBackdrop: Backdrop? = null,
-  liquidGlassEnabled: Boolean = false,
-) {
-  if (visibleTabs.isEmpty()) return
-
-  val glassSettings = rememberLiquidGlassSettings()
-  val initialFocusRequester = rememberTvInitialFocusRequester(visibleTabs.isNotEmpty())
-  val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-  val selectedIndex = pagerState?.targetPage?.takeIf { it in visibleTabs.indices }
-    ?: visibleTabs.indexOf(selectedTab).coerceAtLeast(0)
-  val labels = visibleTabs.map { tab -> mainNavigationLabel(tab) }
-  fun visualIndex(index: Int) = if (isRtl) visibleTabs.lastIndex - index else index
-  val motion = remember(visibleTabs, isRtl) { NavigationJellyMotion(visualIndex(selectedIndex), visibleTabs.size) }
-  val playerPreferences = koinInject<PlayerPreferences>()
-  val navStyle by playerPreferences.appNavStyle.collectAsState()
-  val reducedMotion = AppMotion.shouldReduceMotion() || navStyle == NavigationAnimStyle.None
-  val density = LocalDensity.current
-  val currentSelectedTab by rememberUpdatedState(selectedTab)
-  val currentOnTabSelected by rememberUpdatedState(onTabSelected)
-  val appearancePreferences = koinInject<AppearancePreferences>()
-  val navigationHaptics = app.gyrolet.mpvrx.ui.utils.rememberAppHaptics()
-  val glowEnabled by appearancePreferences.navigationBarGlow.collectAsState()
-  val glowStrength by animateFloatAsState(
-    targetValue = if (glowEnabled) 1f else 0f,
-    animationSpec = if (reducedMotion) snap() else tween(420, easing = NavigationBarEasing),
-    label = "navigation_glow",
-  )
-  val compactIcons = androidx.compose.ui.platform.LocalConfiguration.current.smallestScreenWidthDp >= 600
-  val iconSize = if (compactIcons) 24.dp else MainNavigationIconSize
-  val labelStyle = if (compactIcons) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium
-  val activeLabelStyle =
-    if (compactIcons) MaterialTheme.typography.labelSmallEmphasized else MaterialTheme.typography.labelMediumEmphasized
-  val labelHeight = with(density) { labelStyle.lineHeight.toDp() }
-  val labelFraction by animateFloatAsState(
-    targetValue = NavigationBarState.navLabelVisibility,
-    animationSpec = if (reducedMotion) snap() else tween(300, easing = NavigationBarEasing),
-    label = "navigation_labels",
-  )
-  LaunchedEffect(selectedTab) { NavigationBarState.expandNavLabels() }
-  LaunchedEffect(selectedIndex, motion, reducedMotion) {
-    if (reducedMotion) motion.snapTo(visualIndex(selectedIndex)) else motion.select(visualIndex(selectedIndex))
-  }
-  LaunchedEffect(motion.running, reducedMotion) {
-    if (!motion.running || reducedMotion) return@LaunchedEffect
-    var previousFrame = withFrameNanos { it }
-    while (motion.running) {
-      withFrameNanos { now ->
-        motion.advance((now - previousFrame) / 1_000_000_000.0)
-        previousFrame = now
-      }
-    }
-  }
-
-  val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
-  val accentColor = MaterialTheme.colorScheme.primary
-  val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
-  val selectedSurface = accentColor.copy(alpha = 0.15f)
-  val selectedContent = accentColor
-  val accentBrush = Brush.linearGradient(listOf(accentColor, MaterialTheme.colorScheme.secondary))
-
-  val tabRow: @Composable (Boolean) -> Unit = { active ->
-      Row(
-        modifier = Modifier.fillMaxSize().padding(4.dp).clearAndSetSemantics {},
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        visibleTabs.forEachIndexed { index, tab ->
-          key(tab) {
-            val label = labels[index]
-            val contentColor = if (active) selectedContent else mutedColor
-
-            Box(
-              modifier =
-                Modifier
-                  .weight(1f)
-                  .fillMaxHeight()
-                  .graphicsLayer {
-                    val contentScale = if (active) motion.frame.contentScale else 1f
-                    scaleX = contentScale
-                    scaleY = contentScale
-                  },
-              contentAlignment = Alignment.Center,
-            ) {
-              Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-              ) {
-                Box(Modifier.size(iconSize).graphicsLayer { translationY = 2.dp.toPx() * labelFraction }
-                  .then(if (active && tab != MainScreen.MainTab.PROFILE) Modifier.navigationAccentMask(accentBrush) else Modifier)) {
-                  MainTabIcon(tab, if (active && tab != MainScreen.MainTab.PROFILE) Color.White else contentColor, null, iconSize)
-                }
-                Box(Modifier.height(labelHeight * labelFraction).fillMaxWidth().clipToBounds().graphicsLayer { alpha = labelFraction }) {
-                Text(
-                  text = label,
-                  style = if (active) activeLabelStyle else labelStyle,
-                  color = contentColor,
-                  maxLines = 1,
-                  softWrap = false,
-                  overflow = TextOverflow.Ellipsis,
-                  textAlign = TextAlign.Center,
-                  modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                )
-                }
-              }
-            }
-          }
-        }
-      }
-  }
-
-  val baseModifier =
-    modifier
-      .widthIn(max = NavigationBarState.navigationPillMaxWidth)
-      .fillMaxWidth()
-      .height(48.dp + labelHeight * labelFraction)
-      .onSizeChanged { motion.resize(it.width / density.density, it.height / density.density) }
-      .onGloballyPositioned { coordinates ->
-        // The outer layout fills the screen; measure the real pill for mini-player clearance.
-        NavigationBarState.navbarWidth = with(density) { coordinates.size.width.toDp() }
-        NavigationBarState.navigationPillHeight = with(density) { coordinates.size.height.toDp() }
-        NavigationBarState.navbarLeftOffset = with(density) { coordinates.positionInRoot().x.toDp() }
-      }
-      .then(
-        if (reducedMotion) Modifier else Modifier.pointerInput(motion, density, isRtl, navigationHaptics) {
-          awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            motion.begin(down.position.x / density.density, down.position.y / density.density)
-            var claimed = false
-            var finished = false
-            try {
-              while (true) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                if (!motion.dragging) { finished = true; break }
-                val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                if (event.changes.count { it.pressed } > 1) break
-                val delta = change.position - down.position
-                if (maxOf(kotlin.math.abs(delta.x), kotlin.math.abs(delta.y)) > viewConfiguration.touchSlop) claimed = true
-                if (claimed) change.consume()
-                awaitPointerEvent(PointerEventPass.Main)
-                if (!motion.dragging) { finished = true; break }
-                if (change.isConsumed && !claimed) break
-                motion.drag(delta.x / density.density, delta.y / density.density)
-                if (!change.pressed) {
-                  val target = motion.finish()
-                  finished = true
-                  val targetTab = visibleTabs[if (isRtl) visibleTabs.lastIndex - target else target]
-                  if (targetTab != currentSelectedTab) navigationHaptics.selection(true)
-                  currentOnTabSelected(targetTab)
-                  change.consume()
-                  break
-                }
-              }
-            } finally {
-              if (!finished) {
-                val restoreIndex = visualIndex(visibleTabs.indexOf(currentSelectedTab).coerceAtLeast(0))
-                if (reducedMotion) motion.snapTo(restoreIndex) else motion.select(restoreIndex)
-              }
-            }
-          }
-        },
-      )
-
-  Box(baseModifier) {
-    Box(
-      Modifier.matchParentSize().graphicsLayer {
-        scaleX = motion.frame.trackScale
-        scaleY = motion.frame.trackScale
-      }.graphicsLayer {
-        val frame = motion.frame
-        transformOrigin = TransformOrigin(if (size.width > 0) frame.originX * density.density / size.width else 0.5f, 0.5f)
-        scaleX = frame.trackScaleX
-        translationY = frame.trackOffsetY * density.density
-      }.graphicsLayer {
-        translationX = motion.frame.panelOffset * density.density
-      },
-    ) {
-      if (liquidGlassEnabled && kyantBackdrop != null) {
-        Box(
-          modifier =
-            Modifier
-              .matchParentSize()
-              .drawBackdrop(
-                backdrop = kyantBackdrop,
-                shape = { Capsule() },
-                effects = {
-                  liquidGlassEffects(glassSettings, 8.dp.toPx(), 24.dp.toPx(), 24.dp.toPx(), vibrant = true)
-                },
-                highlight = {
-                  glassSettings.highlight(Highlight.Ambient.copy(alpha = 0.58f * glowStrength))
-                },
-                shadow = {
-                  Shadow(
-                    radius = 8.dp,
-                    color = Color.Black.copy(alpha = 0.14f * glowStrength),
-                  )
-                },
-                onDrawSurface = {
-                  drawCapsuleTint(glassSettings.surfaceColor(surfaceColor.copy(alpha = 0.34f)))
-                },
-              ).navigationGlassRim(glowStrength * glassSettings.highlightStrength.coerceAtMost(1f))
-              .drawWithContent {
-                drawContent()
-                drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-              },
-        )
-      } else {
-        Box(
-          modifier = Modifier.matchParentSize()
-            .clip(CircleShape)
-            .drawWithContent {
-              drawContent()
-              drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-            },
-        ) {
-          NavigationGlassSurface(hazeBackdrop, surfaceColor, glowStrength, Modifier.matchParentSize())
-        }
-      }
-      Box(Modifier.matchParentSize().drawWithContent {
-        clipPath(navigationJellyPath(motion.frame, visibleTabs.size), ClipOp.Difference) {
-          this@drawWithContent.drawContent()
-        }
-      }) { tabRow(false) }
-      Box(Modifier.matchParentSize().drawWithContent {
-        val pillPath = navigationJellyPath(motion.frame, visibleTabs.size)
-        drawPath(pillPath, selectedSurface)
-        clipPath(pillPath) {
-          drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-          this@drawWithContent.drawContent()
-        }
-      }) { tabRow(true) }
-      Row(Modifier.matchParentSize().padding(horizontal = 4.dp).selectableGroup()) {
-        visibleTabs.forEachIndexed { index, tab ->
-          Box(
-            Modifier.weight(1f).fillMaxHeight()
-              .then(if (tab == selectedTab) Modifier.tvInitialFocus(initialFocusRequester) else Modifier)
-              .tvFocusHighlight(CircleShape, focusedScale = 1.04f)
-              .clip(CircleShape)
-              .selectable(
-                selected = tab == selectedTab,
-                role = Role.Tab,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-              ) {
-                if (tab != selectedTab) navigationHaptics.selection(true)
-                if (reducedMotion) motion.snapTo(visualIndex(index)) else motion.select(visualIndex(index))
-                onTabSelected(tab)
-              }
-              .semantics { contentDescription = labels[index] },
-          )
-        }
-      }
-    }
-  }
-}
-
 @Composable
 internal fun mainNavigationLabel(tab: MainScreen.MainTab): String =
   stringResource(when (tab) {
     MainScreen.MainTab.HOME -> R.string.ui_home
-    MainScreen.MainTab.MUSIC -> R.string.ui_music
+    MainScreen.MainTab.LIBRARY -> R.string.ui_library
     MainScreen.MainTab.NETWORK -> R.string.ui_network
-    MainScreen.MainTab.JELLYFIN -> R.string.ui_jellyfin
     MainScreen.MainTab.PROFILE -> R.string.ui_profile
   })
-
-@Composable
-private fun LegacyMaterialNavigationBar(
-  visibleTabs: List<MainScreen.MainTab>,
-  selectedTab: MainScreen.MainTab,
-  onTabSelected: (MainScreen.MainTab) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val density = LocalDensity.current
-  NavigationBar(
-    windowInsets = WindowInsets(0),
-    modifier =
-      modifier.onGloballyPositioned { coordinates ->
-        NavigationBarState.navbarWidth = with(density) { coordinates.size.width.toDp() }
-        NavigationBarState.navigationPillHeight = with(density) { coordinates.size.height.toDp() }
-        NavigationBarState.navbarLeftOffset = with(density) { coordinates.positionInRoot().x.toDp() }
-      },
-  ) {
-    visibleTabs.forEach { tab ->
-      NavigationBarItem(
-        selected = tab == selectedTab,
-        onClick = { onTabSelected(tab) },
-        icon = {
-          MainTabIcon(
-            tab = tab,
-            tint = LocalContentColor.current,
-            contentDescription = null,
-          )
-        },
-        label = { Text(mainNavigationLabel(tab)) },
-      )
-    }
-  }
-}
 
 @Composable
 internal fun MainTabIcon(
@@ -1242,28 +633,20 @@ internal fun MainTabIcon(
     )
     return
   }
+  // Mockup dock glyphs are thin ink strokes (#i-home / #i-bookmark / #i-globe), not the
+  // filled Material Symbols set, which reads too heavy on the paper dock.
   val icon = when (tab) {
-    MainScreen.MainTab.HOME -> Icons.RoundedFilled.Home
-    MainScreen.MainTab.MUSIC -> Icons.RoundedFilled.Audiotrack
-    MainScreen.MainTab.NETWORK -> Icons.RoundedFilled.BringYourOwnIp
-    MainScreen.MainTab.JELLYFIN -> null
-    MainScreen.MainTab.PROFILE -> Icons.RoundedFilled.AccountCircle
+    MainScreen.MainTab.HOME -> PaperIcons.Home
+    MainScreen.MainTab.LIBRARY -> PaperIcons.Bookmark
+    MainScreen.MainTab.NETWORK -> PaperIcons.Globe
+    MainScreen.MainTab.PROFILE -> PaperIcons.User
   }
-  if (icon == null) {
-    androidx.compose.material3.Icon(
-      painter = painterResource(R.drawable.ic_jellyfin),
-      contentDescription = contentDescription,
-      tint = tint,
-      modifier = Modifier.size(iconSize),
-    )
-  } else {
-    Icon(
-      icon,
-      contentDescription = contentDescription,
-      tint = tint,
-      modifier = Modifier.size(iconSize),
-    )
-  }
+  Icon(
+    icon,
+    contentDescription = contentDescription,
+    tint = tint,
+    modifier = Modifier.size(iconSize),
+  )
 }
 
 private val MainNavigationIconSize = 28.dp
@@ -1276,17 +659,15 @@ private const val ADJACENT_TAB_IDLE_MS = 1_200L
  * tab. The Profile tab absorbs Recents, Playlists and Snapshots, which stay reachable from inside it.
  */
 internal fun mainNavigationTabs(
-  showMusic: Boolean,
+  showLibrary: Boolean,
   showProfile: Boolean,
   showNetwork: Boolean,
-  showJellyfin: Boolean,
   order: List<String> = emptyList(),
 ): List<MainScreen.MainTab> {
   val available = buildList {
     add(MainScreen.MainTab.HOME)
-    if (showMusic) add(MainScreen.MainTab.MUSIC)
+    if (showLibrary) add(MainScreen.MainTab.LIBRARY)
     if (showNetwork) add(MainScreen.MainTab.NETWORK)
-    if (showJellyfin) add(MainScreen.MainTab.JELLYFIN)
     if (showProfile) add(MainScreen.MainTab.PROFILE)
   }
   val byName = available.associateBy { it.name }

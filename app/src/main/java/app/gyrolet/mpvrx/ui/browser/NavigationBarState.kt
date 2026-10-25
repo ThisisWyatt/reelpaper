@@ -60,7 +60,7 @@ object NavigationBarState {
 
   var navbarWidth: Dp by mutableStateOf(320.dp)
 
-  val floatingBarSpacing: Dp = 12.dp
+  val floatingBarSpacing: Dp = 22.dp
   internal val navigationPillMaxWidth: Dp = 400.dp
   internal val navigationPillMaxMargin: Dp = 58.dp
   internal val miniPlayerMinWidth: Dp = 320.dp

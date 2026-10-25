@@ -1130,6 +1130,32 @@
   <string name="ui_home">Главная</string>
   <string name="ui_recents">Недавние</string>
   <string name="ui_playlists">Плейлисты</string>
+  <string name="ui_library">Коллекция</string>
+  <string name="profile_seal">Личное</string>
+  <string name="profile_media_tag">Медиаархив</string>
+  <string name="profile_archive_title">Локальный архив показов</string>
+  <string name="profile_privacy_note">Приватно · только на этом устройстве</string>
+  <string name="profile_privacy_explanation">История просмотров и статистика хранятся только на этом устройстве и никуда не отправляются.</string>
+  <string name="profile_motto">Каждый показ оставляет след</string>
+  <string name="profile_count_items">%1$d шт.</string>
+  <string name="profile_count_shots">%1$d кадр.</string>
+  <string name="profile_screened_today">Показ сегодня</string>
+  <string name="profile_screened_yesterday">Показ вчера</string>
+  <string name="profile_screened_days_ago">Показ %1$d дн. назад</string>
+  <string name="profile_local_media">Локальные медиа</string>
+  <string name="profile_duration_minutes">%1$d мин</string>
+  <string name="profile_duration_hours">%1$d ч</string>
+  <string name="profile_duration_hours_minutes">%1$d ч %2$d мин</string>
+  <string name="profile_duration_seconds">%1$d с</string>
+  <string name="profile_unit_minutes">мин</string>
+  <string name="profile_unit_times">раз</string>
+  <string name="watch_stats_total_sessions">Всего воспроизведений</string>
+  <string name="watch_stats_by_watch_time">По времени просмотра</string>
+  <string name="network_stamp_connected">Подключено</string>
+  <string name="network_stamp_failed">Ошибка подключения</string>
+  <string name="network_stamp_offline">Не подключено</string>
+  <string name="library_summary_playlists">%1$d плейлистов · %2$d видео</string>
+  <string name="library_summary_snapshots">%1$d снимков · %2$d папок</string>
   <string name="ui_network">Сеть</string>
   <string name="ui_pinned_folder">Закреплённая папка</string>
   <string name="ui_pin_videos">Закрепить видео</string>
@@ -1218,7 +1244,9 @@
   <string name="ui_quick_play">Быстрое воспроизведение</string>
   <string name="ui_open_file">Открыть файл</string>
   <string name="ui_open_link">Открыть ссылку</string>
-  <string name="ui_search_folders_and_videos">Поиск папок и видео...</string>
+  <string name="ui_search_folders_and_videos">Поиск папок или видео</string>
+  <string name="home_brand_tag">Частный видеоплеер</string>
+  <string name="home_all_folders">Все папки</string>
   <string name="ui_pinned">Закреплено</string>
   <string name="ui_rename_failed">Ошибка переименования</string>
   <string name="ui_deleted_successfully">Успешно удалено</string>
@@ -1226,6 +1254,21 @@
   <string name="ui_play_recently_played_or_first_video">Воспроизвести недавнее или первое видео</string>
   <string name="ui_videos">Видео</string>
   <string name="ui_add_connection">Добавить подключение</string>
+  <string name="folder_new_count_short">%1$d нов.</string>
+  <string name="ui_network_tag">Локальные сети и удалённые потоки</string>
+  <string name="ui_saved_connections">Сохранённые подключения</string>
+  <string name="ui_connections_count">Всего: %1$d</string>
+  <string name="ui_add_media">Добавить медиа</string>
+  <string name="ui_auto_connect">Автоподключение</string>
+  <string name="ui_optional">Необязательно</string>
+  <string name="network_name_placeholder">напр. iMac</string>
+  <string name="network_server_info">Сведения о сервере</string>
+  <string name="network_auto_connect_hint">Пытаться подключиться к серверу при запуске плеера</string>
+  <string name="network_test_connection">Проверить подключение</string>
+  <string name="network_testing">Проверка подключения…</string>
+  <string name="network_test_success">Подключение успешно</string>
+  <string name="network_test_failed">Не удалось подключиться: %1$s</string>
+  <string name="network_test_unknown_error">Неизвестная ошибка</string>
   <string name="ui_local_network">Локальная сеть</string>
   <string name="ui_no_network_connections">Нет сетевых подключений</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">Добавьте подключения SMB, FTP или WebDAV для просмотра сетевых файлов</string>
@@ -2256,6 +2299,8 @@
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">Кадры</string>
   <string name="ui_profile">Профиль</string>
+  <string name="pref_nav_library_title">Показывать вкладку «Коллекция»</string>
+  <string name="pref_nav_library_summary">Плейлисты и снимки в одном центре</string>
   <string name="pref_nav_profile_title">Показывать вкладку «Профиль»</string>
   <string name="pref_nav_profile_summary">Объединить «Недавние», «Плейлисты» и «Кадры» в одну вкладку</string>
   <string name="profile_view_all">Показать все</string>
@@ -2876,4 +2921,21 @@
   <string name="pref_persistent_status_micro_battery">Показывать маленький значок батареи</string>
   <string name="pref_persistent_status_est_prefix">Прим.</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">Порядок сортировки</string>
+  <string name="view_mode_label">Режим просмотра</string>
+  <string name="options_section">Параметры</string>
+  <string name="view_mode_folder">Папка</string>
+  <string name="view_mode_tree">Дерево</string>
+  <string name="view_mode_library">Медиатека</string>
+  <string name="grid_columns_range">Столбцы сетки (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">Столбцы папок</string>
+  <string name="video_grid_columns">Столбцы видео</string>
+  <string name="sort_type_title">Название</string>
+  <string name="sort_type_date">Дата</string>
+  <string name="sort_type_size">Размер</string>
+  <string name="sort_type_count">Количество</string>
+  <string name="generic_close">Закрыть</string>
+  <string name="ui_images">Изображения</string>
 </resources>

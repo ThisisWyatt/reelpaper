@@ -41,9 +41,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -53,6 +59,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.database.entities.PlaylistEntity
 import app.gyrolet.mpvrx.database.repository.PlaylistRepository
@@ -71,6 +78,8 @@ import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvContextMenu
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpManager
+import app.gyrolet.mpvrx.ui.theme.paper.paperInset
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
 import java.io.File
 import kotlinx.coroutines.CancellationException
@@ -272,90 +281,153 @@ fun PlaylistCard(
     return
   }
 
-  val folderModel =
-    VideoFolder(
-      bucketId = playlist.id.toString(),
-      name = displayName,
-      path = "",
-      videoCount = itemCount,
-      totalSize = 0,
-      totalDuration = 0,
-      lastModified = playlist.updatedAt / 1000,
+  // Mockup `.pcard`: 叠纸卡片 — two offset paper sheets behind, an inset icon slot, the
+  // count line with source chips, and a circular play key on the right.
+  val paperColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
+  val cardShape = RoundedCornerShape(14.dp)
+  val countLine = androidx.compose.ui.res.pluralStringResource(R.plurals.folder_video_count, itemCount, itemCount)
+
+  Box(modifier = modifier.padding(start = 12.dp, end = 20.dp)) {
+    // 错位的两张纸 (mock ::before/::after) — deliberate stack-paper metaphor.
+    Box(
+      modifier =
+        Modifier
+          .matchParentSize()
+          .graphicsLayer {
+            translationX = 8.dp.toPx()
+            translationY = 8.dp.toPx()
+            rotationZ = -0.6f
+            alpha = 0.75f
+          }
+          .clip(cardShape)
+          .background(paperColors.card)
+          .border(1.dp, paperColors.cardLine, cardShape),
+    )
+    Box(
+      modifier =
+        Modifier
+          .matchParentSize()
+          .graphicsLayer {
+            translationX = 4.dp.toPx()
+            translationY = 4.dp.toPx()
+            rotationZ = 0.7f
+          }
+          .clip(cardShape)
+          .background(paperColors.card)
+          .border(1.dp, paperColors.cardLine, cardShape),
     )
 
-  // Keep the richer source chips in list mode where there is room for them.
-  val customChipRenderer: @Composable () -> Unit = {
-    val materialTheme = MaterialTheme.colorScheme
-    if (playlist.isZipPlaylist) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-      ) {
-        SourceChip(
-          label = stringResource(R.string.playlist_zip_read_only),
-          color = materialTheme.primaryContainer,
-          modifier = Modifier.weight(1f, fill = false),
-        )
-        SourceChip(
-          label = localSourceLabel,
-          color = sourceChipColor(null),
-          modifier = Modifier.weight(1f, fill = false),
-        )
-      }
-    } else if (typeBadge != null) {
-      val (chipColor, chipBgColor) =
-        if (playlist.isM3uPlaylist) {
-          Pair(materialTheme.tertiary, materialTheme.tertiaryContainer)
-        } else {
-          Pair(materialTheme.primary, materialTheme.primaryContainer)
-        }
-
-      Text(
-        text = typeBadge,
-        style = MaterialTheme.typography.labelSmall,
+    Row(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .paperRaise(cardShape, paperColors)
+          .clip(cardShape)
+          .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) paperColors.red else paperColors.cardLine, cardShape)
+          .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+          .padding(horizontal = 16.dp, vertical = 15.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+      // .pico: inset icon slot; favorites carry the vermilion heart with its red ring.
+      Box(
         modifier =
           Modifier
-            .background(chipBgColor, AppShapeScale.small)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        color = chipColor,
-      )
-    } else {
-      sources.forEach { protocol ->
-        SourceChip(
-          label = protocol?.displayName ?: "Local",
-          color = sourceChipColor(protocol),
+            .size(46.dp)
+            .paperInset(RoundedCornerShape(12.dp), paperColors)
+            .then(
+              if (isFavorites) {
+                Modifier.border(1.5.dp, paperColors.red.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+              } else {
+                Modifier
+              },
+            ),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(
+          placeholderIcon,
+          contentDescription = null,
+          tint = if (isFavorites) paperColors.red else paperColors.inkSecondary,
+          modifier = Modifier.size(21.dp),
+        )
+      }
+
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          text = displayName,
+          fontSize = 15.5.sp,
+          fontWeight = FontWeight.Bold,
+          color = paperColors.ink,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+          text = countLine,
+          fontSize = 11.5.sp,
+          color = paperColors.inkSecondary,
+          modifier = Modifier.padding(top = 3.dp),
+        )
+        // Source chips as inset paper pills (mock `.chip`); favorites show none.
+        if (!isFavorites) {
+          Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+          ) {
+            val chipLabels =
+              when {
+                playlist.isZipPlaylist -> listOf(stringResource(R.string.playlist_zip_read_only), localSourceLabel)
+                typeBadge != null -> listOf(typeBadge)
+                else -> sources.map { it?.displayName ?: localSourceLabel }.distinct()
+              }
+            chipLabels.forEach { label ->
+              Text(
+                text = label,
+                fontSize = 10.sp,
+                color = paperColors.inkSecondary,
+                modifier =
+                  Modifier
+                    .paperInset(RoundedCornerShape(7.dp), paperColors)
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+              )
+            }
+          }
+        }
+        if (!playlist.isZipPlaylist && showLocation && sourceLocation.isNotBlank()) {
+          Text(
+            text = sourceLocation,
+            fontSize = 11.sp,
+            color = paperColors.inkTertiary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp),
+          )
+        }
+      }
+
+      // .pmini: raised paper play key (circles never take a step).
+      Box(
+        modifier =
+          Modifier
+            .size(38.dp)
+            .paperRaise(CircleShape, paperColors, elevation = 2.dp)
+            .border(1.dp, paperColors.cardLine, CircleShape)
+            .clickable(onClick = onThumbClick),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(
+          Icons.RoundedFilled.PlayArrow,
+          contentDescription = stringResource(R.string.ui_play),
+          tint = paperColors.red,
+          modifier = Modifier.size(17.dp),
         )
       }
     }
-    if (!playlist.isZipPlaylist && showLocation && sourceLocation.isNotBlank()) {
-      Text(
-        text = sourceLocation,
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-    }
-  }
 
-  FolderCard(
-    folder = folderModel,
-    isSelected = isSelected,
-    selectionNeighbors = selectionNeighbors,
-    isRecentlyPlayed = false,
-    onClick = onClick,
-    onLongClick = onLongClick,
-    onThumbClick = onThumbClick,
-    showDateModified = true,
-    customIcon = placeholderIcon,
-    modifier = modifier,
-    customChipContent = customChipRenderer,
-    isGridMode = false,
-    thumbnail = thumbnailBitmap,
-    placeholderIconSize = if (isFavorites) 32.dp else null,
-    viewPreferences = viewPreferences,
-  )
+    SelectionIndicator(
+      selected = isSelected,
+      modifier = Modifier.align(Alignment.TopEnd),
+    )
+  }
 }
 
 private suspend fun resolvePlaylistItemArtwork(

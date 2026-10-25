@@ -92,7 +92,7 @@ import app.gyrolet.mpvrx.preferences.GesturePreferences
 import app.gyrolet.mpvrx.preferences.MediaLayoutMode
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.presentation.components.pullrefresh.PullRefreshBox
-import app.gyrolet.mpvrx.ui.browser.cards.FolderCard
+import app.gyrolet.mpvrx.ui.browser.folderlist.HomeFolderCard
 import app.gyrolet.mpvrx.ui.browser.cards.MediaSelectionListGap
 import app.gyrolet.mpvrx.ui.browser.cards.MediaSelectionGridGap
 import app.gyrolet.mpvrx.ui.browser.cards.mediaSelectionNeighbors
@@ -603,6 +603,16 @@ fun FileSystemBrowserScreen(path: String? = null) {
                 stringResource(app.gyrolet.mpvrx.R.string.app_name)
               } else {
                 breadcrumbs.lastOrNull()?.name ?: "Tree View"
+              },
+            // Home's tree root wears the same brand header as the folder grid; deeper levels
+            // go back to the plain breadcrumb title.
+            brandLogo = isAppRoot,
+            brandWordmark = isAppRoot,
+            brandTag =
+              if (isAppRoot) {
+                stringResource(app.gyrolet.mpvrx.R.string.home_brand_tag)
+              } else {
+                null
               },
             isInSelectionMode = isInSelectionMode,
             selectedCount = selectedCount,
@@ -1647,7 +1657,7 @@ private fun FileSystemBrowserContent(
                       lastModified = folder.lastModified / 1000,
                     )
 
-                  FolderCard(
+                  HomeFolderCard(
                     folder = folderModel,
                     isSelected = selectionManager.isSelected(folder),
                     selectionNeighbors = mediaSelectionNeighbors(index, folderItems.size, (spansInfo.spans / spansInfo.folderSpan).coerceAtLeast(1)) { neighbor ->
@@ -1775,7 +1785,7 @@ private fun FileSystemBrowserContent(
                     lastModified = folder.lastModified / 1000,
                   )
 
-                FolderCard(
+                HomeFolderCard(
                   folder = folderModel,
                   isSelected = selectionManager.isSelected(folder),
                     selectionNeighbors = mediaSelectionNeighbors(index, folderItems.size, 1) { neighbor ->
@@ -2105,7 +2115,7 @@ private fun FileSystemSearchContent(
                       lastModified = folder.lastModified / 1000,
                     )
 
-                  FolderCard(
+                  HomeFolderCard(
                     folder = folderModel,
                     isSelected = false,
                     isRecentlyPlayed = false,
@@ -2194,7 +2204,7 @@ private fun FileSystemSearchContent(
                     lastModified = folder.lastModified / 1000,
                   )
 
-                FolderCard(
+                HomeFolderCard(
                   folder = folderModel,
                   isSelected = false,
                   isRecentlyPlayed = false,

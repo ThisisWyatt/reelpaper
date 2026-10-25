@@ -363,11 +363,18 @@ private fun SnapshotDetailOverlay(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-          Button(onClick = onJumpToVideo) {
-            Icon(Icons.RoundedFilled.PlayArrow, contentDescription = null)
-            Spacer(Modifier.padding(horizontal = 4.dp))
-            Text(stringResource(R.string.snapshot_jump_to_video))
-          }
+          // 朱砂实体键: 跳转回播 · 时间点 (mockup .btn-red with the frame position).
+          val jumpLabel =
+            stringResource(R.string.snapshot_jump_to_video) +
+              " · " + (item?.positionLabel ?: "")
+          app.gyrolet.mpvrx.ui.theme.paper.PaperSolidButton(
+            text = jumpLabel,
+            onClick = onJumpToVideo,
+            height = 46.dp,
+            fillWidth = false,
+            icon = Icons.RoundedFilled.PlayArrow,
+            modifier = Modifier.padding(horizontal = 14.dp),
+          )
 
           if (totalCount > 1) {
             Text(

@@ -185,7 +185,7 @@ fun AppPickerSheet(
   ModalBottomSheet(
     onDismissRequest = onDismissRequest,
     sheetState = sheetState,
-    containerColor = MaterialTheme.colorScheme.surface,
+    containerColor = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.card,
     scrimColor = BottomSheetDefaults.ScrimColor,
     // Keeps the sheet a centred panel on a tablet instead of a band across a 1600dp screen.
     sheetMaxWidth = 640.dp,

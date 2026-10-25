@@ -26,6 +26,7 @@ import app.gyrolet.mpvrx.ui.theme.AppMotion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -85,7 +86,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.BuildConfig
 import app.gyrolet.mpvrx.R
@@ -708,6 +711,9 @@ object FolderListScreen : Screen {
           } else {
             BrowserTopBar(
               title = stringResource(app.gyrolet.mpvrx.R.string.app_name),
+              brandLogo = true,
+              brandWordmark = true,
+              brandTag = stringResource(R.string.home_brand_tag),
               isInSelectionMode = selectionManager.isInSelectionMode,
               selectedCount = selectionManager.selectedCount,
               totalCount = videoFolders.size,
@@ -787,13 +793,19 @@ object FolderListScreen : Screen {
           }
         },
         floatingActionButton = {
+          // Mockup home has no FAB (`.fab` exists only on playlist/snapshot/network
+          // pages); the quick-play key keeps serving embedded/audio-only panes.
           val isFabShouldBeVisible =
             showQuickPlayFab &&
+              (embedded || audioOnly) &&
               !selectionManager.isInSelectionMode &&
               isFabVisible.value &&
               !app.gyrolet.mpvrx.ui.browser.MainScreen
                 .getPermissionDeniedState() &&
               !(isDualPaneActive && selectedFolderBucketId != null)
+          // reelPaper `.fab`: vermilion round key; the Material toggle keeps its shape
+          // morph, but takes the paper red glaze and ink-light glyph.
+          val paperColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
 
           FloatingActionButtonMenu(
             modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
@@ -825,6 +837,7 @@ object FolderListScreen : Screen {
                       alignment = Alignment.BottomEnd,
                     ),
                   checked = isFabExpanded.value && !quickPlayFabDirect,
+                  containerColor = { paperColors.red },
                   onCheckedChange = {
                     if (quickPlayFabDirect) {
                       coroutineScope.launch {
@@ -855,6 +868,7 @@ object FolderListScreen : Screen {
                   Icon(
                     imageVector = imageVector,
                     contentDescription = null,
+                    tint = paperColors.onRed,
                     modifier = Modifier.animateIcon({ if (quickPlayFabDirect) 0f else checkedProgress }),
                   )
                 }
@@ -984,6 +998,8 @@ object FolderListScreen : Screen {
                   gridState = gridState,
                   isRefreshing = isRefreshing,
                   selectionManager = selectionManager,
+                  showHomeHeader = !embedded,
+                  onSearchActivate = { internalIsSearching = true },
                   onRefresh = { viewModel.refresh() },
                   onFolderClick = { folder ->
                     if (selectionManager.isInSelectionMode && !ZipArchiveMedia.isBrowserPath(folder.path) &&
@@ -1374,6 +1390,8 @@ private fun FolderListContent(
   onTogglePin: (VideoFolder) -> Unit,
   selectedFolderBucketId: String? = null,
   audioOnly: Boolean = false,
+  showHomeHeader: Boolean = false,
+  onSearchActivate: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val swipeScope = rememberCoroutineScope()
@@ -1382,6 +1400,7 @@ private fun FolderListContent(
   val showLoading = isLoading && !hasCompletedInitialLoad
   val showEmpty = folders.isEmpty() && hasCompletedInitialLoad && !foldersWereDeleted
   val folderCardUiConfig = app.gyrolet.mpvrx.ui.browser.cards.rememberFolderCardUiConfig()
+  val totalVideoCount = remember(folders) { folders.sumOf { it.videoCount } }
 
   val hasEnoughItems = folders.size > 20
   val scrollbarAlpha by androidx.compose.animation.core.animateFloatAsState(
@@ -1437,6 +1456,9 @@ private fun FolderListContent(
           selectedFolderBucketId = selectedFolderBucketId,
           audioOnly = audioOnly,
           uiConfig = folderCardUiConfig,
+          showHomeHeader = showHomeHeader,
+          onSearchActivate = onSearchActivate,
+          totalVideoCount = totalVideoCount,
         )
       } else {
         ListContent(
@@ -1456,8 +1478,78 @@ private fun FolderListContent(
           selectedFolderBucketId = selectedFolderBucketId,
           audioOnly = audioOnly,
           uiConfig = folderCardUiConfig,
+          showHomeHeader = showHomeHeader,
+          onSearchActivate = onSearchActivate,
+          totalVideoCount = totalVideoCount,
         )
       }
+    }
+  }
+}
+
+/**
+ * Mockup home `.scroll` preamble: the recessed search slot (`.search`) followed by
+ * the section header (`.sec`) — "全部文件夹" with the total video count on the right.
+ *
+ * In grid mode the header lives inside the LazyVerticalGrid whose contentPadding is
+ * already 20dp (`.flist.grid`), so the mockup's own margins are not added again;
+ * in list mode rows carry no container padding and the full margins apply.
+ */
+@Composable
+private fun HomeFoldersHeader(
+  totalVideoCount: Int,
+  onSearchClick: () -> Unit,
+  inGrid: Boolean = false,
+) {
+  val colors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
+  Column {
+    app.gyrolet.mpvrx.ui.theme.paper.PaperSearchSlot(
+      placeholder = stringResource(R.string.ui_search_folders_and_videos),
+      onClick = onSearchClick,
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .padding(
+            start = if (inGrid) 0.dp else 20.dp,
+            end = if (inGrid) 0.dp else 20.dp,
+            top = if (inGrid) 0.dp else 4.dp,
+            bottom = 8.dp,
+          ),
+    )
+    Row(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .padding(
+            start = if (inGrid) 2.dp else 22.dp,
+            end = if (inGrid) 2.dp else 22.dp,
+            // Mockup `.sec` is 20/10; tightened per user preference.
+            top = 14.dp,
+            bottom = 6.dp,
+          ),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.Bottom,
+    ) {
+      Text(
+        text = stringResource(R.string.home_all_folders),
+        fontSize = 12.5.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 3.sp,
+        color = colors.inkTertiary,
+        maxLines = 1,
+      )
+      Text(
+        text =
+          androidx.compose.ui.res.pluralStringResource(
+            R.plurals.folder_video_count,
+            totalVideoCount,
+            totalVideoCount,
+          ),
+        fontSize = 11.5.sp,
+        letterSpacing = 1.sp,
+        color = colors.inkSecondary,
+        maxLines = 1,
+      )
     }
   }
 }
@@ -1479,6 +1571,9 @@ private fun GridContent(
   selectedFolderBucketId: String? = null,
   audioOnly: Boolean = false,
   uiConfig: app.gyrolet.mpvrx.ui.browser.cards.FolderCardUiConfig? = null,
+  showHomeHeader: Boolean = false,
+  onSearchActivate: () -> Unit = {},
+  totalVideoCount: Int = 0,
 ) {
   val folderCardUiConfig = uiConfig ?: app.gyrolet.mpvrx.ui.browser.cards.rememberFolderCardUiConfig()
   val newCountByBucketId =
@@ -1508,16 +1603,26 @@ private fun GridContent(
       columns = GridCells.Fixed(computedColumns),
       state = gridState,
       modifier = Modifier.fillMaxSize(),
+      // Mockup `.flist.grid`: 20px side padding, 12px gutters, 16px row gaps.
       contentPadding =
         PaddingValues(
-          start = 8.dp,
-          end = 8.dp,
-          top = 8.dp,
+          start = 20.dp,
+          end = 20.dp,
+          top = 6.dp,
           bottom = navigationBarHeight + 8.dp,
         ),
-      horizontalArrangement = Arrangement.spacedBy(MediaSelectionGridGap),
-      verticalArrangement = Arrangement.spacedBy(MediaSelectionGridGap),
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+      if (showHomeHeader) {
+        item(key = "home_header", span = { GridItemSpan(maxLineSpan) }) {
+          HomeFoldersHeader(
+            totalVideoCount = totalVideoCount,
+            onSearchClick = onSearchActivate,
+            inGrid = true,
+          )
+        }
+      }
       items(
         count = folders.size,
         key = { index -> folders[index].bucketId },
@@ -1532,7 +1637,7 @@ private fun GridContent(
         val rowIndex = index / computedColumns
         val tallestContentInRow = measuredRowHeights[rowIndex] ?: 0
 
-        FolderCard(
+        HomeFolderCard(
           folder = folder,
           modifier = mediaItemMotion(),
           isSelected = selectionManager.isSelected(folder),
@@ -1609,6 +1714,9 @@ private fun ListContent(
   audioOnly: Boolean = false,
   onFolderSwipe: ((VideoFolder, VideoSwipeAction) -> Unit)? = null,
   uiConfig: app.gyrolet.mpvrx.ui.browser.cards.FolderCardUiConfig? = null,
+  showHomeHeader: Boolean = false,
+  onSearchActivate: () -> Unit = {},
+  totalVideoCount: Int = 0,
 ) {
   val folderCardUiConfig = uiConfig ?: app.gyrolet.mpvrx.ui.browser.cards.rememberFolderCardUiConfig()
   val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -1626,15 +1734,24 @@ private fun ListContent(
     LazyColumn(
       state = listState,
       modifier = Modifier.fillMaxSize(),
-      verticalArrangement = Arrangement.spacedBy(MediaSelectionListGap),
+      verticalArrangement = Arrangement.spacedBy(0.dp),
+      // Rows carry their own 20dp sides (mockup `.flist .row`), so the list adds none.
       contentPadding =
         PaddingValues(
-          start = 8.dp,
-          end = 8.dp,
-          top = 4.dp,
+          start = 0.dp,
+          end = 0.dp,
+          top = 2.dp,
           bottom = navigationBarHeight,
         ),
     ) {
+      if (showHomeHeader) {
+        item(key = "home_header") {
+          HomeFoldersHeader(
+            totalVideoCount = totalVideoCount,
+            onSearchClick = onSearchActivate,
+          )
+        }
+      }
       items(
         count = folders.size,
         key = { index -> folders[index].bucketId },
@@ -1647,7 +1764,7 @@ private fun ListContent(
 
         val isActive = isDualPaneActive && folder.bucketId == selectedFolderBucketId
 
-        FolderCard(
+        HomeFolderCard(
           folder = folder,
           modifier = mediaItemMotion(),
           isSelected = selectionManager.isSelected(folder),

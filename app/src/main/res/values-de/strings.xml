@@ -1122,6 +1122,32 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="ui_home">Startseite</string>
   <string name="ui_recents">Zuletzt</string>
   <string name="ui_playlists">Wiedergabelisten</string>
+  <string name="ui_library">Sammlung</string>
+  <string name="profile_seal">Privat</string>
+  <string name="profile_media_tag">Medienarchiv</string>
+  <string name="profile_archive_title">Lokales Vorführarchiv</string>
+  <string name="profile_privacy_note">Privat · nur auf diesem Gerät</string>
+  <string name="profile_privacy_explanation">Wiedergabeverlauf und Statistiken werden nur auf diesem Gerät gespeichert und niemals übertragen.</string>
+  <string name="profile_motto">Jede Vorführung hinterlässt eine Spur</string>
+  <string name="profile_count_items">%1$d Elemente</string>
+  <string name="profile_count_shots">%1$d Aufnahmen</string>
+  <string name="profile_screened_today">Heute vorgeführt</string>
+  <string name="profile_screened_yesterday">Gestern vorgeführt</string>
+  <string name="profile_screened_days_ago">Vor %1$d Tagen vorgeführt</string>
+  <string name="profile_local_media">Lokale Medien</string>
+  <string name="profile_duration_minutes">%1$d Min.</string>
+  <string name="profile_duration_hours">%1$d Std.</string>
+  <string name="profile_duration_hours_minutes">%1$d Std. %2$d Min.</string>
+  <string name="profile_duration_seconds">%1$d Sek.</string>
+  <string name="profile_unit_minutes">Min.</string>
+  <string name="profile_unit_times">Wiedergaben</string>
+  <string name="watch_stats_total_sessions">Gesamte Wiedergaben</string>
+  <string name="watch_stats_by_watch_time">Nach Sehzeit</string>
+  <string name="network_stamp_connected">Verbunden</string>
+  <string name="network_stamp_failed">Fehlgeschlagen</string>
+  <string name="network_stamp_offline">Offline</string>
+  <string name="library_summary_playlists">%1$d Playlists · %2$d Videos</string>
+  <string name="library_summary_snapshots">%1$d Schnappschüsse · %2$d Ordner</string>
   <string name="ui_network">Netzwerk</string>
   <string name="ui_pinned_folder">Angehefteter Ordner</string>
   <string name="ui_pin_videos">Videos anheften</string>
@@ -1210,7 +1236,9 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="ui_quick_play">Schnellwiedergabe</string>
   <string name="ui_open_file">Datei öffnen</string>
   <string name="ui_open_link">Link öffnen</string>
-  <string name="ui_search_folders_and_videos">Ordner und Videos suchen...</string>
+  <string name="ui_search_folders_and_videos">Ordner oder Videos suchen</string>
+  <string name="home_brand_tag">Privater Videoplayer</string>
+  <string name="home_all_folders">Alle Ordner</string>
   <string name="ui_pinned">Angeheftet</string>
   <string name="ui_rename_failed">Umbenennen fehlgeschlagen</string>
   <string name="ui_deleted_successfully">Erfolgreich gelöscht</string>
@@ -1218,6 +1246,21 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="ui_play_recently_played_or_first_video">Zuletzt wiedergegebenes oder erstes Video abspielen</string>
   <string name="ui_videos">Videos</string>
   <string name="ui_add_connection">Verbindung hinzufügen</string>
+  <string name="folder_new_count_short">%1$d neu</string>
+  <string name="ui_network_tag">Lokale Netzwerke &amp; Remote-Streams</string>
+  <string name="ui_saved_connections">Gespeicherte Verbindungen</string>
+  <string name="ui_connections_count">%1$d insgesamt</string>
+  <string name="ui_add_media">Medium hinzufügen</string>
+  <string name="ui_auto_connect">Auto-Verbinden</string>
+  <string name="ui_optional">Optional</string>
+  <string name="network_name_placeholder">z. B. iMac</string>
+  <string name="network_server_info">Serverinformationen</string>
+  <string name="network_auto_connect_hint">Beim Start des Players versucht, eine Verbindung zu diesem Server herzustellen</string>
+  <string name="network_test_connection">Verbindung testen</string>
+  <string name="network_testing">Verbindung wird getestet…</string>
+  <string name="network_test_success">Verbindung erfolgreich</string>
+  <string name="network_test_failed">Verbindung fehlgeschlagen: %1$s</string>
+  <string name="network_test_unknown_error">Unbekannter Fehler</string>
   <string name="ui_local_network">Lokales Netzwerk</string>
   <string name="ui_no_network_connections">Keine Netzwerkverbindungen</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">SMB-, FTP- oder WebDAV-Verbindungen hinzufügen, um Netzwerkdateien zu durchsuchen</string>
@@ -2242,6 +2285,8 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">Schnappschüsse</string>
   <string name="ui_profile">Profil</string>
+  <string name="pref_nav_library_title">Sammlung-Tab anzeigen</string>
+  <string name="pref_nav_library_summary">Playlists und Schnappschüsse in einem Sammlungs-Hub</string>
   <string name="pref_nav_profile_title">Profil-Tab anzeigen</string>
   <string name="pref_nav_profile_summary">Zuletzt, Playlists und Schnappschüsse in einem Tab zusammenfassen</string>
   <string name="profile_view_all">Alle anzeigen</string>
@@ -2844,4 +2889,21 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="pref_persistent_status_micro_battery">Kleines Akkusymbol anzeigen</string>
   <string name="pref_persistent_status_est_prefix">Ca.</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">Sortierreihenfolge</string>
+  <string name="view_mode_label">Ansichtsmodus</string>
+  <string name="options_section">Optionen</string>
+  <string name="view_mode_folder">Ordner</string>
+  <string name="view_mode_tree">Baum</string>
+  <string name="view_mode_library">Mediathek</string>
+  <string name="grid_columns_range">Gitterspalten (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">Ordnerspalten</string>
+  <string name="video_grid_columns">Videospalten</string>
+  <string name="sort_type_title">Titel</string>
+  <string name="sort_type_date">Datum</string>
+  <string name="sort_type_size">Größe</string>
+  <string name="sort_type_count">Anzahl</string>
+  <string name="generic_close">Schließen</string>
+  <string name="ui_images">Bilder</string>
 </resources>

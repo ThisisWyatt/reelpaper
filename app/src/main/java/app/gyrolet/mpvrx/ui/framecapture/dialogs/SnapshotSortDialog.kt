@@ -150,7 +150,7 @@ fun SnapshotSortDialog(
         },
       getLabelForType = { type, _ ->
         if (type == labels.getValue(SnapshotFolderSortType.Name)) {
-          "A-Z" to "Z-A"
+          "A → Z" to "Z → A"
         } else {
           ascendingLabel to descendingLabel
         }
@@ -194,7 +194,7 @@ fun SnapshotSortDialog(
       },
     getLabelForType = { type, _ ->
       if (type == labels.getValue(SnapshotSortType.VideoTitle)) {
-        "A-Z" to "Z-A"
+        "A → Z" to "Z → A"
       } else {
         ascendingLabel to descendingLabel
       }

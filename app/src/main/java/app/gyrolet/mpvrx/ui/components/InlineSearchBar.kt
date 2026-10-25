@@ -12,6 +12,7 @@ package app.gyrolet.mpvrx.ui.components
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -30,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
 
 /**
  * Material 3 Expressive search field used inline at the top of list screens.
@@ -47,9 +50,9 @@ fun InlineSearchBar(
   placeholder: (@Composable () -> Unit)? = null,
   leadingIcon: (@Composable () -> Unit)? = null,
   trailingIcon: (@Composable () -> Unit)? = null,
-  shape: Shape = SearchBarDefaults.inputFieldShape,
-  tonalElevation: Dp = SearchBarDefaults.TonalElevation,
-  shadowElevation: Dp = SearchBarDefaults.ShadowElevation,
+  shape: Shape = RoundedCornerShape(12.dp),
+  tonalElevation: Dp = Dp.Unspecified,
+  shadowElevation: Dp = 0.dp,
   windowInsets: WindowInsets = SearchBarDefaults.windowInsets,
 ) {
   val keyboardController = LocalSoftwareKeyboardController.current
@@ -80,11 +83,12 @@ fun InlineSearchBar(
     if (!focused && searchBarState.currentValue != SearchBarValue.Collapsed) searchBarState.snapTo(0f)
   }
 
+  val paperColors = LocalPaperColors.current
   Surface(
     modifier = Modifier.windowInsetsPadding(windowInsets).then(modifier),
     shape = shape,
-    color = SearchBarDefaults.colors().containerColor,
-    tonalElevation = tonalElevation,
+    color = paperColors.paperInset,
+    tonalElevation = if (tonalElevation == Dp.Unspecified) 0.dp else tonalElevation,
     shadowElevation = shadowElevation,
   ) {
     SearchBarDefaults.InputField(

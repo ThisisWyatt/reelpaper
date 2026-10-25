@@ -24,6 +24,7 @@ fun AddConnectionSheet(
   onSave: (NetworkConnection) -> Unit,
   modifier: Modifier = Modifier,
   savedConnections: List<NetworkConnection> = emptyList(),
+  onTest: suspend (NetworkConnection) -> Result<Unit> = { Result.success(Unit) },
 ) {
   if (!isOpen) return
 
@@ -31,19 +32,20 @@ fun AddConnectionSheet(
     remember {
       NetworkConnection(
         name = "",
-        protocol = NetworkProtocol.SMB,
+        protocol = NetworkProtocol.WEBDAV,
         host = "",
-        port = NetworkProtocol.SMB.defaultPort,
+        port = NetworkProtocol.WEBDAV.defaultPort,
       )
     }
   ConnectionEditorSheet(
-    title = stringResource(R.string.ui_add_network_connection),
+    title = stringResource(R.string.ui_add_connection),
     initialConnection = initialConnection,
     isEditing = false,
     onDismiss = onDismiss,
     onSave = { connection, _ -> onSave(connection) },
     modifier = modifier,
     savedConnections = savedConnections,
+    onTest = onTest,
   )
 }
 
@@ -55,6 +57,7 @@ fun EditConnectionSheet(
   onSave: (NetworkConnection, Boolean) -> Unit,
   modifier: Modifier = Modifier,
   savedConnections: List<NetworkConnection> = emptyList(),
+  onTest: suspend (NetworkConnection) -> Result<Unit> = { Result.success(Unit) },
 ) {
   if (!isOpen) return
 
@@ -66,5 +69,6 @@ fun EditConnectionSheet(
     onSave = onSave,
     modifier = modifier,
     savedConnections = savedConnections,
+    onTest = onTest,
   )
 }

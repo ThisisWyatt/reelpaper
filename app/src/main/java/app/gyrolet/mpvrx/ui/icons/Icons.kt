@@ -227,6 +227,7 @@ object Icons {
     val Share by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Share) }
     val Shuffle by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Shuffle) }
     val ShuffleOn by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Shuffle_on) }
+    val Sort by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Sort) }
     val SortByAlpha by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Sort_by_alpha) }
     val Star by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Star) }
     val Favorite by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Favorite) }
@@ -456,6 +457,7 @@ object Icons {
     val Screenshot get() = Shared.Screenshot
     val SdCard get() = Shared.SdCard
     val Search get() = Shared.Search
+    val Sort get() = Shared.Sort
     val Settings get() = Shared.Settings
     val Security get() = Shared.Security
     val Seerr get() = Shared.Seerr

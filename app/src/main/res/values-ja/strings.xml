@@ -1118,6 +1118,32 @@
   <string name="ui_home">ホーム</string>
   <string name="ui_recents">最近</string>
   <string name="ui_playlists">プレイリスト</string>
+  <string name="ui_library">コレクション</string>
+  <string name="profile_seal">私蔵</string>
+  <string name="profile_media_tag">メディアアーカイブ</string>
+  <string name="profile_archive_title">ローカル放映アーカイブ</string>
+  <string name="profile_privacy_note">プライベート · この端末のみ</string>
+  <string name="profile_privacy_explanation">視聴履歴と統計はこの端末にのみ保存され、外部へ送信されません。</string>
+  <string name="profile_motto">上映の痕は紙に残る</string>
+  <string name="profile_count_items">%1$d件</string>
+  <string name="profile_count_shots">%1$d枚</string>
+  <string name="profile_screened_today">今日上映</string>
+  <string name="profile_screened_yesterday">昨日上映</string>
+  <string name="profile_screened_days_ago">%1$d日前に上映</string>
+  <string name="profile_local_media">ローカルメディア</string>
+  <string name="profile_duration_minutes">%1$d分</string>
+  <string name="profile_duration_hours">%1$d時間</string>
+  <string name="profile_duration_hours_minutes">%1$d時間%2$d分</string>
+  <string name="profile_duration_seconds">%1$d秒</string>
+  <string name="profile_unit_minutes">分</string>
+  <string name="profile_unit_times">回</string>
+  <string name="watch_stats_total_sessions">累計再生回数</string>
+  <string name="watch_stats_by_watch_time">視聴時間順</string>
+  <string name="network_stamp_connected">接続済み</string>
+  <string name="network_stamp_failed">接続失敗</string>
+  <string name="network_stamp_offline">未接続</string>
+  <string name="library_summary_playlists">%1$d 個のプレイリスト · %2$d 本の動画</string>
+  <string name="library_summary_snapshots">%1$d 枚のスナップショット · %2$d 個のフォルダー</string>
   <string name="ui_network">ネットワーク</string>
   <string name="ui_pinned_folder">ピン留めしたフォルダー</string>
   <string name="ui_pin_videos">動画をピン留め</string>
@@ -1206,7 +1232,9 @@
   <string name="ui_quick_play">クイック再生</string>
   <string name="ui_open_file">ファイルを開く</string>
   <string name="ui_open_link">リンクを開く</string>
-  <string name="ui_search_folders_and_videos">フォルダーと動画を検索...</string>
+  <string name="ui_search_folders_and_videos">フォルダーまたは動画を検索</string>
+  <string name="home_brand_tag">プライベート動画プレーヤー</string>
+  <string name="home_all_folders">すべてのフォルダ</string>
   <string name="ui_pinned">ピン留め済み</string>
   <string name="ui_rename_failed">名前の変更に失敗しました</string>
   <string name="ui_deleted_successfully">削除しました</string>
@@ -1214,6 +1242,21 @@
   <string name="ui_play_recently_played_or_first_video">最近再生した動画または最初の動画を再生</string>
   <string name="ui_videos">動画</string>
   <string name="ui_add_connection">接続を追加</string>
+  <string name="folder_new_count_short">%1$d 件新着</string>
+  <string name="ui_network_tag">ローカルネットワークとリモートストリーム</string>
+  <string name="ui_saved_connections">保存済みの接続</string>
+  <string name="ui_connections_count">全%1$d件</string>
+  <string name="ui_add_media">メディアを追加</string>
+  <string name="ui_auto_connect">自動接続</string>
+  <string name="ui_optional">任意</string>
+  <string name="network_name_placeholder">例: iMac</string>
+  <string name="network_server_info">サーバー情報</string>
+  <string name="network_auto_connect_hint">プレーヤーの起動時にこのサーバーへの接続を試みます</string>
+  <string name="network_test_connection">接続テスト</string>
+  <string name="network_testing">接続をテストしています…</string>
+  <string name="network_test_success">接続に成功しました</string>
+  <string name="network_test_failed">接続に失敗しました: %1$s</string>
+  <string name="network_test_unknown_error">不明なエラー</string>
   <string name="ui_local_network">ローカルネットワーク</string>
   <string name="ui_no_network_connections">ネットワーク接続がありません</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">SMB、FTP、WebDAV接続を追加してネットワークファイルを参照</string>
@@ -2235,6 +2278,8 @@
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">スナップショット</string>
   <string name="ui_profile">プロフィール</string>
+  <string name="pref_nav_library_title">コレクションタブを表示</string>
+  <string name="pref_nav_library_summary">プレイリストとスナップショットをまとめたハブ</string>
   <string name="pref_nav_profile_title">プロフィールタブを表示</string>
   <string name="pref_nav_profile_summary">履歴、プレイリスト、スナップショットを1つのタブにまとめる</string>
   <string name="profile_view_all">すべて表示</string>
@@ -2828,4 +2873,21 @@
   <string name="pref_persistent_status_micro_battery">小さな電池アイコンを表示</string>
   <string name="pref_persistent_status_est_prefix">予想</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">並び順</string>
+  <string name="view_mode_label">表示モード</string>
+  <string name="options_section">オプション</string>
+  <string name="view_mode_folder">フォルダ</string>
+  <string name="view_mode_tree">ツリー</string>
+  <string name="view_mode_library">ライブラリ</string>
+  <string name="grid_columns_range">グリッド列数（%1$d – %2$d）</string>
+  <string name="folder_grid_columns">フォルダ列数</string>
+  <string name="video_grid_columns">動画列数</string>
+  <string name="sort_type_title">タイトル</string>
+  <string name="sort_type_date">日付</string>
+  <string name="sort_type_size">サイズ</string>
+  <string name="sort_type_count">数</string>
+  <string name="generic_close">閉じる</string>
+  <string name="ui_images">画像</string>
 </resources>

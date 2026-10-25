@@ -1036,6 +1036,32 @@
   <string name="ui_home">होम</string>
   <string name="ui_recents">रीसेंट्स</string>
   <string name="ui_playlists">प्लेलिस्ट</string>
+  <string name="ui_library">संग्रह</string>
+  <string name="profile_seal">निजी</string>
+  <string name="profile_media_tag">मीडिया संग्रह</string>
+  <string name="profile_archive_title">लोकल स्क्रीनिंग संग्रह</string>
+  <string name="profile_privacy_note">निजी · केवल इस डिवाइस पर</string>
+  <string name="profile_privacy_explanation">देखने का इतिहास और आंकड़े केवल इस डिवाइस पर सहेजे जाते हैं, कभी अपलोड नहीं होते।</string>
+  <string name="profile_motto">हर प्रोजेक्शन का निशान रहता है</string>
+  <string name="profile_count_items">%1$d आइटम</string>
+  <string name="profile_count_shots">%1$d शॉट</string>
+  <string name="profile_screened_today">आज प्रोजेक्ट किया गया</string>
+  <string name="profile_screened_yesterday">कल प्रोजेक्ट किया गया</string>
+  <string name="profile_screened_days_ago">%1$d दिन पहले प्रोजेक्ट किया गया</string>
+  <string name="profile_local_media">लोकल मीडिया</string>
+  <string name="profile_duration_minutes">%1$d मिनट</string>
+  <string name="profile_duration_hours">%1$d घंटे</string>
+  <string name="profile_duration_hours_minutes">%1$d घंटे %2$d मिनट</string>
+  <string name="profile_duration_seconds">%1$d सेकंड</string>
+  <string name="profile_unit_minutes">मिनट</string>
+  <string name="profile_unit_times">बार</string>
+  <string name="watch_stats_total_sessions">कुल प्लेबैक</string>
+  <string name="watch_stats_by_watch_time">देखने के समय के अनुसार</string>
+  <string name="network_stamp_connected">कनेक्टेड</string>
+  <string name="network_stamp_failed">कनेक्शन विफल</string>
+  <string name="network_stamp_offline">ऑफ़लाइन</string>
+  <string name="library_summary_playlists">%1$d प्लेलिस्ट · %2$d वीडियो</string>
+  <string name="library_summary_snapshots">%1$d स्नैपशॉट · %2$d फ़ोल्डर</string>
   <string name="ui_network">नेटवर्क</string>
   <string name="ui_pinned_folder">पिन किया फोल्डर</string>
   <string name="ui_pin_videos">वीडियो पिन करें</string>
@@ -1124,7 +1150,9 @@
   <string name="ui_quick_play">क्विक प्ले</string>
   <string name="ui_open_file">फाइल खोलें</string>
   <string name="ui_open_link">लिंक खोलें</string>
-  <string name="ui_search_folders_and_videos">फोल्डर और वीडियो खोजें...</string>
+  <string name="ui_search_folders_and_videos">फ़ोल्डर या वीडियो खोजें</string>
+  <string name="home_brand_tag">निजी वीडियो प्लेयर</string>
+  <string name="home_all_folders">सभी फ़ोल्डर</string>
   <string name="ui_pinned">पिन किया गया</string>
   <string name="ui_rename_failed">नाम बदलना नाकाम</string>
   <string name="ui_deleted_successfully">सफलतापूर्वक डिलीट हुआ</string>
@@ -1132,6 +1160,21 @@
   <string name="ui_play_recently_played_or_first_video">हाल ही में चलाई या पहली वीडियो चलाएं</string>
   <string name="ui_videos">वीडियो</string>
   <string name="ui_add_connection">कनेक्शन जोड़ें</string>
+  <string name="folder_new_count_short">%1$d नए</string>
+  <string name="ui_network_tag">लोकल नेटवर्क और रिमोट स्ट्रीम</string>
+  <string name="ui_saved_connections">सहेजे गए कनेक्शन</string>
+  <string name="ui_connections_count">कुल %1$d</string>
+  <string name="ui_add_media">मीडिया जोड़ें</string>
+  <string name="ui_auto_connect">ऑटो-कनेक्ट</string>
+  <string name="ui_optional">वैकल्पिक</string>
+  <string name="network_name_placeholder">जैसे: iMac</string>
+  <string name="network_server_info">सर्वर जानकारी</string>
+  <string name="network_auto_connect_hint">प्लेयर शुरू होने पर इस सर्वर से कनेक्ट करने का प्रयास करता है</string>
+  <string name="network_test_connection">कनेक्शन जाँचें</string>
+  <string name="network_testing">कनेक्शन जाँचा जा रहा है…</string>
+  <string name="network_test_success">कनेक्शन सफल</string>
+  <string name="network_test_failed">कनेक्शन विफल: %1$s</string>
+  <string name="network_test_unknown_error">अज्ञात त्रुटि</string>
   <string name="ui_local_network">लोकल नेटवर्क</string>
   <string name="ui_no_network_connections">कोई नेटवर्क कनेक्शन नहीं</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">नेटवर्क फाइलें ब्राउज़ करने के लिए SMB, FTP या WebDAV कनेक्शन जोड़ें</string>
@@ -2150,6 +2193,8 @@
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">स्नैपशॉट</string>
   <string name="ui_profile">प्रोफ़ाइल</string>
+  <string name="pref_nav_library_title">संग्रह टैब दिखाएं</string>
+  <string name="pref_nav_library_summary">प्लेलिस्ट और स्नैपशॉट एक ही हब में</string>
   <string name="pref_nav_profile_title">प्रोफ़ाइल टैब दिखाएं</string>
   <string name="pref_nav_profile_summary">हाल के, प्लेलिस्ट और स्नैपशॉट को एक टैब में मिलाएं</string>
   <string name="profile_view_all">सभी देखें</string>
@@ -2748,4 +2793,21 @@
   <string name="pref_persistent_status_micro_battery">छोटा बैटरी आइकन दिखाएँ</string>
   <string name="pref_persistent_status_est_prefix">अनु.</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">क्रमण क्रम</string>
+  <string name="view_mode_label">व्यू मोड</string>
+  <string name="options_section">विकल्प</string>
+  <string name="view_mode_folder">फ़ोल्डर</string>
+  <string name="view_mode_tree">ट्री</string>
+  <string name="view_mode_library">लाइब्रेरी</string>
+  <string name="grid_columns_range">ग्रिड कॉलम (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">फ़ोल्डर कॉलम</string>
+  <string name="video_grid_columns">वीडियो कॉलम</string>
+  <string name="sort_type_title">शीर्षक</string>
+  <string name="sort_type_date">तारीख</string>
+  <string name="sort_type_size">आकार</string>
+  <string name="sort_type_count">संख्या</string>
+  <string name="generic_close">बंद करें</string>
+  <string name="ui_images">चित्र</string>
 </resources>

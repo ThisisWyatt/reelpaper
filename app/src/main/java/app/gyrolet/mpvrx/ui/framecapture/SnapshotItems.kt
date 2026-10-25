@@ -12,6 +12,8 @@ package app.gyrolet.mpvrx.ui.framecapture
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,15 +33,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavBackStack
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.domain.framecapture.FrameCapture
@@ -265,10 +275,18 @@ fun SnapshotGridItem(
   modifier: Modifier = Modifier,
 ) {
   val selectionTint = animatedSelectionColor(isSelected)
+  val paperColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
 
   Box(
     modifier =
       modifier
+        .shadow(
+          elevation = 2.dp,
+          shape = RoundedCornerShape(10.dp),
+          ambientColor = paperColors.shadowTint.copy(alpha = if (paperColors.isDark) 0.5f else 0.28f),
+          spotColor = paperColors.shadowTint.copy(alpha = if (paperColors.isDark) 0.45f else 0.24f),
+        )
+        .clip(RoundedCornerShape(10.dp))
         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         .tvFocusHighlight(AppShapeScale.none, focusedScale = 1.03f)
         .semantics { selected = isSelected }
@@ -295,6 +313,30 @@ fun SnapshotGridItem(
       )
     }
     Box(modifier = Modifier.matchParentSize().background(selectionTint))
+    // 角标 = 画面在原影片中的时间点 + 播放三角 (mockup .polbadge).
+    if (capture.formattedPosition.isNotBlank() && capture.formattedPosition != "--:--") {
+      Row(
+        modifier =
+          Modifier
+            .align(Alignment.BottomEnd)
+            .padding(4.dp)
+            .background(Color.Black.copy(alpha = 0.62f), androidx.compose.foundation.shape.RoundedCornerShape(5.dp))
+            .padding(horizontal = 5.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(
+          Icons.RoundedFilled.PlayArrow,
+          contentDescription = null,
+          tint = Color.White.copy(alpha = 0.85f),
+          modifier = Modifier.size(10.dp),
+        )
+        Text(
+          text = capture.formattedPosition,
+          style = MaterialTheme.typography.labelSmall,
+          color = Color.White,
+        )
+      }
+    }
     SelectionIndicator(
       selected = isSelected,
       modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
@@ -303,15 +345,13 @@ fun SnapshotGridItem(
 }
 
 /**
- * A folder in the grid, drawn to the same recipe as the browser's own folder cards —
- * `ui/browser/cards/FolderCard.kt` and `NetworkFolderCard.kt` — so a folder looks the same here as
- * anywhere else in the app: the filled folder glyph in a 20:17 box, name centred underneath.
- *
- * Deliberately no snapshot count: no other folder card shows one, and matching them is the point.
+ * A folder in the snapshot grid per mockup `02-A2`: the 照片小叠 illustration filling the cell,
+ * the vermilion capture-count badge riding its top-right corner, and the bold name underneath.
  */
 @Composable
 fun SnapshotFolderGridItem(
   name: String,
+  captureCount: Int,
   isSelected: Boolean,
   onClick: () -> Unit,
   onLongClick: () -> Unit,
@@ -327,35 +367,72 @@ fun SnapshotFolderGridItem(
         .semantics { selected = isSelected }
         .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         .padding(horizontal = 4.dp, vertical = 6.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     Box(
-      modifier = Modifier.fillMaxWidth().aspectRatio(FOLDER_GLYPH_ASPECT),
+      modifier = Modifier.fillMaxWidth().aspectRatio(48f / 50f),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(
-        Icons.RoundedFilled.Folder,
-        contentDescription = stringResource(R.string.ui_folder),
-        modifier = Modifier.fillMaxWidth().aspectRatio(FOLDER_GLYPH_ASPECT),
-        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+      // reelPaper: snapshot folders are 照片小叠 (mockup #i-photostack). The icon draws in a
+      // 48×50 viewBox — give it BOTH axes, a fillMaxWidth-only Canvas collapses to zero height.
+      app.gyrolet.mpvrx.ui.theme.paper.PaperPhotoStackIcon(
+        modifier = Modifier.matchParentSize(),
       )
       Box(modifier = Modifier.matchParentSize().background(selectionTint))
+      if (captureCount > 0) {
+        PhotoStackCountBadge(
+          count = captureCount,
+          modifier =
+            Modifier
+              .align(Alignment.TopEnd)
+              .offset(x = 6.dp, y = (-4).dp),
+        )
+      }
       SelectionIndicator(
         selected = isSelected,
-        modifier = Modifier.align(Alignment.TopEnd),
+        modifier = Modifier.align(Alignment.TopStart),
       )
     }
 
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(6.dp))
 
     Text(
       text = name,
-      style = MaterialTheme.typography.titleMedium,
+      fontSize = 15.sp,
+      fontWeight = FontWeight.SemiBold,
       color = MaterialTheme.colorScheme.onSurface,
-      maxLines = 2,
+      maxLines = 1,
       overflow = TextOverflow.Ellipsis,
-      textAlign = TextAlign.Center,
       modifier = Modifier.fillMaxWidth(),
+    )
+  }
+}
+
+/** Mockup `.fbadge`: 19dp vermilion pill with a paper ring, same recipe as the browser folders. */
+@Composable
+private fun PhotoStackCountBadge(
+  count: Int,
+  modifier: Modifier = Modifier,
+) {
+  val colors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
+  val shape = RoundedCornerShape(10.dp)
+  Box(
+    modifier
+      .shadow(elevation = 2.dp, shape = shape, clip = false, ambientColor = Color(0xFF8E261F).copy(alpha = 0.40f), spotColor = Color(0xFF8E261F).copy(alpha = 0.36f))
+      .defaultMinSize(minWidth = 19.dp)
+      .height(19.dp)
+      .clip(shape)
+      .background(Brush.verticalGradient(listOf(colors.redHighlight, colors.red)))
+      .border(1.5.dp, colors.paper, shape)
+      .padding(horizontal = 5.dp),
+    contentAlignment = Alignment.Center,
+  ) {
+    Text(
+      text = count.toString(),
+      color = colors.onRed,
+      fontSize = 10.5.sp,
+      fontWeight = FontWeight.Bold,
+      lineHeight = 12.sp,
+      maxLines = 1,
     )
   }
 }
@@ -364,6 +441,7 @@ fun SnapshotFolderGridItem(
 @Composable
 fun SnapshotFolderListItem(
   name: String,
+  captureCount: Int,
   isSelected: Boolean,
   onClick: () -> Unit,
   onLongClick: () -> Unit,
@@ -381,14 +459,21 @@ fun SnapshotFolderListItem(
         .padding(horizontal = 8.dp, vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
-      Icon(
-        Icons.RoundedFilled.Folder,
-        contentDescription = stringResource(R.string.ui_folder),
+    Box(modifier = Modifier.size(width = 46.dp, height = 48.dp), contentAlignment = Alignment.Center) {
+      // reelPaper: snapshot folders are 照片小叠 (mockup #i-photostack).
+      app.gyrolet.mpvrx.ui.theme.paper.PaperPhotoStackIcon(
         modifier = Modifier.matchParentSize(),
-        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
       )
       Box(modifier = Modifier.matchParentSize().background(selectionTint))
+      if (captureCount > 0) {
+        PhotoStackCountBadge(
+          count = captureCount,
+          modifier =
+            Modifier
+              .align(Alignment.TopEnd)
+              .offset(x = 5.dp, y = (-4).dp),
+        )
+      }
     }
 
     Spacer(modifier = Modifier.width(12.dp))

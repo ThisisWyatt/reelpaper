@@ -995,7 +995,7 @@
   <string name="ui_recently_played_disabled">最近播放已禁用</string>
   <string name="ui_no_recently_played_videos">没有最近播放的视频</string>
   <string name="compressor_failed">压缩失败</string>
-  <string name="sort_view_options">排序与视图选项</string>
+  <string name="sort_view_options">排序与视图</string>
   <string name="ui_view_options">视图选项</string>
   <string name="ambient_glow">辉光</string>
   <string name="ambient_color">颜色</string>
@@ -1120,6 +1120,32 @@
   <string name="ui_home">主页</string>
   <string name="ui_recents">最近</string>
   <string name="ui_playlists">播放列表</string>
+  <string name="ui_library">收藏</string>
+  <string name="profile_seal">私藏</string>
+  <string name="profile_media_tag">媒体档案</string>
+  <string name="profile_archive_title">本地放映档案</string>
+  <string name="profile_privacy_note">隐私数据 · 仅存本机</string>
+  <string name="profile_privacy_explanation">观看记录与统计数据仅保存在本机，不会上传。</string>
+  <string name="profile_motto">放映有痕 · 皆在纸上</string>
+  <string name="profile_count_items">%1$d 个</string>
+  <string name="profile_count_shots">%1$d 张</string>
+  <string name="profile_screened_today">今天放映</string>
+  <string name="profile_screened_yesterday">昨天放映</string>
+  <string name="profile_screened_days_ago">%1$d 天前放映</string>
+  <string name="profile_local_media">本地媒体</string>
+  <string name="profile_duration_minutes">%1$d 分钟</string>
+  <string name="profile_duration_hours">%1$d 小时</string>
+  <string name="profile_duration_hours_minutes">%1$d 小时 %2$d 分钟</string>
+  <string name="profile_duration_seconds">%1$d 秒</string>
+  <string name="profile_unit_minutes">分钟</string>
+  <string name="profile_unit_times">次</string>
+  <string name="watch_stats_total_sessions">累计播放次数</string>
+  <string name="watch_stats_by_watch_time">按观看时长</string>
+  <string name="network_stamp_connected">已连接</string>
+  <string name="network_stamp_failed">连接失败</string>
+  <string name="network_stamp_offline">未连接</string>
+  <string name="library_summary_playlists">%1$d 个列表 · %2$d 个视频</string>
+  <string name="library_summary_snapshots">%1$d 张快照 · %2$d 个文件夹</string>
   <string name="ui_network">网络</string>
   <string name="ui_pinned_folder">已固定文件夹</string>
   <string name="ui_pin_videos">固定视频</string>
@@ -1208,7 +1234,9 @@
   <string name="ui_quick_play">快速播放</string>
   <string name="ui_open_file">打开文件</string>
   <string name="ui_open_link">打开链接</string>
-  <string name="ui_search_folders_and_videos">搜索文件夹和视频...</string>
+  <string name="ui_search_folders_and_videos">搜索文件夹或视频</string>
+  <string name="home_brand_tag">私人视频播放器</string>
+  <string name="home_all_folders">全部文件夹</string>
   <string name="ui_pinned">已固定</string>
   <string name="ui_rename_failed">重命名失败</string>
   <string name="ui_deleted_successfully">删除成功</string>
@@ -1224,6 +1252,21 @@
   <string name="ui_folder_no_videos_or_folders">此文件夹没有视频或文件夹</string>
   <string name="ui_folder_only_images_hidden">此文件夹只有图片。可在「排序与视图选项」中开启「图片」以显示。</string>
   <string name="ui_add_connection">添加连接</string>
+  <string name="folder_new_count_short">%1$d 新</string>
+  <string name="ui_network_tag">本地网络与远程流媒体</string>
+  <string name="ui_saved_connections">已保存的连接</string>
+  <string name="ui_connections_count">%1$d 个</string>
+  <string name="ui_add_media">添加媒体</string>
+  <string name="ui_auto_connect">自动连接</string>
+  <string name="ui_optional">可选</string>
+  <string name="network_name_placeholder">例如：iMac</string>
+  <string name="network_server_info">服务器信息</string>
+  <string name="network_auto_connect_hint">启动播放器时尝试连接该服务器</string>
+  <string name="network_test_connection">测试连接</string>
+  <string name="network_testing">正在测试连接…</string>
+  <string name="network_test_success">连接成功</string>
+  <string name="network_test_failed">连接失败：%1$s</string>
+  <string name="network_test_unknown_error">未知错误</string>
   <string name="ui_local_network">本地网络</string>
   <string name="ui_no_network_connections">没有网络连接</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">添加 SMB、FTP 或 WebDAV 连接以浏览网络文件</string>
@@ -2227,7 +2270,7 @@
   <string name="playlist_full_names">完整名称</string>
   <string name="playlist_stream_details">流详情</string>
   <string name="playlist_center_titles">标题居中</string>
-  <string name="playlist_manual_grid">手动设置网格列数</string>
+  <string name="playlist_manual_grid">手动调整网格</string>
   <string name="playlist_columns_portrait">竖屏列数</string>
   <string name="playlist_columns_landscape">横屏列数</string>
   <string name="playlist_extension">文件扩展名</string>
@@ -2241,6 +2284,8 @@
   <!-- 快照（帧捕获） -->
   <string name="ui_snapshots">快照</string>
   <string name="ui_profile">个人资料</string>
+  <string name="pref_nav_library_title">显示「收藏」标签页</string>
+  <string name="pref_nav_library_summary">播放列表与快照合并为同一个收藏中枢</string>
   <string name="pref_nav_profile_title">显示“个人资料”标签页</string>
   <string name="pref_nav_profile_summary">将最近、播放列表和快照合并到一个标签页</string>
   <string name="profile_view_all">查看全部</string>
@@ -2466,7 +2511,7 @@
   <string name="ui_search_files">搜索文件和文件夹</string>
   <string name="ui_no_matching_files">没有匹配的文件或文件夹</string>
   <string name="ui_system_picker">系统文件选择器</string>
-  <string name="ui_sort_by">排序依据</string>
+  <string name="ui_sort_by">排序方式</string>
   <string name="ui_media_types">媒体类型</string>
   <string name="playlist_open_action">打开播放列表</string>
   <string name="syncplay_failure_dns">找不到服务器地址。请检查主机名和网络的 DNS 设置。</string>
@@ -2826,4 +2871,21 @@
   <string name="pref_persistent_status_micro_battery">显示迷你电池图标</string>
   <string name="pref_persistent_status_est_prefix">预计</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">排序顺序</string>
+  <string name="view_mode_label">视图模式</string>
+  <string name="options_section">选项</string>
+  <string name="view_mode_folder">文件夹</string>
+  <string name="view_mode_tree">树形</string>
+  <string name="view_mode_library">媒体库</string>
+  <string name="grid_columns_range">网格列数（%1$d – %2$d）</string>
+  <string name="folder_grid_columns">文件夹列数</string>
+  <string name="video_grid_columns">视频列数</string>
+  <string name="sort_type_title">标题</string>
+  <string name="sort_type_date">日期</string>
+  <string name="sort_type_size">大小</string>
+  <string name="sort_type_count">数量</string>
+  <string name="generic_close">关闭</string>
+  <string name="ui_images">图片</string>
 </resources>

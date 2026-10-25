@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import app.gyrolet.mpvrx.presentation.components.AppAlertDialog as AlertDialog
@@ -52,6 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
@@ -60,7 +63,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.database.entities.PlaylistEntity
@@ -95,6 +100,8 @@ import app.gyrolet.mpvrx.ui.components.InlineSearchBar
 import app.gyrolet.mpvrx.ui.components.themedSegmentedButtonColors
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.paper.paperInset
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.NavigationPager
@@ -245,6 +252,13 @@ object PlaylistScreen : Screen {
     var directDeleteTarget by remember { mutableStateOf<PlaylistWithCount?>(null) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
+    val libraryHost = app.gyrolet.mpvrx.ui.browser.library.LocalLibraryPaneHost.current
+    LaunchedEffect(libraryHost?.searchRequests) {
+      if (libraryHost != null && libraryHost.searchRequests > 0 && !isSearching) isSearching = true
+    }
+    LaunchedEffect(libraryHost?.sortRequests) {
+      if (libraryHost != null && libraryHost.sortRequests > 0) showSortDialog = true
+    }
     var showPlaylistActionSheet by remember { mutableStateOf(false) }
     var showCreateAudioDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -275,6 +289,9 @@ object PlaylistScreen : Screen {
 
     Scaffold(
       containerColor = wallpaperAwareBackgroundColor(),
+      contentWindowInsets =
+        if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
+        else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
       topBar = {
         if (isSearching) {
           InlineSearchBar(
@@ -299,8 +316,11 @@ object PlaylistScreen : Screen {
             },
             shape = RoundedCornerShape(28.dp),
             tonalElevation = 6.dp,
+            windowInsets =
+              if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
+              else androidx.compose.material3.SearchBarDefaults.windowInsets,
           )
-        } else {
+        } else if (libraryHost == null) {
           BrowserTopBar(
             title = stringResource(R.string.ui_playlists),
             isInSelectionMode = selectionManager.isInSelectionMode,
@@ -322,12 +342,13 @@ object PlaylistScreen : Screen {
       },
       floatingActionButton = {
         if (!selectionManager.isInSelectionMode && isFabVisible.value) {
-          ExtendedFloatingActionButton(
+          // Mockup `.fab`: round vermilion key with the playlist-plus mark.
+          app.gyrolet.mpvrx.ui.theme.paper.PaperFab(
+            icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.PlaylistAdd,
+            contentDescription = stringResource(R.string.ui_create_playlist),
             onClick = {
               if (libraryType == MediaLibraryType.Audio) showCreateAudioDialog = true else showPlaylistActionSheet = true
             },
-            icon = { Icon(Icons.RoundedFilled.Add, contentDescription = null) },
-            text = { Text(stringResource(R.string.ui_create_playlist)) },
             modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
           )
         }
@@ -340,22 +361,42 @@ object PlaylistScreen : Screen {
             .padding(paddingValues)
             .onSizeChanged { contentWidthDp = with(density) { it.width.toDp().value.toInt() } },
       ) {
-        SingleChoiceSegmentedButtonRow(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        // Mockup `.seg`: recessed paper groove; the active type rises on a card key in vermilion.
+        val segColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
+        Row(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 20.dp, vertical = 8.dp)
+              .paperInset(RoundedCornerShape(12.dp), segColors)
+              .padding(4.dp),
+          horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-          MediaLibraryType.entries.forEachIndexed { index, type ->
-            SegmentedButton(
-              selected = libraryType == type,
-              onClick = {
-                if (libraryType != type) {
-                  selectionManager.clear()
-                  libraryType = type
-                }
-              },
-              shape = SegmentedButtonDefaults.itemShape(index, MediaLibraryType.entries.size),
-              colors = themedSegmentedButtonColors(),
+          MediaLibraryType.entries.forEach { type ->
+            val selected = libraryType == type
+            val keyShape = RoundedCornerShape(9.dp)
+            Box(
+              modifier =
+                Modifier
+                  .weight(1f)
+                  .clip(keyShape)
+                  .then(if (selected) Modifier.paperRaise(keyShape, segColors, elevation = 2.dp) else Modifier)
+                  .clickable {
+                    if (libraryType != type) {
+                      selectionManager.clear()
+                      libraryType = type
+                    }
+                  }
+                  .padding(vertical = 8.dp),
+              contentAlignment = Alignment.Center,
             ) {
-              Text(stringResource(if (type == MediaLibraryType.Audio) R.string.ui_audio_tab else R.string.ui_videos))
+              Text(
+                text = stringResource(if (type == MediaLibraryType.Audio) R.string.ui_audio_tab else R.string.ui_videos),
+                fontSize = 13.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) segColors.red else segColors.inkSecondary,
+                maxLines = 1,
+              )
             }
           }
         }
@@ -650,8 +691,8 @@ object PlaylistScreen : Screen {
           LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = bottomPadding),
-            verticalArrangement = Arrangement.spacedBy(MediaSelectionListGap),
+            contentPadding = PaddingValues(top = 4.dp, bottom = bottomPadding),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
           ) {
             items(count = playlistsWithCount.size, key = { playlistsWithCount[it].playlist.id }) { index ->
               val playlistWithCount = playlistsWithCount[index]

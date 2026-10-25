@@ -9,15 +9,14 @@
 
 package app.gyrolet.mpvrx.ui.browser.dialogs
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,30 +25,27 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.foundation.verticalScroll
 import app.gyrolet.mpvrx.ui.components.AppSlider as Slider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,28 +54,45 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.gyrolet.mpvrx.presentation.components.AppPickerSheet
-import app.gyrolet.mpvrx.ui.components.themedSegmentedButtonColors
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
-import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.rememberTvInitialFocusRequester
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusGroup
+import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.player.controls.components.tvInitialFocus
 import app.gyrolet.mpvrx.ui.theme.AppMotion
-import app.gyrolet.mpvrx.ui.theme.AppShapeScale
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
+import app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton
+import app.gyrolet.mpvrx.ui.theme.paper.PaperRaisedButton
+import app.gyrolet.mpvrx.ui.theme.paper.PaperSolidButton
+import app.gyrolet.mpvrx.ui.theme.paper.paperInset
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import app.gyrolet.mpvrx.ui.utils.rememberAppHaptics
 import kotlin.math.roundToInt
 
+/**
+ * The paper redesign of the sort & view dialog (mockup `#modal-sort`): a centered card-paper
+ * modal — not a bottom sheet — with letter-spaced section labels, text pill selectors, square
+ * paper checkboxes, a −/＋ stepper for grid columns and the 取消/完成 key pair at the bottom.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SortDialog(
@@ -116,246 +129,227 @@ fun SortDialog(
 
     val (ascLabel, descLabel) = getLabelForType(sortType, sortOrderAsc)
 
-    AppPickerSheet(
-      onDismissRequest = onDismiss,
+    PaperSortModal(
+      onDismiss = onDismiss,
       title = title,
-      actions = {
-        TextButton(onClick = onDismiss) {
-          Text(
-            text =
-              androidx.compose.ui.res
-                .stringResource(app.gyrolet.mpvrx.R.string.ui_done),
+      modifier = modifier,
+      footer = {
+        // Same width and body height for both keys; the solid key's 3dp step is its shadow.
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+          horizontalArrangement = Arrangement.spacedBy(12.dp),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          PaperRaisedButton(
+            text = androidx.compose.ui.res.stringResource(R.string.generic_cancel),
+            onClick = onDismiss,
+            height = 50.dp,
+            modifier = Modifier.weight(1f),
+          )
+          PaperSolidButton(
+            text = androidx.compose.ui.res.stringResource(R.string.ui_done),
+            onClick = onDismiss,
+            modifier = Modifier.weight(1f),
           )
         }
       },
-      modifier = modifier,
     ) {
-      Column {
-        HorizontalDivider()
-        Column(
-          modifier = Modifier.fillMaxWidth(),
-        ) {
-          if (showSortOptions) {
-            DialogSectionTitle(
-              text = androidx.compose.ui.res.stringResource(app.gyrolet.mpvrx.R.string.ui_sort_by),
-            )
-            SortTypeSelector(
-              sortType = sortType,
-              onSortTypeChange = onSortTypeChange,
-              types = types,
-              icons = icons,
-              modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            SortOrderSelector(
-              sortOrderAsc = sortOrderAsc,
-              onSortOrderChange = onSortOrderChange,
-              ascLabel = ascLabel,
-              descLabel = descLabel,
-              modifier = Modifier.fillMaxWidth(),
-            )
-          }
+      if (showSortOptions && types.isNotEmpty()) {
+        PaperSectionLabel(
+          text = androidx.compose.ui.res.stringResource(R.string.ui_sort_by),
+          isFirst = true,
+        )
+        PaperRadioPillRow(
+          options = types,
+          selected = sortType,
+          onSelect = onSortTypeChange,
+          modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+        )
+        PaperSectionLabel(text = androidx.compose.ui.res.stringResource(R.string.sort_order))
+        PaperRadioPillRow(
+          options = listOf(ascLabel, descLabel),
+          selected = if (sortOrderAsc) ascLabel else descLabel,
+          onSelect = { selected -> onSortOrderChange(selected == ascLabel) },
+          modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+        )
+      }
 
-          if (viewModeSelector != null) {
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp))
-            DialogSectionTitle(text = viewModeSelector.label)
-            SingleChoiceSegmentedButtonRow(
-              modifier = Modifier.fillMaxWidth(),
-            ) {
-              viewModeSelector.options.forEachIndexed { index, option ->
-                SegmentedButton(
-                  selected = option.isSelected,
-                  onClick = {
-                    if (enableViewModeOptions && !option.isSelected) {
-                      option.onClick()
-                      haptics.selection(true)
-                    }
-                  },
-                  enabled = enableViewModeOptions,
-                  shape = SegmentedButtonDefaults.itemShape(index = index, count = viewModeSelector.options.size),
-                  colors = themedSegmentedButtonColors(),
-                ) {
-                  Text(text = option.label)
+      viewModeSelector?.let { viewMode ->
+        PaperSectionLabel(text = viewMode.label)
+        PaperRadioPillRow(
+          options = viewMode.options.map { it.label },
+          selected = viewMode.options.firstOrNull { it.isSelected }?.label,
+          onSelect = { selected ->
+            viewMode.options
+              .firstOrNull { it.label == selected }
+              ?.let { option ->
+                if (enableViewModeOptions && !option.isSelected) {
+                  option.onClick()
+                  haptics.selection(true)
                 }
               }
-            }
-          }
+          },
+          modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+        )
+      }
 
-          if (layoutModeSelector != null) {
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp))
-            DialogSectionTitle(text = layoutModeSelector.label)
-            // A page with three layouts owns its own selection, so the third option decides whether
-            // the middle one is the one showing; with only two the flag still describes both.
-            val thirdSelected = layoutModeSelector.thirdOption?.isSelected == true
-            val isFirstSelected = layoutModeSelector.isFirstOptionSelected && !thirdSelected
-            val options =
-              buildList {
-                add(
-                  ViewModeOption(
-                    label = layoutModeSelector.firstOptionLabel,
-                    icon = layoutModeSelector.firstOptionIcon,
-                    isSelected = isFirstSelected,
-                    onClick = { layoutModeSelector.onViewModeChange(true) },
-                  ),
-                )
-                add(
-                  ViewModeOption(
-                    label = layoutModeSelector.secondOptionLabel,
-                    icon = layoutModeSelector.secondOptionIcon,
-                    isSelected = !layoutModeSelector.isFirstOptionSelected && !thirdSelected,
-                    onClick = { layoutModeSelector.onViewModeChange(false) },
-                  ),
-                )
-                layoutModeSelector.thirdOption?.let(::add)
-              }
-            SingleChoiceSegmentedButtonRow(
-              modifier = Modifier.fillMaxWidth(),
-            ) {
-              options.forEachIndexed { index, option ->
-                SegmentedButton(
-                  selected = option.isSelected,
-                  onClick = {
-                    if (enableLayoutModeOptions && !option.isSelected) {
-                      option.onClick()
-                      haptics.selection(true)
-                    }
-                  },
-                  enabled = enableLayoutModeOptions,
-                  shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                  colors = themedSegmentedButtonColors(),
-                  icon = {
-                    Icon(
-                      imageVector = option.icon,
-                      contentDescription = option.label,
-                      modifier = Modifier.size(16.dp),
-                    )
-                  },
-                ) {
-                  Text(text = option.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-              }
-            }
-            val showSeparateLayout = !isFirstSelected && layoutModeSelector.checkboxLabel != null && layoutModeSelector.onCheckboxChange != null
-            val showManualGrid = manualGridToggle != null && !isFirstSelected
-            if (showSeparateLayout || showManualGrid) {
-              Spacer(modifier = Modifier.height(4.dp))
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                if (layoutModeSelector.checkboxLabel != null && layoutModeSelector.onCheckboxChange != null) {
-                  Row(
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp))
-                      .toggleable(
-                        value = layoutModeSelector.isCheckboxChecked,
-                        enabled = enableLayoutModeOptions,
-                        role = androidx.compose.ui.semantics.Role.Checkbox,
-                        onValueChange = { checked ->
-                          layoutModeSelector.onCheckboxChange.invoke(checked)
-                          haptics.selection(checked)
-                        },
-                      ),
-                    // Without this the label sits flush against the checkbox's own padding and reads
-                    // as one glued block.
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                  ) {
-                    RoundedCheckbox(
-                      checked = layoutModeSelector.isCheckboxChecked,
-                      onCheckedChange = null,
-                      enabled = enableLayoutModeOptions,
-                    )
-                    Text(
-                      text = layoutModeSelector.checkboxLabel,
-                      modifier = Modifier.weight(1f),
-                      style = MaterialTheme.typography.bodyMedium,
-                    )
-                  }
-                }
-                if (manualGridToggle != null && showManualGrid) {
-                  val isEnabled = enableLayoutModeOptions && manualGridToggle.enabled
-                  Row(
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp))
-                      .toggleable(
-                        value = manualGridToggle.checked,
-                        enabled = isEnabled,
-                        role = androidx.compose.ui.semantics.Role.Checkbox,
-                        onValueChange = { checked ->
-                          manualGridToggle.onCheckedChange(checked)
-                          haptics.selection(checked)
-                        },
-                      ),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                  ) {
-                    RoundedCheckbox(checked = manualGridToggle.checked, onCheckedChange = null, enabled = isEnabled)
-                    Text(
-                      text = manualGridToggle.label,
-                      modifier = Modifier.weight(1f),
-                      style = MaterialTheme.typography.bodyMedium,
-                    )
-                  }
-                }
-              }
-            }
+      layoutModeSelector?.let { layoutMode ->
+        PaperSectionLabel(text = layoutMode.label)
+        // A page with three layouts owns its own selection, so the third option decides whether
+        // the middle one is the one showing; with only two the flag still describes both.
+        val thirdSelected = layoutMode.thirdOption?.isSelected == true
+        val isFirstSelected = layoutMode.isFirstOptionSelected && !thirdSelected
+        val options =
+          buildList {
+            add(
+              ViewModeOption(
+                label = layoutMode.firstOptionLabel,
+                icon = layoutMode.firstOptionIcon,
+                isSelected = isFirstSelected,
+                onClick = { layoutMode.onViewModeChange(true) },
+              ),
+            )
+            add(
+              ViewModeOption(
+                label = layoutMode.secondOptionLabel,
+                icon = layoutMode.secondOptionIcon,
+                isSelected = !layoutMode.isFirstOptionSelected && !thirdSelected,
+                onClick = { layoutMode.onViewModeChange(false) },
+              ),
+            )
+            layoutMode.thirdOption?.let(::add)
           }
-
-          GridColumnsNextSection(
-            folderGridColumnSelector = folderGridColumnSelector,
-            videoGridColumnSelector = videoGridColumnSelector,
+        PaperRadioPillRow(
+          options = options.map { it.label },
+          selected = options.firstOrNull { it.isSelected }?.label,
+          onSelect = { selected ->
+            options
+              .firstOrNull { it.label == selected }
+              ?.let { option ->
+                if (enableLayoutModeOptions && !option.isSelected) {
+                  option.onClick()
+                  haptics.selection(true)
+                }
+              }
+          },
+          modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+        )
+        val showSeparateLayout =
+          !isFirstSelected && layoutMode.checkboxLabel != null && layoutMode.onCheckboxChange != null
+        val showManualGrid = manualGridToggle != null && !isFirstSelected
+        if (showSeparateLayout || showManualGrid) {
+          PaperSectionLabel(
+            text = androidx.compose.ui.res.stringResource(R.string.options_section),
           )
-
-          if (mediaTypeToggles.isNotEmpty()) {
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
-            DialogSectionTitle(
-              text = androidx.compose.ui.res.stringResource(app.gyrolet.mpvrx.R.string.ui_media_types),
-            )
-            ToggleChipRow(mediaTypeToggles)
+          Column(modifier = Modifier.padding(top = 4.dp)) {
+            if (showSeparateLayout) {
+              PaperCheckboxRow(
+                label = layoutMode.checkboxLabel.orEmpty(),
+                checked = layoutMode.isCheckboxChecked,
+                enabled = enableLayoutModeOptions,
+                onCheckedChange = { checked ->
+                  layoutMode.onCheckboxChange?.invoke(checked)
+                  haptics.selection(checked)
+                },
+              )
+            }
+            if (showManualGrid) {
+              PaperCheckboxRow(
+                label = manualGridToggle?.label.orEmpty(),
+                checked = manualGridToggle?.checked == true,
+                enabled = enableLayoutModeOptions && (manualGridToggle?.enabled ?: true),
+                onCheckedChange = { checked ->
+                  manualGridToggle?.onCheckedChange?.invoke(checked)
+                  haptics.selection(checked)
+                },
+              )
+            }
           }
+        }
+      }
 
-          if (visibilityToggles.isNotEmpty()) {
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
-            Column(
-              modifier =
-                Modifier
-                  .fillMaxWidth()
-                  .animateContentSize(
-                    animationSpec = AppMotion.spatial(tween(durationMillis = 250), snap()),
-                  ),
-            ) {
-              Row(
-                modifier =
-                  Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { isFieldsExpanded = !isFieldsExpanded }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                Text(
-                  text =
-                    androidx.compose.ui.res
-                      .stringResource(app.gyrolet.mpvrx.R.string.ui_fields),
-                  style = MaterialTheme.typography.titleSmall,
-                )
-                Icon(
-                  imageVector = if (isFieldsExpanded) Icons.RoundedFilled.KeyboardArrowUp else Icons.RoundedFilled.KeyboardArrowDown,
-                  contentDescription =
-                    androidx.compose.ui.res.stringResource(
-                      if (isFieldsExpanded) {
-                        app.gyrolet.mpvrx.R.string.generic_collapse
-                      } else {
-                        app.gyrolet.mpvrx.R.string.generic_expand
-                      },
-                    ),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                  modifier = Modifier.size(20.dp),
-                )
-              }
+      GridColumnsSection(
+        folderGridColumnSelector = folderGridColumnSelector,
+        videoGridColumnSelector = videoGridColumnSelector,
+      )
+
+      if (mediaTypeToggles.isNotEmpty()) {
+        PaperSectionLabel(
+          text = androidx.compose.ui.res.stringResource(R.string.ui_media_types),
+        )
+        FlowRow(
+          modifier = Modifier.fillMaxWidth().padding(top = 9.dp),
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+          mediaTypeToggles.forEach { toggle ->
+            PaperCheckPill(
+              label = toggle.label,
+              checked = toggle.checked,
+              enabled = toggle.enabled,
+              onCheckedChange = toggle.onCheckedChange,
+            )
+          }
+        }
+      }
+
+      if (visibilityToggles.isNotEmpty()) {
+        Row(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .clip(RoundedCornerShape(8.dp))
+              .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = true),
+              ) { isFieldsExpanded = !isFieldsExpanded }
+              .padding(top = 17.dp, bottom = 4.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Text(
+            text = androidx.compose.ui.res.stringResource(R.string.ui_fields),
+            fontSize = 12.sp,
+            letterSpacing = 2.5.sp,
+            fontWeight = FontWeight.Bold,
+            color = LocalPaperColors.current.inkTertiary,
+          )
+          Icon(
+            imageVector =
               if (isFieldsExpanded) {
-                FieldToggleChipRow(visibilityToggles)
+                Icons.RoundedFilled.KeyboardArrowUp
+              } else {
+                Icons.RoundedFilled.KeyboardArrowDown
+              },
+            contentDescription =
+              androidx.compose.ui.res.stringResource(
+                if (isFieldsExpanded) R.string.generic_collapse else R.string.generic_expand,
+              ),
+            tint = LocalPaperColors.current.inkTertiary,
+            modifier = Modifier.size(16.dp),
+          )
+        }
+        Column(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .animateContentSize(
+                animationSpec = AppMotion.spatial(tween(durationMillis = 250), snap()),
+              ),
+        ) {
+          if (isFieldsExpanded) {
+            FlowRow(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+              visibilityToggles.forEach { toggle ->
+                PaperCheckPill(
+                  label = toggle.label,
+                  checked = toggle.checked,
+                  enabled = toggle.enabled,
+                  onCheckedChange = toggle.onCheckedChange,
+                )
               }
             }
           }
@@ -370,414 +364,515 @@ fun SortDialog(
   }
 }
 
+/**
+ * The centered paper modal shell (mockup `.modal` + `.sheet`): warm dim scrim over the screen,
+ * a card-paper sheet capped at the mockup's 620px height that scrolls when the content is
+ * taller, with the title and close key pinned above the body.
+ */
 @Composable
-private fun SortTypeSelector(
-  sortType: String,
-  onSortTypeChange: (String) -> Unit,
-  types: List<String>,
-  icons: List<AppIcon>,
+private fun PaperSortModal(
+  onDismiss: () -> Unit,
+  title: String,
   modifier: Modifier = Modifier,
+  footer: @Composable () -> Unit = {},
+  content: @Composable () -> Unit,
 ) {
-  val haptics = rememberAppHaptics()
-  val initialFocusRequester = rememberTvInitialFocusRequester(types.isNotEmpty(), requestKey = sortType)
-  Row(
-    modifier =
-      modifier
-        .fillMaxWidth()
-        .tvFocusGroup()
-        .selectableGroup()
-        .horizontalScroll(rememberScrollState()),
-    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-    verticalAlignment = Alignment.CenterVertically,
+  val colors = LocalPaperColors.current
+  val configuration = LocalConfiguration.current
+  val maxSheetHeight = minOf(620.dp, (configuration.screenHeightDp - 52).dp).coerceAtLeast(200.dp)
+  val shape = RoundedCornerShape(18.dp)
+  val scrollState = rememberScrollState()
+
+  Dialog(
+    onDismissRequest = onDismiss,
+    properties =
+      DialogProperties(
+        usePlatformDefaultWidth = false,
+        decorFitsSystemWindows = false,
+      ),
   ) {
-    types.forEachIndexed { index, type ->
-      val selected = sortType == type
-      val containerColor by animateColorAsState(
-        targetValue =
-          if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-          } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-          },
-        animationSpec = AppMotion.spatial(AppMotion.Effect.Color, snap()),
-        label = "sortSelectionColor",
-      )
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    // Mockup `pop`: scale .9→1 with a 14px drop-in, scrim fades over `fade`.
+    val progress by animateFloatAsState(
+      targetValue = if (shown) 1f else 0f,
+      animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f),
+      label = "paperModalPop",
+    )
+    Box(
+      modifier =
+        Modifier
+          .fillMaxSize()
+          .background(Color(0xFF342A18).copy(alpha = 0.45f * progress))
+          .displayCutoutPadding()
+          .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+          ) { onDismiss },
+      contentAlignment = Alignment.Center,
+    ) {
       Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-        modifier = Modifier.padding(2.dp),
+        modifier =
+          modifier
+            .padding(horizontal = 24.dp, vertical = 26.dp)
+            .widthIn(max = 520.dp)
+            .heightIn(max = maxSheetHeight)
+            .graphicsLayer {
+              alpha = progress
+              val scale = 0.9f + 0.1f * progress
+              scaleX = scale
+              scaleY = scale
+              translationY = (1f - progress) * 14.dp.toPx()
+            }
+            .shadow(
+              elevation = 24.dp,
+              shape = shape,
+              clip = false,
+              ambientColor = Color(0xFF1E1608).copy(alpha = 0.45f),
+              spotColor = Color(0xFF1E1608).copy(alpha = 0.45f),
+            )
+            .paperRaise(shape, colors, elevation = 18.dp)
+            .border(1.dp, colors.cardLine, shape)
+            .clip(shape)
+            .clickable(
+              interactionSource = remember { MutableInteractionSource() },
+              indication = null,
+            ) { }
+            .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 20.dp),
       ) {
-        Box(
-          modifier =
-            Modifier
-              .size(64.dp)
-              .clip(AppShapeScale.large)
-              .background(containerColor)
-              .then(if (selected) Modifier.tvInitialFocus(initialFocusRequester) else Modifier)
-              .tvFocusHighlight(AppShapeScale.large, focusedScale = 1.04f)
-              .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = {
-                  if (!selected) {
-                    onSortTypeChange(type)
-                    haptics.selection(true)
-                  }
-                },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = true),
-              ),
-          contentAlignment = Alignment.Center,
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
         ) {
-          Icon(
-            imageVector = icons[index],
-            contentDescription = type,
-            modifier = Modifier.size(30.dp),
-            tint =
-              if (selected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-              } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-              },
+          Text(
+            text = title,
+            modifier = Modifier.semantics { heading() },
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp,
+            color = colors.ink,
+          )
+          PaperIconButton(
+            icon = Icons.RoundedFilled.Close,
+            contentDescription = androidx.compose.ui.res.stringResource(R.string.generic_close),
+            onClick = onDismiss,
           )
         }
-        Text(
-          text = type,
-          style = MaterialTheme.typography.labelSmall,
-          fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-          color =
-            if (selected) {
-              MaterialTheme.colorScheme.primary
-            } else {
-              MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
+        Column(
+          modifier =
+            Modifier
+              .weight(1f, fill = false)
+              .verticalScroll(scrollState),
+        ) {
+          content()
+        }
+        footer()
       }
     }
   }
 }
 
+/** Mockup `.mlab`: 12px bold letter-spaced tertiary label above each form group. */
 @Composable
-private fun SortOrderSelector(
-  sortOrderAsc: Boolean,
-  onSortOrderChange: (Boolean) -> Unit,
-  ascLabel: String,
-  descLabel: String,
+private fun PaperSectionLabel(
+  text: String,
   modifier: Modifier = Modifier,
+  isFirst: Boolean = false,
 ) {
-  val haptics = rememberAppHaptics()
-  val options = listOf(ascLabel, descLabel)
-  val selectedIndex = if (sortOrderAsc) 0 else 1
-
-  SingleChoiceSegmentedButtonRow(
-    modifier = modifier,
-  ) {
-    options.forEachIndexed { index, label ->
-      SegmentedButton(
-        selected = index == selectedIndex,
-        onClick = {
-          if (index != selectedIndex) {
-            onSortOrderChange(index == 0)
-            haptics.selection(true)
-          }
-        },
-        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-        colors = themedSegmentedButtonColors(),
-        icon = {
-          Icon(
-            imageVector =
-              if (index ==
-                0
-              ) {
-                Icons.RoundedFilled.KeyboardArrowUp
-              } else {
-                Icons.RoundedFilled.KeyboardArrowDown
-              },
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-          )
-        },
-      ) {
-        Text(text = label)
-      }
-    }
-  }
-}
-
-@Composable
-private fun DialogSectionTitle(text: String) {
   Text(
     text = text,
-    style = MaterialTheme.typography.titleSmall,
-    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+    modifier = modifier.then(if (isFirst) Modifier else Modifier.padding(top = 17.dp)),
+    fontSize = 12.sp,
+    letterSpacing = 2.5.sp,
+    fontWeight = FontWeight.Bold,
+    color = LocalPaperColors.current.inkTertiary,
   )
 }
 
-/** Shared by the Media Types and Fields groups so the two chip rows cannot drift apart. */
+/** Mockup `.opt-group` + `.opt`: wrapping row of single-select text pills. */
 @Composable
-private fun ToggleChipRow(toggles: List<VisibilityToggle>) {
-  FlowRow(
-    modifier =
-      Modifier
-        .fillMaxWidth()
-        .wrapContentHeight(align = Alignment.Top),
-    horizontalArrangement = Arrangement.spacedBy(6.dp),
-    verticalArrangement = Arrangement.spacedBy(4.dp),
-  ) {
-    toggles.forEach { toggle ->
-      FilterChip(
-        selected = toggle.checked,
-        onClick = { toggle.onCheckedChange(!toggle.checked) },
-        enabled = toggle.enabled,
-        label = { Text(text = toggle.label) },
-        border =
-          FilterChipDefaults.filterChipBorder(
-            enabled = toggle.enabled,
-            selected = toggle.checked,
-            selectedBorderWidth = 1.dp,
-            selectedBorderColor = MaterialTheme.colorScheme.primary,
-          ),
-      )
-    }
-  }
-}
-
-/** Expressive selection chips are used only for the expanded Fields options. */
-@Composable
-private fun OptionChip(
-  label: String,
-  selected: Boolean,
-  onClick: () -> Unit,
+private fun PaperRadioPillRow(
+  options: List<String>,
+  selected: String?,
+  onSelect: (String) -> Unit,
   modifier: Modifier = Modifier,
-  enabled: Boolean = true,
-  icon: AppIcon? = null,
-  singleChoice: Boolean = false,
 ) {
-  val haptics = rememberAppHaptics()
-  FilterChip(
-    selected = selected,
-    onClick = {
-      if (enabled && !(singleChoice && selected)) {
-        onClick()
-        haptics.selection(!selected)
-      }
-    },
-    modifier = modifier
-      .heightIn(min = 48.dp)
-      .tvFocusHighlight(AppShapeScale.medium, focusedScale = 1.03f),
-    enabled = enabled,
-    label = { Text(text = label, style = MaterialTheme.typography.labelLarge) },
-    leadingIcon = if (icon != null) {
-      { Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp)) }
-    } else null,
-    trailingIcon = if (selected) {
-      { Icon(imageVector = Icons.RoundedFilled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-    } else null,
-    shape = AppShapeScale.medium,
-    colors = FilterChipDefaults.filterChipColors(
-      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-      labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-      iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-      selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-      selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-      selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-      selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ),
-    border = null,
-  )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FieldToggleChipRow(toggles: List<VisibilityToggle>) {
+  val initialFocusRequester =
+    rememberTvInitialFocusRequester(options.isNotEmpty(), requestKey = selected.orEmpty())
   FlowRow(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.tvFocusGroup().selectableGroup(),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    toggles.forEach { toggle ->
-      OptionChip(
-        label = toggle.label,
-        selected = toggle.checked,
-        onClick = { toggle.onCheckedChange(!toggle.checked) },
-        enabled = toggle.enabled,
-        modifier = Modifier.semantics { role = Role.Checkbox },
+    options.forEach { label ->
+      PaperRadioPill(
+        label = label,
+        selected = label == selected,
+        onSelect = onSelect,
+        modifier =
+          if (label == selected) {
+            Modifier.tvInitialFocus(initialFocusRequester)
+          } else {
+            Modifier
+          },
       )
     }
   }
 }
 
 @Composable
-private fun GridColumnsNextSection(
-  folderGridColumnSelector: GridColumnSelector?,
-  videoGridColumnSelector: GridColumnSelector?,
-) {
-  if (folderGridColumnSelector == null && videoGridColumnSelector == null) return
-
-  val haptic = rememberAppHaptics()
-
-  HorizontalDivider(modifier = Modifier.padding(top = 10.dp))
-
-  if (folderGridColumnSelector != null && videoGridColumnSelector != null) {
-    DialogSectionTitle(text = "Grid Columns")
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      Column(modifier = Modifier.weight(1f)) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Text(
-            text = folderGridColumnSelector.label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-          Text(
-            text = if (folderGridColumnSelector.unitSuffix.isEmpty()) "${folderGridColumnSelector.currentValue}" else "${folderGridColumnSelector.currentValue} ${folderGridColumnSelector.unitSuffix}",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-          )
-        }
-        Slider(
-          value = folderGridColumnSelector.currentValue.toFloat(),
-          onValueChange = {
-            val newValue = it.roundToInt()
-            if (newValue != folderGridColumnSelector.currentValue) {
-              folderGridColumnSelector.onValueChange(newValue)
-              haptic.tick()
-            }
-          },
-          valueRange = folderGridColumnSelector.valueRange,
-          steps = folderGridColumnSelector.steps,
-          modifier = Modifier.fillMaxWidth().tvFocusHighlight(RoundedCornerShape(8.dp), focusedScale = 1.01f),
-        )
-      }
-
-      Column(modifier = Modifier.weight(1f)) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Text(
-            text = videoGridColumnSelector.label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-          Text(
-            text = if (videoGridColumnSelector.unitSuffix.isEmpty()) "${videoGridColumnSelector.currentValue}" else "${videoGridColumnSelector.currentValue} ${videoGridColumnSelector.unitSuffix}",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-          )
-        }
-        Slider(
-          value = videoGridColumnSelector.currentValue.toFloat(),
-          onValueChange = {
-            val newValue = it.roundToInt()
-            if (newValue != videoGridColumnSelector.currentValue) {
-              videoGridColumnSelector.onValueChange(newValue)
-              haptic.tick()
-            }
-          },
-          valueRange = videoGridColumnSelector.valueRange,
-          steps = videoGridColumnSelector.steps,
-          modifier = Modifier.fillMaxWidth().tvFocusHighlight(RoundedCornerShape(8.dp), focusedScale = 1.01f),
-        )
-      }
-    }
-  } else {
-    val selector = folderGridColumnSelector ?: videoGridColumnSelector!!
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      DialogSectionTitle(text = selector.label)
-      Text(
-        text = if (selector.unitSuffix.isEmpty()) "${selector.currentValue}" else "${selector.currentValue} ${selector.unitSuffix}",
-        style = MaterialTheme.typography.bodySmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary,
-      )
-    }
-    Slider(
-      value = selector.currentValue.toFloat(),
-      onValueChange = {
-        val newValue = it.roundToInt()
-        if (newValue != selector.currentValue) {
-          selector.onValueChange(newValue)
-          haptic.tick()
-        }
-      },
-      valueRange = selector.valueRange,
-      steps = selector.steps,
-      modifier = Modifier.fillMaxWidth().tvFocusHighlight(RoundedCornerShape(8.dp), focusedScale = 1.01f),
-    )
-  }
-}
-
-@Composable
-private fun RoundedCheckbox(
-  checked: Boolean,
-  onCheckedChange: ((Boolean) -> Unit)?,
+private fun PaperRadioPill(
+  label: String,
+  selected: Boolean,
+  onSelect: (String) -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
 ) {
-  val checkColor = MaterialTheme.colorScheme.primary
-  val uncheckedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-  val disabledAlpha = 0.38f
-
-  val animatedBgColor by animateColorAsState(
-    targetValue = if (checked) checkColor else Color.Transparent,
-    animationSpec = AppMotion.spatial(AppMotion.Effect.Color, snap()),
-    label = "checkboxBg",
-  )
-  val animatedBorderColor by animateColorAsState(
-    targetValue = if (checked) checkColor else uncheckedBorderColor,
-    animationSpec = AppMotion.spatial(AppMotion.Effect.Color, snap()),
-    label = "checkboxBorder",
-  )
-
-  val interactionModifier = if (onCheckedChange != null) {
-    Modifier.clickable(
-      enabled = enabled,
-      role = Role.Checkbox,
-      onClick = { onCheckedChange(!checked) },
+  val colors = LocalPaperColors.current
+  val haptics = rememberAppHaptics()
+  val shape = RoundedCornerShape(10.dp)
+  Box(
+    modifier
+      .heightIn(min = 36.dp)
+      .clip(shape)
+      .then(
+        if (selected) {
+          Modifier
+            .background(colors.card, shape)
+            .border(1.5.dp, colors.red, shape)
+        } else {
+          Modifier.background(colors.paperInset, shape)
+        },
+      )
+      .tvFocusHighlight(shape, focusedScale = 1.04f)
+      .selectable(
+        selected = selected,
+        enabled = enabled,
+        role = Role.RadioButton,
+        onClick = {
+          if (!selected) {
+            onSelect(label)
+            haptics.selection(true)
+          }
+        },
+        interactionSource = remember { MutableInteractionSource() },
+        indication = ripple(bounded = true),
+      )
+      .padding(horizontal = 15.dp, vertical = 8.dp),
+    contentAlignment = Alignment.Center,
+  ) {
+    Text(
+      text = label,
+      fontSize = 13.sp,
+      fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+      color = if (selected) colors.red else colors.inkSecondary,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
     )
-  } else {
-    Modifier
   }
+}
 
+/** Toggle pill for the media-type and field groups — same shape as [PaperRadioPill]. */
+@Composable
+private fun PaperCheckPill(
+  label: String,
+  checked: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  val colors = LocalPaperColors.current
+  val haptics = rememberAppHaptics()
+  val shape = RoundedCornerShape(10.dp)
+  Box(
+    modifier
+      .heightIn(min = 36.dp)
+      .clip(shape)
+      .then(
+        if (checked) {
+          Modifier
+            .background(colors.card, shape)
+            .border(1.5.dp, colors.red, shape)
+        } else {
+          Modifier.background(colors.paperInset, shape)
+        },
+      )
+      .tvFocusHighlight(shape, focusedScale = 1.04f)
+      .toggleable(
+        value = checked,
+        enabled = enabled,
+        role = Role.Checkbox,
+        onValueChange = {
+          onCheckedChange(!checked)
+          haptics.selection(!checked)
+        },
+      )
+      .padding(horizontal = 15.dp, vertical = 8.dp),
+    contentAlignment = Alignment.Center,
+  ) {
+    Text(
+      text = label,
+      fontSize = 13.sp,
+      fontWeight = if (checked) FontWeight.Bold else FontWeight.Normal,
+      color = if (checked) colors.red else colors.inkSecondary,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+    )
+  }
+}
+
+/** Mockup `.chk`: square recessed paper box; filled with the vermilion gradient when on. */
+@Composable
+private fun PaperCheckbox(checked: Boolean, enabled: Boolean = true) {
+  val colors = LocalPaperColors.current
+  val shape = RoundedCornerShape(7.dp)
   Box(
     modifier =
-      modifier
-        .padding(8.dp)
-        .size(20.dp)
-        .graphicsLayer {
-          if (!enabled) alpha = disabledAlpha
-        }
-        .background(animatedBgColor, CircleShape)
-        .border(2.dp, animatedBorderColor, CircleShape)
-        .then(interactionModifier),
+      Modifier
+        .size(21.dp)
+        .graphicsLayer { if (!enabled) alpha = 0.38f }
+        .then(
+          if (checked) {
+            Modifier
+              .background(
+                Brush.verticalGradient(listOf(colors.redHighlight, colors.red)),
+                shape,
+              )
+              .border(0.5.dp, colors.redDark.copy(alpha = 0.4f), shape)
+          } else {
+            Modifier.paperInset(shape, colors)
+          },
+        ),
     contentAlignment = Alignment.Center,
   ) {
     if (checked) {
       Icon(
         imageVector = Icons.RoundedFilled.Check,
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.onPrimary,
+        tint = colors.onRed,
         modifier = Modifier.size(13.dp),
       )
     }
+  }
+}
+
+@Composable
+private fun PaperCheckboxRow(
+  label: String,
+  checked: Boolean,
+  enabled: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+) {
+  val colors = LocalPaperColors.current
+  val haptics = rememberAppHaptics()
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .heightIn(min = 40.dp)
+        .clip(RoundedCornerShape(8.dp))
+        .toggleable(
+          value = checked,
+          enabled = enabled,
+          role = Role.Checkbox,
+          onValueChange = { value ->
+            onCheckedChange(value)
+            haptics.selection(value)
+          },
+        )
+        .padding(vertical = 6.dp),
+    horizontalArrangement = Arrangement.spacedBy(9.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    PaperCheckbox(checked = checked, enabled = enabled)
+    Text(
+      text = label,
+      fontSize = 13.sp,
+      color = if (checked) colors.ink else colors.inkSecondary,
+    )
+  }
+}
+
+/**
+ * Grid-column count as a mockup `.stepper` (− value ＋). The dp-based selectors (cover-art
+ * size) keep a slider — a 40–128dp range is not steppable.
+ */
+@Composable
+private fun GridColumnsSection(
+  folderGridColumnSelector: GridColumnSelector?,
+  videoGridColumnSelector: GridColumnSelector?,
+) {
+  val selectors = listOfNotNull(folderGridColumnSelector, videoGridColumnSelector)
+  if (selectors.isEmpty()) return
+
+  val haptics = rememberAppHaptics()
+  val colors = LocalPaperColors.current
+  val columnSelectors = selectors.filter { it.unitSuffix == "cols" }
+  if (columnSelectors.isNotEmpty()) {
+    val minColumns = columnSelectors.minOf { it.valueRange.start.roundToInt() }
+    val maxColumns = columnSelectors.maxOf { it.valueRange.endInclusive.roundToInt() }
+    PaperSectionLabel(
+      text =
+        androidx.compose.ui.res
+          .stringResource(R.string.grid_columns_range, minColumns, maxColumns),
+    )
+    if (columnSelectors.size == 1) {
+      val selector = columnSelectors.first()
+      PaperStepper(
+        value = selector.currentValue,
+        minValue = selector.valueRange.start.roundToInt(),
+        maxValue = selector.valueRange.endInclusive.roundToInt(),
+        onValueChange = {
+          selector.onValueChange(it)
+          haptics.tick()
+        },
+        modifier = Modifier.padding(top = 11.dp),
+      )
+    } else {
+      Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp),
+      ) {
+        columnSelectors.forEach { selector ->
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Text(
+              text = selector.label,
+              fontSize = 13.sp,
+              color = colors.inkSecondary,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+            PaperStepper(
+              value = selector.currentValue,
+              minValue = selector.valueRange.start.roundToInt(),
+              maxValue = selector.valueRange.endInclusive.roundToInt(),
+              onValueChange = {
+                selector.onValueChange(it)
+                haptics.tick()
+              },
+            )
+          }
+        }
+      }
+    }
+  }
+
+  selectors
+    .firstOrNull { it.unitSuffix != "cols" }
+    ?.let { selector ->
+      PaperSectionLabel(text = selector.label)
+      Text(
+        text = "${selector.currentValue} ${selector.unitSuffix}",
+        modifier = Modifier.padding(top = 4.dp),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = colors.red,
+      )
+      Slider(
+        value = selector.currentValue.toFloat(),
+        onValueChange = {
+          val newValue = it.roundToInt()
+          if (newValue != selector.currentValue) {
+            selector.onValueChange(newValue)
+            haptics.tick()
+          }
+        },
+        valueRange = selector.valueRange,
+        steps = selector.steps,
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .tvFocusHighlight(RoundedCornerShape(8.dp), focusedScale = 1.01f),
+      )
+    }
+}
+
+@Composable
+private fun PaperStepper(
+  value: Int,
+  minValue: Int,
+  maxValue: Int,
+  onValueChange: (Int) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val colors = LocalPaperColors.current
+  Row(
+    modifier = modifier,
+    horizontalArrangement = Arrangement.spacedBy(14.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    PaperStepperKey(
+      symbol = "−",
+      desc = androidx.compose.ui.res.stringResource(R.string.generic_decrease),
+      enabled = value > minValue,
+      onClick = { onValueChange(value - 1) },
+    )
+    Text(
+      text = value.toString(),
+      modifier = Modifier.widthIn(min = 28.dp),
+      fontSize = 15.sp,
+      fontWeight = FontWeight.SemiBold,
+      textAlign = TextAlign.Center,
+      color = colors.ink,
+    )
+    PaperStepperKey(
+      symbol = "＋",
+      desc = androidx.compose.ui.res.stringResource(R.string.generic_increase),
+      enabled = value < maxValue,
+      onClick = { onValueChange(value + 1) },
+    )
+  }
+}
+
+/** Mockup `.stepper button`: 40dp raised card key with a card→paper-in gradient. */
+@Composable
+private fun PaperStepperKey(
+  symbol: String,
+  desc: String,
+  enabled: Boolean,
+  onClick: () -> Unit,
+) {
+  val colors = LocalPaperColors.current
+  val shape = RoundedCornerShape(11.dp)
+  Box(
+    modifier =
+      Modifier
+        .size(40.dp)
+        .semantics { contentDescription = desc }
+        .graphicsLayer { if (!enabled) alpha = 0.38f }
+        .shadow(
+          elevation = 2.dp,
+          shape = shape,
+          clip = false,
+          ambientColor = colors.shadowTint.copy(alpha = 0.3f),
+          spotColor = colors.shadowTint.copy(alpha = 0.3f),
+        )
+        .border(1.dp, colors.cardLine, shape)
+        .background(
+          Brush.verticalGradient(listOf(colors.card, colors.paperInset)),
+          shape,
+        )
+        .tvFocusHighlight(shape, focusedScale = 1.06f)
+        .clickable(
+          interactionSource = remember { MutableInteractionSource() },
+          indication = null,
+          enabled = enabled,
+          role = Role.Button,
+          onClick = onClick,
+        ),
+    contentAlignment = Alignment.Center,
+  ) {
+    Text(
+      text = symbol,
+      fontSize = 20.sp,
+      color = colors.ink,
+    )
   }
 }
 

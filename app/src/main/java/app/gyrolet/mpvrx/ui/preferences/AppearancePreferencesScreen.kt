@@ -320,47 +320,8 @@ object AppearancePreferencesScreen : Screen {
                   PreferenceDivider()
 
                   val amoledMode by preferences.amoledMode.collectAsState()
-                  ThemePicker(
-                    currentTheme = appTheme,
-                    customThemes = pickerThemes,
-                    selectedCustomThemeName = selectedCustomThemeName,
-                    isDarkMode = isDarkMode,
-                    onThemeSelected = { theme, position ->
-                      if ((theme != appTheme || selectedCustomThemeName.isNotBlank()) && themeTransition?.isAnimating != true) {
-                        themeTransition?.startTransition(position)
-                        scope.launch {
-                          delay(50)
-                          preferences.appTheme.set(theme)
-                          preferences.selectedCustomThemeName.set("")
-                        }
-                      }
-                    },
-                    onAddCustomTheme = { backstack.navigateTo(CustomThemeEditorScreen()) },
-                    onCustomThemeSelected = { theme, position ->
-                      if (theme.name != selectedCustomThemeName && themeTransition?.isAnimating != true) {
-                        themeTransition?.startTransition(position)
-                        scope.launch {
-                          delay(50)
-                          preferences.selectedCustomThemeName.set(theme.name)
-                        }
-                      }
-                    },
-                    onEditCustomTheme = { name -> backstack.navigateTo(CustomThemeEditorScreen(name)) },
-                    onDeleteCustomTheme = { name ->
-                      val remainingThemes = customThemes.filterNot { it.name == name }
-                      preferences.customTheme.set(CustomThemeDefinition.serializeCollection(remainingThemes))
-                      if (selectedCustomThemeName == name) preferences.selectedCustomThemeName.set("")
-                    },
-                    modifier = Modifier.padding(vertical = 8.dp),
-                  )
-
                   PreferenceDivider()
 
-                  WallpaperPreferenceCard(
-                    modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_custom_wallpaper_title),
-                    wallpaperUri = customWallpaperUri,
-                    onClick = { backstack.navigateTo(WallpaperEditorScreen()) },
-                  )
 
                   PreferenceCard {
                    ExpressivePreferenceItem {
@@ -379,21 +340,6 @@ object AppearancePreferencesScreen : Screen {
 
                   PreferenceDivider()
 
-                  ExpressivePreferenceItem {
-                    Preference(
-                      title = { Text(stringResource(R.string.bg_pref_title)) },
-                      summary = {
-                        Text(
-                          stringResource(backgroundType.labelRes),
-                          color = MaterialTheme.colorScheme.outline,
-                        )
-                      },
-                      modifier = Modifier.settingsSearchTarget(R.string.bg_pref_title),
-                      onClick = { backstack.navigateTo(BackgroundAnimationPreferencesScreen) },
-                    )
-                  }
-
-                  PreferenceDivider()
 
                   SwitchPreference(
                     modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_amoled_mode_title),
@@ -929,12 +875,11 @@ object AppearancePreferencesScreen : Screen {
           }
 
           item {
-            val showMusicTab by preferences.showMusicTab.collectAsState()
+            val showLibraryTab by preferences.showLibraryTab.collectAsState()
             val showProfileTab by preferences.showProfileTab.collectAsState()
             val showNetworkTab by preferences.showNetworkTab.collectAsState()
-            val showJellyfinTab by preferences.showJellyfinTab.collectAsState()
             val savedOrder by preferences.bottomNavigationOrder.collectAsState()
-            val names = listOf("HOME", "MUSIC", "NETWORK", "JELLYFIN", "PROFILE")
+            val names = listOf("HOME", "LIBRARY", "NETWORK", "PROFILE")
             val ordered =
               listOf("HOME") +
                 (savedOrder.filter { it in names } + names)
@@ -943,9 +888,8 @@ object AppearancePreferencesScreen : Screen {
             val tabItems = ordered.map { id ->
               when (id) {
                 "HOME" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_home_title), stringResource(R.string.pref_nav_home_summary), true, required = true)
-                "MUSIC" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_music_title), stringResource(R.string.pref_nav_music_summary), showMusicTab, titleRes = R.string.pref_nav_music_title)
+                "LIBRARY" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_library_title), stringResource(R.string.pref_nav_library_summary), showLibraryTab, titleRes = R.string.pref_nav_library_title)
                 "NETWORK" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_network_title), stringResource(R.string.pref_nav_network_summary), showNetworkTab, titleRes = R.string.pref_nav_network_title)
-                "JELLYFIN" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_jellyfin_title), stringResource(R.string.pref_nav_jellyfin_summary), showJellyfinTab, titleRes = R.string.pref_nav_jellyfin_title)
                 else -> ReorderableTabItem(id, stringResource(R.string.pref_nav_profile_title), stringResource(R.string.pref_nav_profile_summary), showProfileTab, titleRes = R.string.pref_nav_profile_title)
               }
             }
@@ -954,9 +898,8 @@ object AppearancePreferencesScreen : Screen {
                 tabs = tabItems,
                 onEnabledChange = { id, enabled ->
                   when (id) {
-                    "MUSIC" -> preferences.showMusicTab.set(enabled)
+                    "LIBRARY" -> preferences.showLibraryTab.set(enabled)
                     "NETWORK" -> preferences.showNetworkTab.set(enabled)
-                    "JELLYFIN" -> preferences.showJellyfinTab.set(enabled)
                     "PROFILE" -> preferences.showProfileTab.set(enabled)
                   }
                 },

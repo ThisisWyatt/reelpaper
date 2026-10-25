@@ -256,6 +256,42 @@ class NetworkRepository(
       }
     }
 
+  /**
+   * Opens a throwaway client to verify a connection — typically the unsaved draft from the
+   * add/edit dialog. Deliberately does not touch the status map, the active-client table or the
+   * database, so unlike [resolveCredential] a plaintext draft password is used as-is instead of
+   * being persisted, and an empty draft password falls back to the stored one for edits.
+   */
+  suspend fun testConnection(connection: NetworkConnection): Result<Unit> =
+    withContext(Dispatchers.IO) {
+      try {
+        val effective =
+          if (connection.password.isEmpty() && connection.id != 0L) {
+            val stored = dao.getConnectionById(connection.id)
+            val storedPassword = stored?.password.orEmpty()
+            when {
+              storedPassword.isEmpty() -> connection
+              credentialCipher.isEncrypted(storedPassword) ->
+                connection.copy(password = credentialCipher.decrypt(storedPassword))
+              else -> connection.copy(password = storedPassword)
+            }
+          } else {
+            connection
+          }
+        val client = clientFactory(effective)
+        try {
+          client.connect().getOrThrow()
+        } finally {
+          closeClient(client)
+        }
+        Result.success(Unit)
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Result.failure(e)
+      }
+    }
+
   suspend fun listFiles(
     connection: NetworkConnection,
     path: String,

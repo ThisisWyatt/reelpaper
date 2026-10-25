@@ -23,9 +23,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,7 +44,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import app.gyrolet.mpvrx.ui.background.rememberSeasonalGreeting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -64,16 +67,20 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.DpOffset
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.icons.PaperIcons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.theme.DarkMode
 import app.gyrolet.mpvrx.ui.theme.AppMotion
@@ -153,6 +160,9 @@ fun BrowserTopBar(
   forceHeadlineSmall: Boolean = false,
   showBetaBadge: Boolean = false,
   customTitle: (@Composable () -> Unit)? = null,
+  brandLogo: Boolean = false,
+  brandWordmark: Boolean = false,
+  brandTag: String? = null,
 ) {
   val reducedMotion = AppMotion.shouldReduceMotion()
   val haptics = rememberAppHaptics()
@@ -227,6 +237,9 @@ fun BrowserTopBar(
         forceHeadlineSmall = forceHeadlineSmall,
         showBetaBadge = showBetaBadge,
         customTitle = customTitle,
+        brandLogo = brandLogo,
+        brandWordmark = brandWordmark,
+        brandTag = brandTag,
       )
     }
   }
@@ -255,6 +268,9 @@ private fun NormalTopBar(
   forceHeadlineSmall: Boolean = false,
   showBetaBadge: Boolean = false,
   customTitle: (@Composable () -> Unit)? = null,
+  brandLogo: Boolean = false,
+  brandWordmark: Boolean = false,
+  brandTag: String? = null,
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val wallpaperActive = LocalAppWallpaperActive.current
@@ -262,7 +278,6 @@ private fun NormalTopBar(
   val darkTheme = isSystemInDarkTheme()
   val themeTransition = LocalThemeTransitionState.current
   val coroutineScope = rememberCoroutineScope()
-  val seasonalGreeting = rememberSeasonalGreeting()
 
   // Track title bounds for animation position
   val titleBounds = remember { mutableStateOf(Rect.Zero) }
@@ -300,7 +315,8 @@ private fun NormalTopBar(
           } else if (MaterialTheme.colorScheme.background == Color.Black) {
             Color.Black
           } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            // Mockup `.appbar` sits directly on the paper page — no lighter card band.
+            MaterialTheme.colorScheme.background
           },
         titleContentColor = MaterialTheme.colorScheme.onSurface.onWallpaper(),
         navigationIconContentColor = MaterialTheme.colorScheme.onSurface.onWallpaper(),
@@ -358,48 +374,126 @@ private fun NormalTopBar(
           verticalAlignment = Alignment.CenterVertically,
           modifier =
             if (onBackClick == null) {
-              Modifier.padding(start = 8.dp)
+              // Mockup `.appbar` pads 20dp from the screen edge; TopAppBar already
+              // contributes its own 16dp title padding, so add the remainder here.
+              Modifier.padding(start = 4.dp)
             } else {
               Modifier
             },
         ) {
-          Text(
-            buildAnnotatedString {
-              append(title)
-              if (showBetaBadge) {
-                withStyle(
-                  SpanStyle(
-                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
-                    fontWeight = FontWeight.SemiBold,
-                    baselineShift = BaselineShift.Superscript,
-                  ),
-                ) {
-                  append(betaBadgeSuffix)
+          if (brandLogo) {
+            // Mockup `.brand`: enamel logo badge + two-line lockup. Home shows the
+            // "reelPaper" serif-italic wordmark; other brand pages use a page title
+            // (`.brand.pg`, sans 20px/800) — both may carry a small tag line below.
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = titleModifier,
+            ) {
+              // Brand lockup scaled 1.2× over the mockup tokens (user preference).
+              app.gyrolet.mpvrx.ui.theme.paper.ReelPaperLogoBadge(size = 40.8.dp)
+              Spacer(Modifier.width(11.dp))
+              Column {
+                val betaBadge: @Composable () -> Unit = if (showBetaBadge) {
+                  {
+                    Text(
+                      stringResource(R.string.ui_beta_badge_suffix),
+                      style =
+                        androidx.compose.ui.text.TextStyle(
+                          fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                          fontWeight = FontWeight.SemiBold,
+                          baselineShift = BaselineShift.Superscript,
+                        ),
+                      color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.inkSecondary,
+                    )
+                  }
+                } else {
+                  {}
+                }
+                if (brandWordmark) {
+                  Row(verticalAlignment = Alignment.Top) {
+                    Text(
+                      buildAnnotatedString {
+                        withStyle(
+                          SpanStyle(color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.ink),
+                        ) { append("reel") }
+                        withStyle(
+                          SpanStyle(color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.red),
+                        ) { append("Paper") }
+                      },
+                      fontFamily = FontFamily.Serif,
+                      fontStyle = FontStyle.Italic,
+                      fontSize = 27.4.sp,
+                      fontWeight = FontWeight.Bold,
+                      maxLines = 1,
+                    )
+                  }
+                } else {
+                  Row(verticalAlignment = Alignment.Top, modifier = Modifier.weight(1f, fill = false)) {
+                    Text(
+                      title,
+                      fontSize = 20.sp,
+                      fontWeight = FontWeight.ExtraBold,
+                      letterSpacing = 0.5.sp,
+                      color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.ink,
+                      maxLines = 1,
+                      overflow = TextOverflow.Ellipsis,
+                    )
+                    betaBadge()
+                  }
+                }
+                if (brandTag != null) {
+                  Text(
+                    text =
+                      // The wordmark row has no room for the badge; page titles keep it
+                      // beside the title instead.
+                      if (showBetaBadge && brandWordmark) {
+                        brandTag + stringResource(R.string.ui_beta_badge_suffix)
+                      } else {
+                        brandTag
+                      },
+                    fontSize = 12.5.sp,
+                    letterSpacing = 0.6.sp,
+                    color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.inkSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // Pull the tag a hair closer to the wordmark.
+                    modifier = Modifier.offset(y = (-1.5).dp),
+                  )
                 }
               }
-            },
-            // Match the Profile hero title: headline styles use the app's bundled
-            // expressive Google Sans Flex variable-display cut (or the user's chosen
-            // display font), without overriding accessibility or language fallbacks.
-            style =
-              if (forceHeadlineSmall) {
-                MaterialTheme.typography.headlineSmallEmphasized.copy(fontWeight = FontWeight.ExtraBold)
-              } else {
-                MaterialTheme.typography.headlineMediumEmphasized.copy(fontWeight = FontWeight.ExtraBold)
-              },
-            color = MaterialTheme.colorScheme.primary.onWallpaper(),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = titleModifier.weight(1f, fill = false),
-          )
-          if (seasonalGreeting != null && onBackClick == null) {
+            }
+          } else {
             Text(
-              text = stringResource(seasonalGreeting),
-              style = MaterialTheme.typography.labelLarge,
-              color = MaterialTheme.colorScheme.tertiary.onWallpaper(),
+              buildAnnotatedString {
+                append(title)
+                if (showBetaBadge) {
+                  withStyle(
+                    SpanStyle(
+                      fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                      fontWeight = FontWeight.SemiBold,
+                      baselineShift = BaselineShift.Superscript,
+                    ),
+                  ) {
+                    append(betaBadgeSuffix)
+                  }
+                }
+              },
+              // Match the Profile hero title: headline styles use the app's bundled
+              // expressive Google Sans Flex variable-display cut (or the user's chosen
+              // display font), without overriding accessibility or language fallbacks.
+              style =
+                if (forceHeadlineSmall) {
+                  MaterialTheme.typography.headlineSmallEmphasized
+                } else {
+                  MaterialTheme.typography.headlineMediumEmphasized
+                },
+              fontSize = 23.sp,
+              fontWeight = FontWeight.Black,
+              letterSpacing = 0.5.sp,
+              color = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.ink,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
-              modifier = Modifier.padding(start = 10.dp),
+              modifier = titleModifier.weight(1f, fill = false),
             )
           }
           if (titleTrailing != null) {
@@ -442,50 +536,40 @@ private fun NormalTopBar(
         }
       }
       if (onSearchClick != null) {
-        IconButton(
+        app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+          icon = PaperIcons.Search,
+          contentDescription =
+            androidx.compose.ui.res.stringResource(
+              app.gyrolet.mpvrx.R.string.settings_search_title,
+            ),
           onClick = onSearchClick,
-          modifier = Modifier.padding(horizontal = 2.dp).browserTopBarFocus(),
-        ) {
-          Icon(
-            Icons.RoundedFilled.Search,
-            contentDescription =
-              androidx.compose.ui.res.stringResource(
-                app.gyrolet.mpvrx.R.string.settings_search_title,
-              ),
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.secondary.onWallpaper(),
-          )
-        }
+          buttonSize = 48.dp,
+          iconSize = 25.2.dp,
+          modifier = Modifier.padding(horizontal = 4.dp).browserTopBarFocus(),
+        )
       }
       postSearchActions()
       if (onSortClick != null) {
-        IconButton(
+        app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+          icon = PaperIcons.Sort,
+          contentDescription = stringResource(R.string.sort),
           onClick = onSortClick,
-          modifier = Modifier.padding(horizontal = 2.dp).browserTopBarFocus(),
-        ) {
-          Icon(
-            Icons.RoundedFilled.SortByAlpha,
-            contentDescription = stringResource(R.string.sort),
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.secondary.onWallpaper(),
-          )
-        }
+          buttonSize = 48.dp,
+          iconSize = 25.2.dp,
+          modifier = Modifier.padding(horizontal = 4.dp).browserTopBarFocus(),
+        )
       }
       additionalActions()
       if (onSettingsClick != null) {
-        IconButton(
+        app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+          icon = PaperIcons.Tune,
+          contentDescription =
+            androidx.compose.ui.res.stringResource(app.gyrolet.mpvrx.R.string.ui_settings),
           onClick = onSettingsClick,
-          modifier = Modifier.padding(horizontal = 2.dp).browserTopBarFocus(),
-        ) {
-          Icon(
-            Icons.RoundedFilled.Settings,
-            contentDescription =
-              androidx.compose.ui.res
-                .stringResource(app.gyrolet.mpvrx.R.string.ui_settings),
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.secondary.onWallpaper(),
-          )
-        }
+          buttonSize = 48.dp,
+          iconSize = 25.2.dp,
+          modifier = Modifier.padding(horizontal = 4.dp).browserTopBarFocus(),
+        )
       }
     },
     modifier = modifier,
@@ -534,7 +618,8 @@ private fun SelectionTopBar(
           } else if (MaterialTheme.colorScheme.background == Color.Black) {
             Color.Black
           } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            // Mockup `.appbar` sits directly on the paper page — no lighter card band.
+            MaterialTheme.colorScheme.background
           },
         titleContentColor = MaterialTheme.colorScheme.onSurface.onWallpaper(),
         navigationIconContentColor = MaterialTheme.colorScheme.onSurface.onWallpaper(),

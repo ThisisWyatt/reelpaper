@@ -66,6 +66,10 @@ import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.domain.fonts.GoogleFontsRepository
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
+import app.gyrolet.mpvrx.ui.theme.paper.PaperGrainOverlay
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
+import app.gyrolet.mpvrx.ui.theme.paper.paperColorScheme
+import app.gyrolet.mpvrx.ui.theme.paper.paperPalette
 import org.koin.compose.koinInject
 import kotlin.math.hypot
 
@@ -255,6 +259,9 @@ private fun ThemeTransitionOverlay(
 
 private const val THEME_CONTENT_SETTLE_DELAY_MS = 100
 private const val THEME_REVEAL_DURATION_MS = 650
+
+/** Paper reads as a solid sheet on real devices; the global grain layer stays off. */
+private const val PAPER_GRAIN_ENABLED = false
 private val THEME_REVEAL_FEATHER = 30.dp
 
 @Composable
@@ -281,16 +288,12 @@ fun MpvrxTheme(
   val preferences = koinInject<AppearancePreferences>()
   val darkMode by preferences.darkMode.collectAsState()
   val amoledMode by preferences.amoledMode.collectAsState()
-  val appTheme by preferences.appTheme.collectAsState()
-  val customTheme by preferences.customTheme.collectAsState()
-  val selectedCustomThemeName by preferences.selectedCustomThemeName.collectAsState()
   val useSystemFont by preferences.useSystemFont.collectAsState()
   val googleFontFamily by preferences.googleFontFamily.collectAsState()
   val googleFontRevision by preferences.googleFontRevision.collectAsState()
   val googleFontsRepository = koinInject<GoogleFontsRepository>()
   val darkTheme = isSystemInDarkTheme()
   val configuration = LocalConfiguration.current
-  val context = LocalContext.current
   val localeNeedsSystemFont =
     remember(configuration) {
       localeRequiresSystemFont(configuration.locales[0])
@@ -339,32 +342,12 @@ fun MpvrxTheme(
       DarkMode.Light -> false
       DarkMode.System -> darkTheme
     }
-  val customThemeDefinition =
-    CustomThemeDefinition
-      .parseCollection(customTheme)
-      .firstOrNull { it.name == selectedCustomThemeName }
-      ?: CustomThemeDefinition.parse(customTheme).takeIf { selectedCustomThemeName.isBlank() }
 
-  val darkColorScheme =
-    resolveAppColorScheme(
-      context = context,
-      appTheme = appTheme,
-      customTheme = customThemeDefinition,
-      useDarkTheme = true,
-      amoledMode = amoledMode,
-    )
-  val colorScheme =
-    if (useDarkTheme) {
-      darkColorScheme
-    } else {
-      resolveAppColorScheme(
-        context = context,
-        appTheme = appTheme,
-        customTheme = customThemeDefinition,
-        useDarkTheme = false,
-        amoledMode = amoledMode,
-      )
-    }
+  // reelPaper design language: the paper palette drives the Material scheme so
+  // restyled and not-yet-restyled screens share one ink-and-vermilion system.
+  val paperPalette = paperPalette(useDarkTheme = useDarkTheme, amoledMode = amoledMode)
+  val darkColorScheme = paperColorScheme(paperPalette(useDarkTheme = true, amoledMode = amoledMode))
+  val colorScheme = if (useDarkTheme) darkColorScheme else paperColorScheme(paperPalette)
 
   // Provide theme transition state first, OUTSIDE MaterialExpressiveTheme
   CompositionLocalProvider(
@@ -374,6 +357,7 @@ fun MpvrxTheme(
     LocalAppFontFamily provides resolvedFontFamily,
     LocalEmphasizedTypography provides emphasizedTypography,
     LocalDarkAppColorScheme provides darkColorScheme,
+    LocalPaperColors provides paperPalette,
   ) {
     ThemeTransitionContent {
       MaterialExpressiveTheme(
@@ -383,7 +367,13 @@ fun MpvrxTheme(
         motionScheme = MotionScheme.expressive(),
         content = {
           ProvideTvFocusRipple {
-            app.gyrolet.mpvrx.ui.utils.ProvideAppHaptics(content)
+            Box(modifier = Modifier.fillMaxSize()) {
+              app.gyrolet.mpvrx.ui.utils.ProvideAppHaptics(content)
+              // 纸纹: the mockup's `.screen::after` grain layer. Disabled — the coarse
+              // noise tile read as visible mottling on-device; the mockup screen is
+              // perceived as solid paper (PAPER_SOLID_BACKGROUND in AppWallpaper.kt).
+              if (PAPER_GRAIN_ENABLED) PaperGrainOverlay()
+            }
           }
         },
       )

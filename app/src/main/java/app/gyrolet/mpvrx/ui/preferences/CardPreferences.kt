@@ -212,6 +212,10 @@ fun ExpressivePreferenceTile(
     modifier = modifier.fillMaxWidth(),
     shape = shape,
     color = containerColor,
+    border = androidx.compose.foundation.BorderStroke(
+      1.dp,
+      app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current.cardLine,
+    ),
   ) {
     // The tile already owns the row surface and the 16dp group inset. Nested
     // ComposePreference rows (especially sliders) must not add another inset.

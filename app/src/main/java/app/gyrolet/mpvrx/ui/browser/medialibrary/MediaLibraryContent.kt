@@ -454,6 +454,15 @@ fun MediaLibraryContent(forceAudio: Boolean = false) {
               androidx.compose.ui.res
                 .stringResource(app.gyrolet.mpvrx.R.string.pref_media_library_section)
             },
+          // Home's library mode keeps the brand header, same as the folder grid.
+          brandLogo = !forceAudio,
+          brandWordmark = !forceAudio,
+          brandTag =
+            if (!forceAudio) {
+              androidx.compose.ui.res.stringResource(app.gyrolet.mpvrx.R.string.home_brand_tag)
+            } else {
+              null
+            },
           isInSelectionMode = selectionManager.isInSelectionMode,
           selectedCount = selectionManager.selectedCount,
           totalCount = filteredVideosWithInfo.size,

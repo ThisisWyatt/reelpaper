@@ -50,7 +50,7 @@ import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.BrowserPreferences
 import app.gyrolet.mpvrx.preferences.MediaLayoutMode
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import app.gyrolet.mpvrx.ui.browser.ExpressivePillNavigationBar
+import app.gyrolet.mpvrx.ui.theme.paper.PaperDock
 import app.gyrolet.mpvrx.ui.browser.MainScreen
 import app.gyrolet.mpvrx.ui.browser.mainNavigationTabs
 import app.gyrolet.mpvrx.ui.browser.cards.FolderCard
@@ -85,21 +85,19 @@ internal fun WallpaperHomePreviewDialog(
 ) {
   val appearancePreferences = koinInject<AppearancePreferences>()
   val browserPreferences = koinInject<BrowserPreferences>()
-  val showMusicTab by appearancePreferences.showMusicTab.collectAsState()
+  val showLibraryTab by appearancePreferences.showLibraryTab.collectAsState()
   val showProfileTab by appearancePreferences.showProfileTab.collectAsState()
   val showNetworkTab by appearancePreferences.showNetworkTab.collectAsState()
-  val showJellyfinTab by appearancePreferences.showJellyfinTab.collectAsState()
   val showQuickPlayFab by appearancePreferences.showQuickPlayFab.collectAsState()
   val layoutMode by browserPreferences.folderViewFolderLayoutMode.collectAsState()
 
   // Same tab order as MainScreen; the pill only shows with 2+ tabs.
   val navigationTabs =
-    remember(showMusicTab, showProfileTab, showNetworkTab, showJellyfinTab) {
+    remember(showLibraryTab, showProfileTab, showNetworkTab) {
       mainNavigationTabs(
-        showMusic = showMusicTab,
+        showLibrary = showLibraryTab,
         showProfile = showProfileTab,
         showNetwork = showNetworkTab,
-        showJellyfin = showJellyfinTab,
       ).takeIf { it.size > 1 }.orEmpty()
     }
   val contentBottomPadding = if (navigationTabs.isEmpty()) 0.dp else 88.dp
@@ -227,11 +225,10 @@ internal fun WallpaperHomePreviewDialog(
                 .navigationBarsPadding()
                 .padding(bottom = 12.dp),
           ) {
-            ExpressivePillNavigationBar(
+            PaperDock(
               visibleTabs = navigationTabs,
               selectedTab = MainScreen.MainTab.HOME,
               onTabSelected = {},
-              pagerState = null,
             )
           }
         }

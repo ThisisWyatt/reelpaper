@@ -72,6 +72,13 @@ fun Color.onWallpaper(): Color =
 
 private const val LIGHT_TEXT_LUMINANCE_THRESHOLD = 0.55f
 
+/**
+ * reelPaper design language: the mockup's page surface is solid paper. Wallpaper images and
+ * animated backdrops are no longer drawn under the app; their editor screens keep working for
+ * now and come down with the settings restyle.
+ */
+private const val PAPER_SOLID_BACKGROUND = true
+
 enum class WallpaperScaleMode {
   Fit,
   Fill,
@@ -110,7 +117,7 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
         }
       value = loadedWallpaper
       initialWallpaperResolved = true
-    }.value
+    }.value?.takeIf { !PAPER_SOLID_BACKGROUND }
   val contentAlpha by animateFloatAsState(
     targetValue = if (initialWallpaperResolved) 1f else 0f,
     animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
@@ -132,7 +139,8 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
   // transparent for it exactly as they do for a wallpaper.
   val activeBackground = rememberActiveBackground()
   val animationShown =
-    activeBackground.type != BackgroundType.NONE && (!wallpaperActive || activeBackground.overWallpaper)
+    !PAPER_SOLID_BACKGROUND &&
+      activeBackground.type != BackgroundType.NONE && (!wallpaperActive || activeBackground.overWallpaper)
   val isLightTheme = MaterialTheme.colorScheme.background.luminance() >= 0.5f
   val wallpaperLuminance =
     produceState(initialValue = 0.4f, wallpaper) {

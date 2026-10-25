@@ -1134,6 +1134,32 @@
   <string name="ui_home">الرئيسية</string>
   <string name="ui_recents">الأخيرة</string>
   <string name="ui_playlists">قوائم التشغيل</string>
+  <string name="ui_library">المكتبة</string>
+  <string name="profile_seal">خاص</string>
+  <string name="profile_media_tag">أرشيف الوسائط</string>
+  <string name="profile_archive_title">أرشيف العرض المحلي</string>
+  <string name="profile_privacy_note">بيانات خاصة · على هذا الجهاز فقط</string>
+  <string name="profile_privacy_explanation">يتم تخزين سجل المشاهدة والإحصائيات على هذا الجهاز فقط ولا يتم إرسالها أبداً.</string>
+  <string name="profile_motto">كل عرض يترك أثره</string>
+  <string name="profile_count_items">%1$d عنصر</string>
+  <string name="profile_count_shots">%1$d لقطة</string>
+  <string name="profile_screened_today">عُرض اليوم</string>
+  <string name="profile_screened_yesterday">عُرض أمس</string>
+  <string name="profile_screened_days_ago">عُرض قبل %1$d يوم</string>
+  <string name="profile_local_media">وسائط محلية</string>
+  <string name="profile_duration_minutes">%1$d دقيقة</string>
+  <string name="profile_duration_hours">%1$d ساعة</string>
+  <string name="profile_duration_hours_minutes">%1$d س %2$d دقيقة</string>
+  <string name="profile_duration_seconds">%1$d ثانية</string>
+  <string name="profile_unit_minutes">دقيقة</string>
+  <string name="profile_unit_times">مرة</string>
+  <string name="watch_stats_total_sessions">إجمالي مرات التشغيل</string>
+  <string name="watch_stats_by_watch_time">حسب وقت المشاهدة</string>
+  <string name="network_stamp_connected">متصل</string>
+  <string name="network_stamp_failed">فشل الاتصال</string>
+  <string name="network_stamp_offline">غير متصل</string>
+  <string name="library_summary_playlists">%1$d قائمة · %2$d فيديو</string>
+  <string name="library_summary_snapshots">%1$d لقطة · %2$d مجلد</string>
   <string name="ui_network">الشبكة</string>
   <string name="ui_pinned_folder">مجلد مثبّت</string>
   <string name="ui_pin_videos">تثبيت الفيديوهات</string>
@@ -1222,7 +1248,9 @@
   <string name="ui_quick_play">التشغيل السريع</string>
   <string name="ui_open_file">فتح ملف</string>
   <string name="ui_open_link">فتح رابط</string>
-  <string name="ui_search_folders_and_videos">البحث في المجلدات ومقاطع الفيديو...</string>
+  <string name="ui_search_folders_and_videos">البحث في المجلدات أو مقاطع الفيديو</string>
+  <string name="home_brand_tag">مشغّل فيديو خاص</string>
+  <string name="home_all_folders">كل المجلدات</string>
   <string name="ui_pinned">مثبّت</string>
   <string name="ui_rename_failed">فشلت إعادة التسمية</string>
   <string name="ui_deleted_successfully">تم الحذف بنجاح</string>
@@ -1230,6 +1258,21 @@
   <string name="ui_play_recently_played_or_first_video">تشغيل أحدث فيديو أو أول فيديو</string>
   <string name="ui_videos">مقاطع الفيديو</string>
   <string name="ui_add_connection">إضافة اتصال</string>
+  <string name="folder_new_count_short">%1$d جديد</string>
+  <string name="ui_network_tag">الشبكات المحلية والبث البعيد</string>
+  <string name="ui_saved_connections">الاتصالات المحفوظة</string>
+  <string name="ui_connections_count">%1$d عنصر</string>
+  <string name="ui_add_media">إضافة وسائط</string>
+  <string name="ui_auto_connect">اتصال تلقائي</string>
+  <string name="ui_optional">اختياري</string>
+  <string name="network_name_placeholder">مثال: iMac</string>
+  <string name="network_server_info">معلومات الخادم</string>
+  <string name="network_auto_connect_hint">محاولة الاتصال بهذا الخادم عند بدء المشغل</string>
+  <string name="network_test_connection">اختبار الاتصال</string>
+  <string name="network_testing">جارٍ اختبار الاتصال…</string>
+  <string name="network_test_success">تم الاتصال بنجاح</string>
+  <string name="network_test_failed">فشل الاتصال: %1$s</string>
+  <string name="network_test_unknown_error">خطأ غير معروف</string>
   <string name="ui_local_network">الشبكة المحلية</string>
   <string name="ui_no_network_connections">لا توجد اتصالات شبكة</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">أضف اتصالات SMB أو FTP أو WebDAV لتصفح ملفات الشبكة</string>
@@ -2268,6 +2311,8 @@
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">اللقطات</string>
   <string name="ui_profile">الملف الشخصي</string>
+  <string name="pref_nav_library_title">إظهار تبويب المكتبة</string>
+  <string name="pref_nav_library_summary">قوائم التشغيل واللقطات في مركز واحد</string>
   <string name="pref_nav_profile_title">إظهار علامة تبويب الملف الشخصي</string>
   <string name="pref_nav_profile_summary">دمج الأخيرة وقوائم التشغيل واللقطات في علامة تبويب واحدة</string>
   <string name="profile_view_all">عرض الكل</string>
@@ -2906,4 +2951,21 @@
   <string name="pref_persistent_status_micro_battery">عرض رمز بطارية صغير</string>
   <string name="pref_persistent_status_est_prefix">المتوقع</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">ترتيب الفرز</string>
+  <string name="view_mode_label">وضع العرض</string>
+  <string name="options_section">الخيارات</string>
+  <string name="view_mode_folder">مجلد</string>
+  <string name="view_mode_tree">شجرة</string>
+  <string name="view_mode_library">مكتبة الوسائط</string>
+  <string name="grid_columns_range">أعمدة الشبكة (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">أعمدة المجلد</string>
+  <string name="video_grid_columns">أعمدة الفيديو</string>
+  <string name="sort_type_title">العنوان</string>
+  <string name="sort_type_date">التاريخ</string>
+  <string name="sort_type_size">الحجم</string>
+  <string name="sort_type_count">العدد</string>
+  <string name="generic_close">إغلاق</string>
+  <string name="ui_images">صور</string>
 </resources>

@@ -59,6 +59,7 @@ fun IconSwitch(
     return
   }
 
+  val paperColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
   Switch(
     checked = checked,
     onCheckedChange =
@@ -72,6 +73,12 @@ fun IconSwitch(
       },
     modifier = modifier,
     enabled = enabled,
+    colors =
+      androidx.compose.material3.SwitchDefaults.colors(
+        checkedTrackColor = paperColors.green,
+        checkedThumbColor = paperColors.card,
+        checkedBorderColor = paperColors.green,
+      ),
     thumbContent = {
       AnimatedIcon(
         imageVector = if (checked) Icons.RoundedFilled.Check else Icons.RoundedFilled.Close,

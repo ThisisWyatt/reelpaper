@@ -56,7 +56,6 @@ import app.gyrolet.mpvrx.domain.navidrome.NavidromeServer
 import app.gyrolet.mpvrx.domain.seerr.JellyseerrUser
 import app.gyrolet.mpvrx.presentation.Screen
 import app.gyrolet.mpvrx.presentation.components.RemoteImage
-import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import org.koin.compose.koinInject
 import app.gyrolet.mpvrx.ui.browser.audiobooks.AddAudiobookshelfServerDialog
 import app.gyrolet.mpvrx.ui.browser.audiobooks.AudiobookshelfViewModel
@@ -81,7 +80,6 @@ object MediaServersPreferencesScreen : Screen {
   override fun Content() {
     val context = LocalContext.current
     val backStack = LocalBackStack.current
-    val appearancePreferences = koinInject<AppearancePreferences>()
 
     val jellyfinViewModel: JellyfinViewModel =
       viewModel(factory = JellyfinViewModel.factory(context.applicationContext as Application))
@@ -792,9 +790,6 @@ object MediaServersPreferencesScreen : Screen {
           onSuccess = {
             isAddServerOpen = false
             serverToReauth = null
-            if (!appearancePreferences.showJellyfinTab.get()) {
-              appearancePreferences.showJellyfinTab.set(true)
-            }
           },
         )
       },

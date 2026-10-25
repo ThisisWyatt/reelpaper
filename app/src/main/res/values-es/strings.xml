@@ -1122,6 +1122,32 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="ui_home">Inicio</string>
   <string name="ui_recents">Recientes</string>
   <string name="ui_playlists">Listas de reproducción</string>
+  <string name="ui_library">Colección</string>
+  <string name="profile_seal">Privado</string>
+  <string name="profile_media_tag">Archivo de medios</string>
+  <string name="profile_archive_title">Archivo de proyección local</string>
+  <string name="profile_privacy_note">Privado · solo en este dispositivo</string>
+  <string name="profile_privacy_explanation">El historial y las estadísticas se guardan solo en este dispositivo y nunca se envían.</string>
+  <string name="profile_motto">Cada proyección deja huella</string>
+  <string name="profile_count_items">%1$d elementos</string>
+  <string name="profile_count_shots">%1$d capturas</string>
+  <string name="profile_screened_today">Proyectado hoy</string>
+  <string name="profile_screened_yesterday">Proyectado ayer</string>
+  <string name="profile_screened_days_ago">Proyectado hace %1$d días</string>
+  <string name="profile_local_media">Medios locales</string>
+  <string name="profile_duration_minutes">%1$d min</string>
+  <string name="profile_duration_hours">%1$d h</string>
+  <string name="profile_duration_hours_minutes">%1$d h %2$d min</string>
+  <string name="profile_duration_seconds">%1$d s</string>
+  <string name="profile_unit_minutes">min</string>
+  <string name="profile_unit_times">reprod.</string>
+  <string name="watch_stats_total_sessions">Reproducciones totales</string>
+  <string name="watch_stats_by_watch_time">Por tiempo visto</string>
+  <string name="network_stamp_connected">Conectado</string>
+  <string name="network_stamp_failed">Error de conexión</string>
+  <string name="network_stamp_offline">Sin conexión</string>
+  <string name="library_summary_playlists">%1$d listas · %2$d videos</string>
+  <string name="library_summary_snapshots">%1$d capturas · %2$d carpetas</string>
   <string name="ui_network">Red</string>
   <string name="ui_pinned_folder">Carpeta fijada</string>
   <string name="ui_pin_videos">Fijar videos</string>
@@ -1210,7 +1236,9 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="ui_quick_play">Reproducción rápida</string>
   <string name="ui_open_file">Abrir archivo</string>
   <string name="ui_open_link">Abrir enlace</string>
-  <string name="ui_search_folders_and_videos">Buscar carpetas y videos...</string>
+  <string name="ui_search_folders_and_videos">Buscar carpetas o vídeos</string>
+  <string name="home_brand_tag">Reproductor de video privado</string>
+  <string name="home_all_folders">Todas las carpetas</string>
   <string name="ui_pinned">Fijado</string>
   <string name="ui_rename_failed">Error al cambiar el nombre</string>
   <string name="ui_deleted_successfully">Eliminado correctamente</string>
@@ -1218,6 +1246,21 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="ui_play_recently_played_or_first_video">Reproducir el video reciente o el primero</string>
   <string name="ui_videos">Videos</string>
   <string name="ui_add_connection">Añadir conexión</string>
+  <string name="folder_new_count_short">%1$d nuevos</string>
+  <string name="ui_network_tag">Redes locales y streams remotos</string>
+  <string name="ui_saved_connections">Conexiones guardadas</string>
+  <string name="ui_connections_count">%1$d en total</string>
+  <string name="ui_add_media">Añadir medio</string>
+  <string name="ui_auto_connect">Autoconexión</string>
+  <string name="ui_optional">Opcional</string>
+  <string name="network_name_placeholder">p. ej., iMac</string>
+  <string name="network_server_info">Información del servidor</string>
+  <string name="network_auto_connect_hint">Intenta conectarse a este servidor al iniciar el reproductor</string>
+  <string name="network_test_connection">Probar conexión</string>
+  <string name="network_testing">Probando conexión…</string>
+  <string name="network_test_success">Conexión correcta</string>
+  <string name="network_test_failed">Error de conexión: %1$s</string>
+  <string name="network_test_unknown_error">Error desconocido</string>
   <string name="ui_local_network">Red local</string>
   <string name="ui_no_network_connections">No hay conexiones de red</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">Añade conexiones SMB, FTP o WebDAV para explorar archivos de red</string>
@@ -2242,6 +2285,8 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">Capturas</string>
   <string name="ui_profile">Perfil</string>
+  <string name="pref_nav_library_title">Mostrar pestaña Colección</string>
+  <string name="pref_nav_library_summary">Listas de reproducción y capturas en un solo centro</string>
   <string name="pref_nav_profile_title">Mostrar pestaña Perfil</string>
   <string name="pref_nav_profile_summary">Combinar Recientes, Listas y Capturas en una sola pestaña</string>
   <string name="profile_view_all">Ver todo</string>
@@ -2844,4 +2889,21 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="pref_persistent_status_micro_battery">Mostrar icono pequeño de batería</string>
   <string name="pref_persistent_status_est_prefix">Est.</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">Orden de clasificación</string>
+  <string name="view_mode_label">Modo de vista</string>
+  <string name="options_section">Opciones</string>
+  <string name="view_mode_folder">Carpeta</string>
+  <string name="view_mode_tree">Árbol</string>
+  <string name="view_mode_library">Biblioteca</string>
+  <string name="grid_columns_range">Columnas de cuadrícula (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">Columnas de carpetas</string>
+  <string name="video_grid_columns">Columnas de vídeo</string>
+  <string name="sort_type_title">Título</string>
+  <string name="sort_type_date">Fecha</string>
+  <string name="sort_type_size">Tamaño</string>
+  <string name="sort_type_count">Cantidad</string>
+  <string name="generic_close">Cerrar</string>
+  <string name="ui_images">Imágenes</string>
 </resources>

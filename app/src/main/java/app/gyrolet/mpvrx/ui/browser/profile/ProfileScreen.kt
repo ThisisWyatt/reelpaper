@@ -38,10 +38,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -77,7 +79,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -94,8 +95,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -114,6 +116,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -132,15 +135,10 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.presentation.Screen
 import app.gyrolet.mpvrx.presentation.components.pullrefresh.PullRefreshBox
 import app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight
-import app.gyrolet.mpvrx.ui.browser.cards.PlaylistCard
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.components.rememberSwipePlaybackInfo
-import app.gyrolet.mpvrx.ui.browser.dialogs.DeleteConfirmationDialog
 import app.gyrolet.mpvrx.ui.browser.networkstreaming.NetworkStreamingScreen
-import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistDetailScreen
-import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistViewModel
-import app.gyrolet.mpvrx.ui.browser.playlist.playlistGridColumnLimit
 import app.gyrolet.mpvrx.ui.browser.recentlyplayed.RecentlyPlayedItem
 import app.gyrolet.mpvrx.ui.browser.recentlyplayed.RecentlyPlayedScreen
 import app.gyrolet.mpvrx.ui.browser.recentlyplayed.RecentlyPlayedViewModel
@@ -151,10 +149,19 @@ import app.gyrolet.mpvrx.ui.framecapture.toDetailItem
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.icons.PaperIcons
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.preferences.PreferencesScreen
 import app.gyrolet.mpvrx.ui.preferences.ProfileWatchStatistics
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
+import app.gyrolet.mpvrx.ui.theme.paper.dashedTopEdge
+import app.gyrolet.mpvrx.ui.theme.paper.paperInset
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.border
+import androidx.compose.runtime.produceState
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
 import app.gyrolet.mpvrx.ui.theme.AppConnectedShapeTokens
 import app.gyrolet.mpvrx.ui.theme.ConnectedLayout
@@ -176,7 +183,6 @@ private const val SHELF_LIMIT = 15
 private const val AVATAR_FILE_PREFIX = "profile_avatar_"
 private const val AVATAR_SIZE_PX = 512
 private val SHELF_VIDEO_CARD_WIDTH = 214.dp
-private val SHELF_AUDIO_CARD_WIDTH = 120.dp
 
 /** Personal hub that folds Recents, Playlists and Snapshots into one bottom-navigation tab. */
 @Serializable
@@ -196,27 +202,7 @@ object ProfileScreen : Screen {
     val profileName by appearancePreferences.profileName.collectAsState()
     val profileImagePath by appearancePreferences.profileImagePath.collectAsState()
     val showRecentThumbnails by browserPreferences.recentView.showThumbnails.collectAsState()
-    val playlistManualGrid by browserPreferences.playlistView.manualGridColumnsEnabled.collectAsState()
-    val playlistGridColumnsPortrait by browserPreferences.playlistView.gridColumnsPortrait.collectAsState()
-    val playlistGridColumnsLandscape by browserPreferences.playlistView.gridColumnsLandscape.collectAsState()
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val maxPlaylistColumns = playlistGridColumnLimit(configuration.screenWidthDp, true)
-    val requestedPlaylistColumns =
-      if (isLandscape) playlistGridColumnsLandscape else playlistGridColumnsPortrait
-    val playlistColumns =
-      if (playlistManualGrid && requestedPlaylistColumns > 0) {
-        requestedPlaylistColumns.coerceIn(1, maxPlaylistColumns)
-      } else {
-        maxPlaylistColumns
-      }
-    val profilePlaylistCardWidth =
-      remember(configuration.screenWidthDp, playlistColumns) {
-        val totalSpacing = 12 * (playlistColumns - 1)
-        ((configuration.screenWidthDp - 24 - totalSpacing).toFloat() / playlistColumns)
-          .coerceAtLeast(120f)
-          .dp
-      }
     val navigationBarHeight = LocalNavigationBarHeight.current
 
     val recentsViewModel: RecentlyPlayedViewModel = viewModel(factory = RecentlyPlayedViewModel.factory(application))
@@ -234,32 +220,14 @@ object ProfileScreen : Screen {
     val snapshotThumbnails by snapshotViewModel.thumbnailCache.collectAsState()
 
     val recentShelf = remember(recentItems) { recentItems.take(SHELF_LIMIT) }
-    val recentVideos =
-      remember(recentShelf) { recentShelf.filterIsInstance<RecentlyPlayedItem.VideoItem>().map { it.video } }
-    val playbackInfo = rememberSwipePlaybackInfo(recentVideos)
     val snapshots = remember(snapshotLibrary.allCaptures) { snapshotLibrary.allCaptures.sortedByDescending { it.capturedAt } }
 
     var activeVideoItem by remember { mutableStateOf<RecentlyPlayedItem.VideoItem?>(null) }
-    var playlistToDelete by remember { mutableStateOf<app.gyrolet.mpvrx.database.entities.PlaylistEntity?>(null) }
     var showProfileDialog by rememberSaveable { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
     val isRefreshing = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val missingFileMessage = stringResource(R.string.ui_recent_file_no_longer_exists)
-    val showHeaderAvatar by remember {
-      derivedStateOf {
-        listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 160
-      }
-    }
-    val heroCollapseProgress by remember {
-      derivedStateOf {
-        if (listState.firstVisibleItemIndex > 0) 1f
-        else (listState.firstVisibleItemScrollOffset / 180f).coerceIn(0f, 1f)
-      }
-    }
-    val reduceMotion = AppMotion.shouldReduceMotion()
-    val headerAlphaSpec = if (reduceMotion) AppMotion.ReducedAlpha else AppMotion.Effect.Alpha
-    val headerOffsetSpec = if (reduceMotion) AppMotion.ReducedOffset else AppMotion.Spatial.ExpressiveOffset
-    val headerScaleSpec = if (reduceMotion) AppMotion.ReducedAlpha else AppMotion.Spatial.ExpressiveDefault
 
     fun playRecent(video: Video) {
       scope.launch {
@@ -277,63 +245,21 @@ object ProfileScreen : Screen {
       topBar = {
         BrowserTopBar(
           title = stringResource(R.string.ui_profile),
+          brandLogo = true,
+          brandTag = stringResource(R.string.profile_media_tag),
           isInSelectionMode = false,
           selectedCount = 0,
           totalCount = 0,
           onCancelSelection = { },
           onSettingsClick = { backStack.navigateTo(PreferencesScreen) },
-          customTitle = {
-            AnimatedContent(
-              targetState = showHeaderAvatar,
-              transitionSpec = {
-                if (reduceMotion) {
-                  fadeIn(headerAlphaSpec).togetherWith(fadeOut(headerAlphaSpec))
-                } else if (targetState) {
-                  (fadeIn(headerAlphaSpec) + slideInVertically(headerOffsetSpec) { it / 2 } + scaleIn(headerScaleSpec, initialScale = 0.86f))
-                    .togetherWith(fadeOut(headerAlphaSpec) + slideOutVertically(headerOffsetSpec) { -it / 2 })
-                } else {
-                  (fadeIn(headerAlphaSpec) + slideInVertically(headerOffsetSpec) { -it / 2 })
-                    .togetherWith(fadeOut(headerAlphaSpec) + slideOutVertically(headerOffsetSpec) { it / 2 } + scaleOut(headerScaleSpec, targetScale = 0.86f))
-                }
-              },
-              label = "profileHeaderTransition",
-            ) { isCollapsed ->
-              if (isCollapsed) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(10.dp),
-                  modifier =
-                    Modifier
-                      .clip(CircleShape)
-                      .clickable {
-                        scope.launch { listState.animateScrollToItem(0) }
-                      }
-                      .padding(vertical = 4.dp, horizontal = 4.dp),
-                ) {
-                  ProfileAvatar(
-                    size = 36.dp,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentDescription = profileName,
-                  )
-                  Text(
-                    text = profileName.ifBlank { stringResource(R.string.ui_profile) },
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface.onWallpaper(),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                  )
-                }
-              } else {
-                Text(
-                  text = stringResource(R.string.ui_profile),
-                  style = MaterialTheme.typography.headlineMedium,
-                  fontWeight = FontWeight.ExtraBold,
-                  color = MaterialTheme.colorScheme.primary.onWallpaper(),
-                  modifier = Modifier.padding(start = 8.dp),
-                )
-              }
-            }
+          additionalActions = {
+            // 设计稿 .iconbtn ⓘ：数据管理入口 —— 打开隐私说明（观看数据仅存本机）。
+            app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+              icon = Icons.RoundedFilled.Info,
+              contentDescription = stringResource(R.string.profile_privacy_note),
+              onClick = { showPrivacyDialog = true },
+              modifier = Modifier.padding(horizontal = 4.dp),
+            )
           },
         )
       },
@@ -357,20 +283,22 @@ object ProfileScreen : Screen {
           verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
           item(key = "profile_overview") {
-            ProfileOverviewCard(
+            ProfileArchiveCard(
               name = profileName,
+              avatarPath = profileImagePath,
               recentCount = recentItems.size,
               playlistCount = playlists.size,
               snapshotCount = snapshots.size,
               showNetwork = true,
-              collapseProgress = heroCollapseProgress,
               onEditProfile = {
                 haptics.tick()
                 showProfileDialog = true
               },
               onRecents = { backStack.navigateTo(RecentlyPlayedScreen) },
-              onPlaylists = { backStack.navigateTo(PlaylistScreen) },
+              onLibrary = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.library.LibraryScreen) },
               onSnapshots = { backStack.navigateTo(SnapshotScreen) },
+              onMusic = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.music.MusicScreen) },
+              onJellyfin = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinScreen) },
               onNetwork = { backStack.navigateTo(NetworkStreamingScreen) },
             )
           }
@@ -378,7 +306,12 @@ object ProfileScreen : Screen {
           item(key = "recents_header") {
             SectionHeader(
               title = stringResource(R.string.pref_advanced_enable_recently_played_title),
-              count = if (enableRecentlyPlayed) recentItems.size else null,
+              countText =
+                if (enableRecentlyPlayed && recentItems.isNotEmpty()) {
+                  stringResource(R.string.profile_count_items, recentItems.size)
+                } else {
+                  null
+                },
               onViewAll = { backStack.navigateTo(RecentlyPlayedScreen) },
             )
           }
@@ -398,93 +331,29 @@ object ProfileScreen : Screen {
                   message = stringResource(R.string.profile_recents_empty_message),
                 )
 
-              else ->
-                LazyRow(
-                  contentPadding = PaddingValues(horizontal = horizontalShelfPadding),
-                  horizontalArrangement = Arrangement.spacedBy(12.dp),
+              else -> {
+                // Mockup `.tstubs`: a fixed 3-column grid of tear-off ticket stubs.
+                // Playlists ride in their own section below, so only video tickets land here.
+                Row(
+                  modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = 20.dp),
+                  horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                  items(
-                    recentShelf,
-                    key = { item ->
-                      when (item) {
-                        is RecentlyPlayedItem.VideoItem -> "video_${item.video.path}"
-                        is RecentlyPlayedItem.PlaylistItem -> "playlist_${item.playlist.id}"
-                      }
-                    },
-                  ) { item ->
-                    when (item) {
-                      is RecentlyPlayedItem.VideoItem -> {
-                        val info = playbackInfo[item.video.path]
-                        RecentVideoCard(
-                          video = item.video,
-                          progress = info?.progressPercentage?.takeUnless { info.isWatched },
-                          showThumbnail = showRecentThumbnails,
-                          onClick = { playRecent(item.video) },
-                          onLongClick = {
-                            haptics.pickup()
-                            activeVideoItem = item
-                          },
-                        )
-                      }
-
-                      is RecentlyPlayedItem.PlaylistItem -> {
-                        PlaylistCard(
-                          playlist = item.playlist,
-                          itemCount = item.videoCount,
-                          onClick = { backStack.navigateTo(PlaylistDetailScreen(item.playlist.id)) },
-                          onLongClick = { },
-                          onThumbClick = { backStack.navigateTo(PlaylistDetailScreen(item.playlist.id)) },
-                          modifier = Modifier.width(SHELF_VIDEO_CARD_WIDTH),
-                          isGridMode = true,
-                          onDeleteClick =
-                            if (playlistViewModel.isProtectedPlaylist(item.playlist)) {
-                              null
-                            } else {
-                              { playlistToDelete = item.playlist }
-                            },
-                        )
-                      }
+                  recentShelf
+                    .filterIsInstance<RecentlyPlayedItem.VideoItem>()
+                    .take(3)
+                    .forEach { item ->
+                      RecentTicketCard(
+                        video = item.video,
+                        timestamp = item.timestamp,
+                        showThumbnail = showRecentThumbnails,
+                        modifier = Modifier.weight(1f),
+                        onClick = { playRecent(item.video) },
+                        onLongClick = {
+                          haptics.pickup()
+                          activeVideoItem = item
+                        },
+                      )
                     }
-                  }
-                }
-            }
-          }
-
-          item(key = "playlists_header") {
-            SectionHeader(
-              title = stringResource(R.string.ui_playlists),
-              count = playlists.size,
-              onViewAll = { backStack.navigateTo(PlaylistScreen) },
-            )
-          }
-          item(key = "playlists_shelf") {
-            if (playlists.isEmpty()) {
-              ShelfEmptyCard(
-                icon = Icons.RoundedFilled.Subscriptions,
-                title = stringResource(R.string.ui_no_playlists_yet),
-                message = stringResource(R.string.profile_playlists_empty_message),
-              )
-            } else {
-              LazyRow(
-                contentPadding = PaddingValues(horizontal = horizontalShelfPadding),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-              ) {
-                items(playlists.take(SHELF_LIMIT), key = { it.playlist.id }) { entry ->
-                  PlaylistCard(
-                    playlist = entry.playlist,
-                    itemCount = entry.itemCount,
-                    onClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
-                    onLongClick = { },
-                    onThumbClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
-                    modifier = Modifier.width(SHELF_VIDEO_CARD_WIDTH),
-                    isGridMode = true,
-                    onDeleteClick =
-                      if (playlistViewModel.isProtectedPlaylist(entry.playlist)) {
-                        null
-                      } else {
-                        { playlistToDelete = entry.playlist }
-                      },
-                  )
                 }
               }
             }
@@ -493,7 +362,7 @@ object ProfileScreen : Screen {
           item(key = "snapshots_header") {
             SectionHeader(
               title = stringResource(R.string.ui_snapshots),
-              count = snapshots.size,
+              countText = stringResource(R.string.profile_count_shots, snapshots.size).takeIf { snapshots.isNotEmpty() },
               onViewAll = { backStack.navigateTo(SnapshotScreen) },
             )
           }
@@ -505,13 +374,14 @@ object ProfileScreen : Screen {
                 message = stringResource(R.string.snapshot_empty_message),
               )
             } else {
+              // Mockup `.profpolars`: small taped polaroids riding one horizontal shelf.
               LazyRow(
-                contentPadding = PaddingValues(horizontal = horizontalShelfPadding),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
               ) {
                 itemsIndexed(snapshots.take(SHELF_LIMIT), key = { _, capture -> capture.id }) { index, capture ->
                   LaunchedEffect(capture.id) { snapshotViewModel.loadThumbnail(capture) }
-                  SnapshotShelfCard(
+                  ProfilePolaroidCard(
                     capture = capture,
                     thumbnail = snapshotThumbnails[capture.id],
                     onClick = {
@@ -529,6 +399,16 @@ object ProfileScreen : Screen {
           }
           item(key = "watch_statistics") {
             ProfileWatchStatistics()
+          }
+          item(key = "profile_motto") {
+            Text(
+              text = stringResource(R.string.profile_motto),
+              fontSize = 11.sp,
+              letterSpacing = 2.sp,
+              color = LocalPaperColors.current.inkTertiary,
+              textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+              modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 8.dp),
+            )
           }
         }
       }
@@ -571,21 +451,16 @@ object ProfileScreen : Screen {
       )
     }
 
-    playlistToDelete?.let { target ->
-      DeleteConfirmationDialog(
-        isOpen = true,
-        onDismiss = { playlistToDelete = null },
-        onConfirm = {
-          playlistToDelete = null
-          scope.launch {
-            playlistViewModel.deletePlaylist(target)
-            playlistViewModel.refresh()
-            recentsViewModel.refresh()
+    if (showPrivacyDialog) {
+      AlertDialog(
+        onDismissRequest = { showPrivacyDialog = false },
+        title = { Text(stringResource(R.string.profile_privacy_note)) },
+        text = { Text(stringResource(R.string.profile_privacy_explanation)) },
+        confirmButton = {
+          TextButton(onClick = { showPrivacyDialog = false }) {
+            Text(stringResource(R.string.generic_close))
           }
         },
-        itemCount = 1,
-        itemType = "playlist",
-        itemNames = listOf(target.name),
       )
     }
   }
@@ -626,7 +501,7 @@ internal fun ProfileAvatar(
     }
   } else {
     Icon(
-      Icons.RoundedFilled.AccountCircle,
+      PaperIcons.User,
       contentDescription = contentDescription,
       tint = tint,
       modifier = modifier.size(size),
@@ -649,128 +524,168 @@ private fun rememberProfileAvatar(path: String): ImageBitmap? {
   return avatar
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/**
+ * 档案卡 per mockup `.profcard`: a bookplate — cream reel-emblem badge carrying the edit key,
+ * the serif archive title with the privacy chip, and the vermilion 私藏 seal stamped at the
+ * upper right. Below it, the `.hubgrid` shortcut cells keep Music/Jellyfin/Network reachable.
+ */
 @Composable
-private fun ProfileOverviewCard(
+private fun ProfileArchiveCard(
   name: String,
+  avatarPath: String,
   recentCount: Int,
   playlistCount: Int,
   snapshotCount: Int,
   showNetwork: Boolean,
-  collapseProgress: Float,
   onEditProfile: () -> Unit,
   onRecents: () -> Unit,
-  onPlaylists: () -> Unit,
+  onLibrary: () -> Unit,
   onSnapshots: () -> Unit,
+  onMusic: () -> Unit,
+  onJellyfin: () -> Unit,
   onNetwork: () -> Unit,
 ) {
+  val paperColors = LocalPaperColors.current
   val configuration = LocalConfiguration.current
   val isTablet = configuration.smallestScreenWidthDp >= 600
-  val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-  val editLabel = stringResource(R.string.profile_edit)
-  val totalItems = recentCount + playlistCount + snapshotCount
-  val avatarScale = 1f - 0.25f * collapseProgress
-  val avatarAlpha = (1f - collapseProgress * 1.5f).coerceIn(0f, 1f)
-
-  val horizontalPadding = if (isTablet) 24.dp else 16.dp
+  val horizontalPadding = if (isTablet) 24.dp else 20.dp
+  val cardShape = RoundedCornerShape(14.dp)
+  // Mockup `.pav`: the user's avatar image when one is set, the reel emblem otherwise.
+  val avatar = rememberProfileAvatar(avatarPath)
 
   Column(
-    modifier = Modifier.fillMaxWidth().padding(start = horizontalPadding, end = horizontalPadding, top = 2.dp, bottom = 0.dp),
-    verticalArrangement = Arrangement.spacedBy(10.dp),
+    modifier = Modifier.fillMaxWidth().padding(start = horizontalPadding, end = horizontalPadding, top = 6.dp, bottom = 4.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 0.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(6.dp),
+    Row(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .paperRaise(cardShape, paperColors)
+          .border(1.dp, paperColors.cardLine, cardShape)
+          .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 15.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-      Box(
-        contentAlignment = Alignment.BottomEnd,
-        modifier =
-          Modifier.graphicsLayer {
-            scaleX = avatarScale
-            scaleY = avatarScale
-            alpha = avatarAlpha
-          },
-      ) {
-        ProfileAvatar(
-          size = if (isTablet) 116.dp else 96.dp,
-          tint = MaterialTheme.colorScheme.onPrimaryContainer,
-          containerColor = MaterialTheme.colorScheme.primaryContainer,
-          contentDescription = null,
-        )
-        // A small visual badge at the lower-right edge, with an independent 48dp
-        // touch target so the edit action remains easy to reach on small devices.
+      // .pav 藏书票徽章 + 编辑键 (22dp key on a 30dp touch target, overhanging like the mock).
+      Box(contentAlignment = Alignment.BottomEnd) {
         Box(
-          modifier = Modifier
-            .size(48.dp)
-            .offset(x = 6.dp, y = 6.dp)
-            .tvFocusHighlight(CircleShape)
-            .clickable(onClick = onEditProfile),
+          modifier =
+            Modifier
+              .size(54.dp)
+              .clip(RoundedCornerShape(16.dp))
+              .drawBehind {
+                drawRect(
+                  Brush.radialGradient(
+                    listOf(Color(0xFFFCF4E2), Color(0xFFF0E4C8), Color(0xFFDCCBA2)),
+                    center = Offset(size.width * 0.32f, size.height * 0.24f),
+                    radius = size.width * 1.2f,
+                  ),
+                )
+              }
+              .border(1.dp, if (paperColors.isDark) paperColors.cardLine else Color(0xFFD6C49A), RoundedCornerShape(16.dp)),
           contentAlignment = Alignment.Center,
         ) {
-          Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(28.dp),
-            shadowElevation = 2.dp,
+          val bitmap = avatar
+          if (bitmap != null) {
+            Image(
+              bitmap,
+              contentDescription = null,
+              contentScale = ContentScale.Crop,
+              modifier = Modifier.fillMaxSize(),
+            )
+          } else {
+            BookplateEmblem(modifier = Modifier.size(34.dp))
+          }
+        }
+        Box(
+          modifier =
+            Modifier
+              .size(30.dp)
+              .offset(x = 4.dp, y = 4.dp)
+              .clickable(onClick = onEditProfile),
+          contentAlignment = Alignment.Center,
+        ) {
+          Box(
+            modifier =
+              Modifier
+                .size(22.dp)
+                .paperRaise(CircleShape, paperColors, elevation = 2.dp)
+                .border(1.5.dp, paperColors.cardLine, CircleShape),
+            contentAlignment = Alignment.Center,
           ) {
-            Box(contentAlignment = Alignment.Center) {
-              Icon(
-                Icons.RoundedFilled.Edit,
-                contentDescription = editLabel,
-                modifier = Modifier.size(13.dp),
-              )
-            }
+            Icon(
+              Icons.RoundedFilled.Edit,
+              contentDescription = stringResource(R.string.profile_edit),
+              tint = paperColors.inkSecondary,
+              modifier = Modifier.size(11.dp),
+            )
           }
         }
       }
 
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-      ) {
+      Column(modifier = Modifier.weight(1f)) {
         Text(
-          text = name.ifBlank { stringResource(R.string.ui_profile) },
+          text = name.ifBlank { stringResource(R.string.profile_archive_title) },
           modifier = Modifier.semantics { heading() },
-          style = MaterialTheme.typography.titleLargeEmphasized,
-          color = MaterialTheme.colorScheme.onSurface,
+          fontFamily = FontFamily.Serif,
+          fontSize = 19.sp,
+          fontWeight = FontWeight.Bold,
+          letterSpacing = 0.5.sp,
+          color = paperColors.ink,
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )
-        Surface(
-          shape = CircleShape,
-          color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        Box(
+          modifier =
+            Modifier
+              .padding(top = 7.dp)
+              .paperInset(RoundedCornerShape(999.dp), paperColors),
         ) {
           Text(
-            text = if (totalItems > 0) "$totalItems items in hub" else stringResource(R.string.ui_profile),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+            text = stringResource(R.string.profile_privacy_note),
+            fontSize = 10.sp,
+            letterSpacing = 0.5.sp,
+            color = paperColors.inkSecondary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
           )
         }
       }
+
+      // .seal 朱砂「私藏」印章: 7° tilt, double vermilion ring, serif characters.
+      Box(
+        modifier =
+          Modifier
+            .size(46.dp)
+            .graphicsLayer { rotationZ = 7f }
+            .border(2.dp, paperColors.red.copy(alpha = 0.72f), RoundedCornerShape(9.dp))
+            .padding(2.dp)
+            .border(1.5.dp, paperColors.red.copy(alpha = 0.26f), RoundedCornerShape(7.dp))
+            .background(paperColors.red.copy(alpha = 0.05f), RoundedCornerShape(7.dp)),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = stringResource(R.string.profile_seal),
+          fontFamily = FontFamily.Serif,
+          fontSize = 14.sp,
+          fontWeight = FontWeight.Bold,
+          lineHeight = 16.sp,
+          letterSpacing = 1.sp,
+          textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+          color = paperColors.red.copy(alpha = 0.88f),
+        )
+      }
     }
 
-    // Intentional Material 3 Expressive connected bento group; no large tinted backdrop.
-    // The logical corner radii adapt automatically to 1, 2 or 4 columns and RTL direction.
     val shortcuts = buildList {
-      add(ProfileShortcutDestination(
-        Icons.RoundedFilled.History, stringResource(R.string.ui_recents), recentCount,
-        MaterialTheme.colorScheme.primary, onRecents,
-      ))
-      add(ProfileShortcutDestination(
-        Icons.RoundedFilled.Subscriptions, stringResource(R.string.ui_playlists), playlistCount,
-        MaterialTheme.colorScheme.secondary, onPlaylists,
-      ))
-      add(ProfileShortcutDestination(
-        Icons.RoundedFilled.Image, stringResource(R.string.ui_snapshots), snapshotCount,
-        MaterialTheme.colorScheme.tertiary, onSnapshots,
-      ))
-      if (showNetwork) add(ProfileShortcutDestination(
-        Icons.RoundedFilled.BringYourOwnIp, stringResource(R.string.ui_network), null,
-        MaterialTheme.colorScheme.primary, onNetwork,
-      ))
+      add(ProfileShortcutDestination(Icons.RoundedFilled.History, stringResource(R.string.ui_recents), recentCount, onRecents))
+      add(ProfileShortcutDestination(Icons.RoundedFilled.VideoLibrary, stringResource(R.string.ui_library), playlistCount, onLibrary))
+      add(ProfileShortcutDestination(Icons.RoundedFilled.Image, stringResource(R.string.ui_snapshots), snapshotCount, onSnapshots))
+      add(ProfileShortcutDestination(Icons.RoundedFilled.Audiotrack, stringResource(R.string.ui_music), null, onMusic))
+      add(ProfileShortcutDestination(AppIcon(drawableRes = R.drawable.ic_jellyfin), stringResource(R.string.ui_jellyfin), null, onJellyfin))
+      if (showNetwork) {
+        add(ProfileShortcutDestination(PaperIcons.Globe, stringResource(R.string.ui_network), null, onNetwork))
+      }
     }
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
       val columns = when {
@@ -778,28 +693,18 @@ private fun ProfileOverviewCard(
         maxWidth >= 680.dp -> 4
         else -> 2
       }
-      Column(verticalArrangement = Arrangement.spacedBy(AppConnectedShapeTokens.spacing)) {
-        shortcuts.chunked(columns).forEachIndexed { rowIndex, rowShortcuts ->
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        shortcuts.chunked(columns).forEach { rowShortcuts ->
           Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppConnectedShapeTokens.spacing),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
           ) {
-            rowShortcuts.forEachIndexed { columnIndex, shortcut ->
-              val index = rowIndex * columns + columnIndex
-              val shape = rememberConnectedShape(
-                index = index,
-                itemCount = shortcuts.size,
-                layout = ConnectedLayout.Grid,
-                columns = columns,
-              )
+            rowShortcuts.forEach { shortcut ->
               ProfileShortcutTile(
                 icon = shortcut.icon,
                 label = shortcut.label,
                 count = shortcut.count,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                contentColor = shortcut.accent,
                 onClick = shortcut.onClick,
-                shape = shape,
                 modifier = Modifier.weight(1f),
               )
             }
@@ -818,129 +723,146 @@ private data class ProfileShortcutDestination(
   val icon: AppIcon,
   val label: String,
   val count: Int?,
-  val accent: Color,
   val onClick: () -> Unit,
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/**
+ * Mockup `.hubcell`: paper card with a recessed 42dp icon groove, the vermilion count in
+ * ExtraBold over the secondary-ink label.
+ */
 @Composable
 private fun ProfileShortcutTile(
   icon: AppIcon,
   label: String,
   count: Int?,
-  containerColor: Color,
-  contentColor: Color,
   onClick: () -> Unit,
-  shape: Shape,
   modifier: Modifier = Modifier,
 ) {
-  Surface(
-    onClick = onClick,
-    shape = shape,
-    color = containerColor,
-    contentColor = contentColor,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+  val paperColors = LocalPaperColors.current
+  val shape = RoundedCornerShape(14.dp)
+  Row(
     modifier =
       modifier
-        .heightIn(min = 90.dp)
-        .tvFocusHighlight(shape),
+        .paperRaise(shape, paperColors)
+        .border(1.dp, paperColors.cardLine, shape)
+        .clickable(onClick = onClick)
+        .padding(horizontal = 14.dp, vertical = 12.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Row(
-      modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(9.dp),
+    Box(
+      modifier =
+        Modifier
+          .size(42.dp)
+          .paperInset(RoundedCornerShape(12.dp), paperColors),
+      contentAlignment = Alignment.Center,
     ) {
-      Surface(
-        shape = CircleShape,
-        color = contentColor.copy(alpha = 0.14f),
-        contentColor = contentColor,
-        modifier = Modifier.size(40.dp),
-      ) {
-        Box(contentAlignment = Alignment.Center) {
-          Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-        }
-      }
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
-      ) {
-        if (count != null) {
-          Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            color = MaterialTheme.colorScheme.onSurface,
-          )
-        }
+      Icon(icon, contentDescription = null, tint = paperColors.inkSecondary, modifier = Modifier.size(20.dp))
+    }
+    Column {
+      if (count != null) {
         Text(
-          text = label,
-          style = if (count == null) MaterialTheme.typography.titleSmallEmphasized else MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 2,
-          overflow = TextOverflow.Ellipsis,
+          text = count.toString(),
+          fontSize = 22.sp,
+          fontWeight = FontWeight.ExtraBold,
+          lineHeight = 24.sp,
+          color = paperColors.red,
         )
       }
-      Icon(
-        Icons.RoundedFilled.ChevronRight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(18.dp),
+      Text(
+        text = label,
+        fontSize = 11.5.sp,
+        letterSpacing = 0.5.sp,
+        color = paperColors.inkSecondary,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
       )
     }
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/**
+ * The reel emblem redrawn in vermilion on the cream bookplate (mockup `.pav`): same symbol
+ * geometry as [ReelPaperLogoBadge], but stroked/filled with the paper red instead of enamel.
+ */
+@Composable
+private fun BookplateEmblem(modifier: Modifier = Modifier) {
+  val colors = LocalPaperColors.current
+  androidx.compose.foundation.Canvas(modifier = modifier) {
+    val s = size.width / 30f
+    fun sx(v: Float) = (v - 9f) * s
+    val red = colors.red
+    // Disc outline + engraved inner ring.
+    drawCircle(red, radius = 12.3f * s, center = Offset(sx(24f), sx(24f)), style = Stroke(width = 1.2f * s))
+    drawCircle(
+      red.copy(alpha = 0.3f),
+      radius = 11f * s,
+      center = Offset(sx(24f), sx(24f)),
+      style = Stroke(width = 0.6f * s),
+    )
+    listOf(
+      Offset(sx(24f), sx(15.2f)),
+      Offset(sx(16.38f), sx(28.4f)),
+      Offset(sx(31.62f), sx(28.4f)),
+    ).forEach { c ->
+      drawCircle(red, radius = 2.9f * s, center = c)
+    }
+    val wing =
+      Path().apply {
+        moveTo(sx(20.66f), sx(19.36f))
+        lineTo(sx(20.66f), sx(28.64f))
+        lineTo(sx(29.07f), sx(24f))
+        close()
+      }
+    drawPath(wing, red)
+  }
+}
+
 @Composable
 private fun SectionHeader(
   title: String,
-  count: Int? = null,
+  countText: String? = null,
   onViewAll: () -> Unit,
 ) {
   val configuration = LocalConfiguration.current
   val isTablet = configuration.smallestScreenWidthDp >= 600
+  val paperColors = LocalPaperColors.current
+  // Mockup `.sec`: letter-spaced tertiary title, with the count and 查看全部 fused into
+  // one secondary-ink `.more` action on the right.
   Row(
-    modifier = Modifier.fillMaxWidth().padding(start = if (isTablet) 24.dp else 16.dp, end = if (isTablet) 16.dp else 8.dp, top = 12.dp, bottom = 2.dp),
-    verticalAlignment = Alignment.CenterVertically,
+    modifier = Modifier.fillMaxWidth().padding(start = if (isTablet) 24.dp else 22.dp, end = if (isTablet) 24.dp else 22.dp, top = 20.dp, bottom = 10.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
+    Text(
+      text = title,
+      modifier = Modifier.alignByBaseline().semantics { heading() },
+      fontSize = 12.5.sp,
+      letterSpacing = 3.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = paperColors.inkTertiary,
+    )
     Row(
+      modifier =
+        Modifier
+          .alignByBaseline()
+          .clip(RoundedCornerShape(8.dp))
+          .clickable(onClick = onViewAll)
+          .padding(horizontal = 2.dp, vertical = 2.dp),
       verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier.weight(1f),
     ) {
       Text(
-        text = title,
-        modifier = Modifier.weight(1f, fill = false).semantics { heading() },
-        style = MaterialTheme.typography.titleMediumEmphasized,
-        color = MaterialTheme.colorScheme.onSurface,
+        text = buildString {
+          if (countText != null) {
+            append(countText)
+            append(" · ")
+          }
+          append(stringResource(R.string.profile_view_all))
+          append(" ›")
+        },
+        fontSize = 11.5.sp,
+        letterSpacing = 1.sp,
+        color = paperColors.inkSecondary,
       )
-      if (count != null && count > 0) {
-        Surface(
-          shape = CircleShape,
-          color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-          Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-          )
-        }
-      }
-    }
-    TextButton(
-      onClick = onViewAll,
-      contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-      shape = CircleShape,
-    ) {
-      Text(
-        stringResource(R.string.profile_view_all),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
-      )
-      Spacer(Modifier.width(2.dp))
-      Icon(Icons.RoundedFilled.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
     }
   }
 }
@@ -984,77 +906,26 @@ private fun ShelfEmptyCard(
   }
 }
 
-/** 16:9 frame for video or 1:1 frame for audio plus a fixed caption. */
+/**
+ * 放映票根 per mockup `.tstub`: a tear-off ticket — 16:10 thumbnail with a center play glyph
+ * and duration chip, a dashed tear line with punched ends, then the relative screening day,
+ * the vermilion time-of-day, the file name and the "duration · source" line.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ShelfCard(
-  title: String,
-  subtitle: String?,
-  onClick: () -> Unit,
-  onLongClick: (() -> Unit)? = null,
-  isAudio: Boolean = false,
-  frame: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit,
-) {
-  val cardWidth = if (isAudio) SHELF_AUDIO_CARD_WIDTH else SHELF_VIDEO_CARD_WIDTH
-  val cardShape = if (isAudio) RoundedCornerShape(16.dp) else RoundedCornerShape(14.dp)
-  val aspectRatio = if (isAudio) 1f else (16f / 9f)
-
-  Column(
-    modifier =
-      Modifier
-        .width(cardWidth)
-        .tvFocusHighlight(cardShape)
-        .clip(cardShape)
-        .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-  ) {
-    Box(
-      modifier =
-        Modifier
-          .fillMaxWidth()
-          .aspectRatio(aspectRatio)
-          .clip(cardShape)
-          .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-      contentAlignment = Alignment.Center,
-      content = frame,
-    )
-    Column(
-      modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),
-      verticalArrangement = Arrangement.spacedBy(1.dp),
-    ) {
-      Text(
-        text = title,
-        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-        color = MaterialTheme.colorScheme.onSurface,
-        maxLines = if (subtitle == null) 2 else 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      if (subtitle != null) {
-        Text(
-          text = subtitle,
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
-      }
-    }
-  }
-}
-
-@Composable
-private fun RecentVideoCard(
+private fun RecentTicketCard(
   video: Video,
-  progress: Float?,
+  timestamp: Long,
   showThumbnail: Boolean,
   onClick: () -> Unit,
+  modifier: Modifier = Modifier,
   onLongClick: () -> Unit,
 ) {
+  val paperColors = LocalPaperColors.current
   val thumbnailRepository = koinInject<ThumbnailRepository>()
   val density = LocalDensity.current
-  val isAudio = video.isAudio
-  val cardWidth = if (isAudio) SHELF_AUDIO_CARD_WIDTH else SHELF_VIDEO_CARD_WIDTH
-  val widthPx = with(density) { cardWidth.roundToPx() }
-  val heightPx = if (isAudio) widthPx else (widthPx * 9 / 16)
+  val widthPx = with(density) { 160.dp.roundToPx() }
+  val heightPx = widthPx * 10 / 16
 
   var thumbnail by remember(video.path, showThumbnail) {
     mutableStateOf(if (showThumbnail) thumbnailRepository.peekThumbnailFromMemory(video, widthPx, heightPx) else null)
@@ -1065,98 +936,228 @@ private fun RecentVideoCard(
     }
   }
 
-  ShelfCard(
-    title = video.displayName,
-    subtitle = null,
-    onClick = onClick,
-    onLongClick = onLongClick,
-    isAudio = isAudio,
+  val shape = RoundedCornerShape(9.dp)
+  val border = if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8)
+  Column(
+    modifier =
+      modifier
+        .fillMaxHeight()
+        .paperRaise(shape, paperColors, elevation = 5.dp)
+        .border(1.dp, border, shape)
+        .then(
+          if (paperColors.isDark) {
+            Modifier
+          } else {
+            Modifier
+              .clip(shape)
+              .drawBehind {
+                drawRect(Brush.verticalGradient(listOf(Color(0xFFFDFBF3), Color(0xFFF3EDDC))))
+              }
+          },
+        )
+        .combinedClickable(onClick = onClick, onLongClick = onLongClick),
   ) {
-    val bitmap = thumbnail
-    if (bitmap != null) {
-      Image(
-        bitmap.asImageBitmap(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize(),
-      )
-    } else {
-      Box(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        contentAlignment = Alignment.Center,
-      ) {
-        Icon(
-          if (isAudio) Icons.RoundedFilled.Audiotrack else Icons.RoundedFilled.PlayArrow,
+    // .timg: 16:10 frame, inset 4dp from the card's top/side edges.
+    Box(
+      modifier =
+        Modifier
+          .padding(start = 4.dp, end = 4.dp, top = 4.dp)
+          .fillMaxWidth()
+          .aspectRatio(16f / 10f)
+          .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
+          .background(paperColors.paperInset),
+      contentAlignment = Alignment.Center,
+    ) {
+      val bitmap = thumbnail
+      if (bitmap != null) {
+        Image(
+          bitmap.asImageBitmap(),
           contentDescription = null,
-          tint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.size(if (isAudio) 36.dp else 32.dp),
+          contentScale = ContentScale.Crop,
+          modifier = Modifier.fillMaxSize(),
+        )
+      } else {
+        Icon(
+          if (video.isAudio) Icons.RoundedFilled.Audiotrack else Icons.RoundedFilled.PlayArrow,
+          contentDescription = null,
+          tint = paperColors.inkTertiary,
+          modifier = Modifier.size(26.dp),
+        )
+      }
+      Icon(
+        Icons.RoundedFilled.PlayArrow,
+        contentDescription = null,
+        tint = Color(0xFFFFF8E6).copy(alpha = 0.92f),
+        modifier = Modifier.size(18.dp),
+      )
+      if (video.durationFormatted.isNotBlank() && video.durationFormatted != "--:--") {
+        Text(
+          text = video.durationFormatted,
+          fontSize = 10.sp,
+          fontWeight = FontWeight.SemiBold,
+          color = Color(0xFFFDF6E6),
+          modifier =
+            Modifier
+              .align(Alignment.BottomEnd)
+              .padding(6.dp)
+              .background(Color(0xFF140F0A).copy(alpha = 0.55f), RoundedCornerShape(6.dp))
+              .padding(horizontal = 7.dp, vertical = 2.dp),
         )
       }
     }
 
-    if (isAudio) {
-      Surface(
-        shape = CircleShape,
-        color = Color.Black.copy(alpha = 0.65f),
-        modifier = Modifier.align(Alignment.TopStart).padding(6.dp).size(24.dp),
-      ) {
-        Box(contentAlignment = Alignment.Center) {
-          Icon(
-            Icons.RoundedFilled.Audiotrack,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(14.dp),
-          )
-        }
-      }
+    // .tcut: dashed tear line with the two punched-out ends.
+    Box(modifier = Modifier.fillMaxWidth().padding(top = 7.dp)) {
+      Box(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+            .dashedTopEdge(if (paperColors.isDark) paperColors.cardLine else Color(0xFFD3C49E)),
+      )
+      Box(
+        modifier =
+          Modifier
+            .align(Alignment.CenterStart)
+            .padding(start = 0.dp)
+            .offset(x = (-4).dp)
+            .size(9.dp)
+            .background(LocalPaperColors.current.paper, CircleShape),
+      )
+      Box(
+        modifier =
+          Modifier
+            .align(Alignment.CenterEnd)
+            .offset(x = 4.dp)
+            .size(9.dp)
+            .background(LocalPaperColors.current.paper, CircleShape),
+      )
     }
 
-    if (video.durationFormatted.isNotBlank() && video.durationFormatted != "--:--") {
-      FrameBadge(video.durationFormatted, Modifier.align(Alignment.BottomEnd))
-    }
+    Spacer(Modifier.weight(1f))
 
-    if (progress != null && progress > 0f) {
-      LinearProgressIndicator(
-        progress = { progress },
-        modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.BottomCenter),
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = Color.Black.copy(alpha = 0.35f),
+    // .tmeta pinned to the stub bottom so the three tickets share one height.
+    Column(modifier = Modifier.padding(start = 9.dp, end = 9.dp, top = 4.dp, bottom = 9.dp)) {
+      Text(
+        text = video.displayName.substringBeforeLast('.'),
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        color = paperColors.ink,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Text(
+        text = video.durationFormatted + " · " + stringResource(R.string.profile_local_media),
+        fontSize = 9.5.sp,
+        color = paperColors.inkSecondary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(top = 4.dp),
       )
     }
   }
 }
 
+/**
+ * 拍立得 per mockup `.ppolaroid`: a 106dp cream print with a strip of tape on top, the 16:10
+ * snapshot with a play/duration chip, and the serif-italic caption band.
+ */
 @Composable
-private fun SnapshotShelfCard(
+@OptIn(ExperimentalFoundationApi::class)
+private fun ProfilePolaroidCard(
   capture: FrameCapture,
   thumbnail: Bitmap?,
   onClick: () -> Unit,
 ) {
-  ShelfCard(title = capture.videoTitle, subtitle = null, onClick = onClick, isAudio = false) {
-    if (thumbnail != null) {
-      Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-    } else {
-      Icon(Icons.RoundedFilled.Image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(36.dp))
+  val paperColors = LocalPaperColors.current
+  val tilt = ((capture.id % 3) - 1) * 1.8f
+  val shape = RoundedCornerShape(5.dp)
+  Box(modifier = Modifier.width(106.dp)) {
+    Column(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .graphicsLayer { rotationZ = tilt }
+          .paperRaise(shape, paperColors, elevation = 6.dp)
+          .clip(shape)
+          .combinedClickable(onClick = onClick)
+          .border(1.dp, if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8), shape)
+          .padding(start = 7.dp, end = 7.dp, top = 7.dp),
+    ) {
+      Box(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 10f)
+            .clip(RoundedCornerShape(2.dp))
+            .background(paperColors.paperInset),
+        contentAlignment = Alignment.Center,
+      ) {
+        if (thumbnail != null) {
+          Image(
+            thumbnail.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+          )
+        } else {
+          Icon(
+            Icons.RoundedFilled.Image,
+            contentDescription = null,
+            tint = paperColors.inkTertiary,
+            modifier = Modifier.size(26.dp),
+          )
+        }
+        // .polbadge: play glyph + position chip pinned to the photo's lower right.
+        Row(
+          modifier =
+            Modifier
+              .align(Alignment.BottomEnd)
+              .padding(7.dp)
+              .background(Color(0xFF140F0A).copy(alpha = 0.55f), RoundedCornerShape(6.dp))
+              .padding(horizontal = 7.dp, vertical = 2.5.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+          Icon(
+            Icons.RoundedFilled.PlayArrow,
+            contentDescription = null,
+            tint = Color(0xFFFDF6E6),
+            modifier = Modifier.size(10.dp),
+          )
+          Text(
+            text = capture.formattedPosition,
+            fontSize = 10.5.sp,
+            color = Color(0xFFFDF6E6),
+          )
+        }
+      }
+      Text(
+        text = capture.videoTitle.ifBlank { capture.formattedPosition },
+        fontFamily = FontFamily.Serif,
+        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+        fontSize = 12.5.sp,
+        color = paperColors.inkSecondary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 13.dp, start = 4.dp, end = 4.dp),
+      )
     }
-    FrameBadge(capture.formattedPosition, Modifier.align(Alignment.BottomEnd))
-  }
-}
-
-@Composable
-private fun FrameBadge(
-  text: String,
-  modifier: Modifier = Modifier,
-) {
-  Surface(
-    shape = RoundedCornerShape(6.dp),
-    color = Color.Black.copy(alpha = 0.75f),
-    contentColor = Color.White,
-    modifier = modifier.padding(6.dp),
-  ) {
-    Text(
-      text = text,
-      style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
-      modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+    // 一条米色胶带斜贴在打印纸的顶缘。
+    Box(
+      modifier =
+        Modifier
+          .align(Alignment.TopCenter)
+          .offset(y = (-10).dp)
+          .size(width = 64.dp, height = 19.dp)
+          .graphicsLayer { rotationZ = -2.5f }
+          .background(
+            Brush.verticalGradient(
+              listOf(Color(0xFFE9DDBE).copy(alpha = 0.8f), Color(0xFFD5C49D).copy(alpha = 0.65f)),
+            ),
+            RoundedCornerShape(2.dp),
+          ),
     )
   }
 }

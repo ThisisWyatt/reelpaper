@@ -462,6 +462,11 @@ class NetworkStreamingViewModel(
   }
 
   /**
+   * Verify a (possibly unsaved) connection draft for the add/edit dialog's test button.
+   */
+  suspend fun testConnection(connection: NetworkConnection): Result<Unit> = repository.testConnection(connection)
+
+  /**
    * Disconnect from a network share
    */
   fun disconnect(connection: NetworkConnection) {

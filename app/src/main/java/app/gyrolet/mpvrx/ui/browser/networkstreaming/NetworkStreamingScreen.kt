@@ -13,6 +13,7 @@ import android.content.Context
 import app.gyrolet.mpvrx.ui.utils.NavigationBackHandler as BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import app.gyrolet.mpvrx.ui.utils.NavigationPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -37,17 +39,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,6 +72,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.database.entities.NetworkStreamEntryEntity
@@ -93,10 +92,16 @@ import app.gyrolet.mpvrx.ui.browser.cards.NetworkConnectionCard
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.dialogs.AddConnectionSheet
 import app.gyrolet.mpvrx.ui.browser.dialogs.EditConnectionSheet
+import app.gyrolet.mpvrx.ui.browser.fab.FabPlacement
 import app.gyrolet.mpvrx.ui.components.InlineSearchBar
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.icons.PaperIcons
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
+import app.gyrolet.mpvrx.ui.theme.paper.PaperFab
+import app.gyrolet.mpvrx.ui.theme.paper.paperInset
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpInstallPromptDialog
 import app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpInstallProgressDialog
 import app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpManager
@@ -294,6 +299,7 @@ object NetworkStreamingScreen : Screen {
     }
 
     val pagerState = rememberPagerState { NetworkTab.entries.size }
+    val navigateTab = rememberTabNavigation(pagerState)
 
     val headerContainerColor =
       if (app.gyrolet.mpvrx.ui.theme.LocalAppWallpaperActive.current) {
@@ -301,7 +307,9 @@ object NetworkStreamingScreen : Screen {
       } else if (MaterialTheme.colorScheme.background == Color.Black) {
         Color.Black
       } else {
-        MaterialTheme.colorScheme.surfaceContainer
+        // Mockup `.appbar`/`.seg` sit directly on the paper page — a card-tone band here
+        // would show as a lighter strip under the segmented control.
+        MaterialTheme.colorScheme.background
       }
 
     Scaffold(
@@ -353,6 +361,8 @@ object NetworkStreamingScreen : Screen {
             Box {
               BrowserTopBar(
                 title = stringResource(R.string.ui_network),
+                brandLogo = true,
+                brandTag = stringResource(R.string.ui_network_tag),
                 isInSelectionMode = false,
                 selectedCount = 0,
                 totalCount = connections.size + recentLinks.size + allMediaGroups.size + resolvedFolderBookmarks.size,
@@ -394,57 +404,34 @@ object NetworkStreamingScreen : Screen {
             }
           }
 
-          PrimaryScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage.coerceIn(0, (NetworkTab.entries.size - 1).coerceAtLeast(0)),
-            edgePadding = 8.dp,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
-            divider = {},
-          ) {
-            val navigateTab = rememberTabNavigation(pagerState)
-            NetworkTab.entries.forEachIndexed { index, tab ->
-              Tab(
-                selected = pagerState.currentPage == index,
-                onClick = {
-                   if (pagerState.currentPage != index) navigationHaptics.selection(true)
-                   navigateTab(index)
-                 },
-                text = {
-                  Text(
-                    text = stringResource(tab.titleResId),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Medium,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
-                  )
-                },
-              )
-            }
-          }
-          HorizontalDivider()
+          // Mockup `.seg`: recessed paper groove with a raised card key for the active tab.
+          PaperSegmentedTabs(
+            tabs = NetworkTab.entries.map { stringResource(it.titleResId) },
+            selectedIndex = pagerState.currentPage.coerceIn(0, NetworkTab.entries.lastIndex),
+            onSelect = { index ->
+              if (pagerState.currentPage != index) navigationHaptics.selection(true)
+              navigateTab(index)
+            },
+          )
         }
       },
       floatingActionButton = {
+        // Mockup `.fab`: round vermilion key with the globe-plus mark (circles never take a step).
         when (pagerState.currentPage) {
           NetworkTab.LOCAL_NETWORK.ordinal -> {
-            ExtendedFloatingActionButton(
+            PaperFab(
+              icon = PaperIcons.NetPlus,
+              contentDescription = stringResource(R.string.ui_add_connection),
               onClick = { showAddSheet = true },
-              icon = { Icon(Icons.RoundedFilled.Add, contentDescription = null) },
-              text = {
-                Text(
-                  stringResource(R.string.ui_add_connection),
-                )
-              },
-              modifier = Modifier.padding(bottom = app.gyrolet.mpvrx.ui.browser.fab.FabPlacement.scaffoldBottomPadding()),
+              modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
             )
           }
           NetworkTab.MEDIA.ordinal -> {
-            ExtendedFloatingActionButton(
+            PaperFab(
+              icon = Icons.RoundedFilled.Add,
+              contentDescription = stringResource(R.string.ui_add_media),
               onClick = { showAddMediaDialog = true },
-              icon = { Icon(Icons.RoundedFilled.Add, contentDescription = null) },
-              text = { Text("Add Media") },
-              modifier = Modifier.padding(bottom = app.gyrolet.mpvrx.ui.browser.fab.FabPlacement.scaffoldBottomPadding()),
+              modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
             )
           }
         }
@@ -471,6 +458,40 @@ object NetworkStreamingScreen : Screen {
                 connections = filteredConnections,
                 bookmarks = filteredFolderBookmarks,
                 connectionStatuses = connectionStatuses,
+                onConnect = { viewModel.connect(it) },
+                onDisconnect = { viewModel.disconnect(it) },
+                onEdit = { editingConnection = it },
+                onDelete = { viewModel.deleteConnection(it) },
+                onBrowse = { conn, status ->
+                  if (status?.isConnected == true) {
+                    backstack.navigateTo(
+                      NetworkBrowserScreen(
+                        connectionId = conn.id,
+                        connectionName = conn.name,
+                        currentPath = "/",
+                      ),
+                    )
+                  }
+                },
+                onAutoConnectChange = { conn, autoConnect ->
+                  viewModel.updateConnection(conn.copy(autoConnect = autoConnect))
+                },
+                onOpenBookmark = { item ->
+                  backstack.navigateTo(
+                    NetworkBrowserScreen(
+                      connectionId = item.connection.id,
+                      connectionName = item.connection.name,
+                      currentPath = item.bookmark.path,
+                    ),
+                  )
+                },
+                onManageBookmarks = { backstack.navigateTo(NetworkBookmarksScreen) },
+              )
+            }
+            NetworkTab.MEDIA -> {
+              MediaContent(
+                mediaGroups = filteredMediaGroups,
+                searchQuery = searchQuery,
                 recentLinks = filteredRecentLinks,
                 isPreparingLink =
                   showYtdlpInstallPrompt ||
@@ -513,40 +534,6 @@ object NetworkStreamingScreen : Screen {
                   }
                 },
                 onDeleteRecent = viewModel::deleteStreamEntry,
-                onConnect = { viewModel.connect(it) },
-                onDisconnect = { viewModel.disconnect(it) },
-                onEdit = { editingConnection = it },
-                onDelete = { viewModel.deleteConnection(it) },
-                onBrowse = { conn, status ->
-                  if (status?.isConnected == true) {
-                    backstack.navigateTo(
-                      NetworkBrowserScreen(
-                        connectionId = conn.id,
-                        connectionName = conn.name,
-                        currentPath = "/",
-                      ),
-                    )
-                  }
-                },
-                onAutoConnectChange = { conn, autoConnect ->
-                  viewModel.updateConnection(conn.copy(autoConnect = autoConnect))
-                },
-                onOpenBookmark = { item ->
-                  backstack.navigateTo(
-                    NetworkBrowserScreen(
-                      connectionId = item.connection.id,
-                      connectionName = item.connection.name,
-                      currentPath = item.bookmark.path,
-                    ),
-                  )
-                },
-                onManageBookmarks = { backstack.navigateTo(NetworkBookmarksScreen) },
-              )
-            }
-            NetworkTab.MEDIA -> {
-              MediaContent(
-                mediaGroups = filteredMediaGroups,
-                searchQuery = searchQuery,
                 onPlayMedia = { entry ->
                   val playableSource = normalizeTorrentSource(entry.canonicalSourceUri) ?: entry.canonicalSourceUri.trim()
                   if (isTorrentSource(playableSource)) {
@@ -586,6 +573,7 @@ object NetworkStreamingScreen : Screen {
           viewModel.addConnection(connection)
           showAddSheet = false
         },
+        onTest = { viewModel.testConnection(it) },
       )
 
       YtdlpInstallPromptDialog(
@@ -662,6 +650,7 @@ object NetworkStreamingScreen : Screen {
             viewModel.updateConnection(updatedConnection, clearPassword)
             editingConnection = null
           },
+          onTest = { viewModel.testConnection(it) },
         )
       }
 
@@ -765,12 +754,6 @@ private fun LocalNetworkContent(
   connections: List<NetworkConnection>,
   bookmarks: List<ResolvedNetworkFolderBookmark>,
   connectionStatuses: Map<Long, ConnectionStatus>,
-  recentLinks: List<NetworkStreamEntryEntity>,
-  isPreparingLink: Boolean,
-  onPlayLink: (String) -> Unit,
-  onPlayRecent: (NetworkStreamEntryEntity) -> Unit,
-  onSaveToMedia: (NetworkStreamEntryEntity) -> Unit,
-  onDeleteRecent: (String) -> Unit,
   onConnect: (NetworkConnection) -> Unit,
   onDisconnect: (NetworkConnection) -> Unit,
   onEdit: (NetworkConnection) -> Unit,
@@ -784,19 +767,57 @@ private fun LocalNetworkContent(
   val bottomOverlayClearance = maxOf(navBarHeight, app.gyrolet.mpvrx.ui.browser.NavigationBarState.miniPlayerClearance)
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = bottomOverlayClearance + 16.dp),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
+    contentPadding = PaddingValues(bottom = bottomOverlayClearance + 16.dp),
   ) {
-    // 1. Stream Link Section (URL input & recent streams with Save to Media action)
+    // Mockup `.sec`: letter-spaced section title with the count on the right.
     item {
-      StreamLinkSection(
-        recentLinks = recentLinks,
-        isPreparing = isPreparingLink,
-        onPlayLink = onPlayLink,
-        onPlayRecent = onPlayRecent,
-        onSaveToTorrent = onSaveToMedia,
-        onDeleteRecent = onDeleteRecent,
+      PaperSectionHeader(
+        title = stringResource(R.string.ui_saved_connections),
+        count = stringResource(R.string.ui_connections_count, connections.size),
       )
+    }
+
+    if (connections.isEmpty()) {
+      item {
+        Box(Modifier.padding(horizontal = 16.dp)) {
+          EmptyStateCard(
+            icon = Icons.RoundedFilled.SignalWifiStatusbarConnectedNoInternet4,
+            title = stringResource(R.string.ui_no_network_connections),
+            subtitle = stringResource(R.string.ui_add_smb_ftp_or_webdav_connections_to_browse_network_files),
+          )
+        }
+      }
+    } else {
+      // Mockup `.netcards`: the connection cards ride in one horizontally scrolling wallet.
+      // A plain scrolling Row (few items, no recycling needed) so that when the cards
+      // underfill the screen the group centers and both margins stay symmetric; once they
+      // overflow it scrolls start-anchored as usual.
+      item {
+        Row(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .horizontalScroll(rememberScrollState())
+              .padding(horizontal = 20.dp),
+          horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+        ) {
+          connections.forEach { connection ->
+            val status = connectionStatuses[connection.id]
+            NetworkConnectionCard(
+              connection = connection,
+              onConnect = onConnect,
+              onDisconnect = onDisconnect,
+              onEdit = onEdit,
+              onDelete = onDelete,
+              onBrowse = { onBrowse(connection, status) },
+              onAutoConnectChange = onAutoConnectChange,
+              isConnected = status?.isConnected ?: false,
+              isConnecting = status?.isConnecting ?: false,
+              error = status?.error,
+            )
+          }
+        }
+      }
     }
 
     if (bookmarks.isNotEmpty()) {
@@ -805,34 +826,6 @@ private fun LocalNetworkContent(
           bookmarks = bookmarks,
           onOpen = onOpenBookmark,
           onManage = onManageBookmarks,
-        )
-      }
-    }
-
-    // 2. Saved Network Connections Section
-    if (connections.isEmpty()) {
-      item {
-        EmptyStateCard(
-          icon = Icons.RoundedFilled.SignalWifiStatusbarConnectedNoInternet4,
-          title = stringResource(R.string.ui_no_network_connections),
-          subtitle = stringResource(R.string.ui_add_smb_ftp_or_webdav_connections_to_browse_network_files),
-        )
-      }
-    } else {
-      items(connections, key = { it.id }) { connection ->
-        val status = connectionStatuses[connection.id]
-        NetworkConnectionCard(
-          connection = connection,
-          onConnect = { onConnect(it) },
-          onDisconnect = { onDisconnect(it) },
-          onEdit = { onEdit(it) },
-          onDelete = { onDelete(it) },
-          onBrowse = { onBrowse(it, status) },
-          onAutoConnectChange = { conn, autoConnect -> onAutoConnectChange(conn, autoConnect) },
-          isConnected = status?.isConnected ?: false,
-          isConnecting = status?.isConnecting ?: false,
-          error = status?.error,
-          modifier = Modifier.padding(bottom = 0.dp),
         )
       }
     }
@@ -848,6 +841,12 @@ private fun SyncPlayContent() {
 private fun MediaContent(
   mediaGroups: List<MediaStreamGroup>,
   searchQuery: String,
+  recentLinks: List<NetworkStreamEntryEntity>,
+  isPreparingLink: Boolean,
+  onPlayLink: (String) -> Unit,
+  onPlayRecent: (NetworkStreamEntryEntity) -> Unit,
+  onSaveToMedia: (NetworkStreamEntryEntity) -> Unit,
+  onDeleteRecent: (String) -> Unit,
   onPlayMedia: (NetworkStreamEntryEntity) -> Unit,
   onDeleteMediaFile: (String) -> Unit,
   onDeleteMediaGroup: (MediaStreamGroup) -> Unit,
@@ -894,6 +893,16 @@ private fun MediaContent(
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = bottomOverlayClearance + 16.dp),
       ) {
         item {
+          StreamLinkSection(
+            recentLinks = recentLinks,
+            isPreparing = isPreparingLink,
+            onPlayLink = onPlayLink,
+            onPlayRecent = onPlayRecent,
+            onSaveToTorrent = onSaveToMedia,
+            onDeleteRecent = onDeleteRecent,
+          )
+        }
+        item {
           EmptyStateCard(
             icon = Icons.RoundedFilled.Movie,
             title = stringResource(R.string.ui_no_saved_media_title),
@@ -907,6 +916,18 @@ private fun MediaContent(
         contentPadding = PaddingValues(bottom = bottomOverlayClearance + 24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
       ) {
+        // 0. Stream URL input & recent quick-autofill links.
+        item {
+          StreamLinkSection(
+            recentLinks = recentLinks,
+            isPreparing = isPreparingLink,
+            onPlayLink = onPlayLink,
+            onPlayRecent = onPlayRecent,
+            onSaveToTorrent = onSaveToMedia,
+            onDeleteRecent = onDeleteRecent,
+          )
+        }
+
         // 1. Featured Hero Carousel Banner
         if (heroGroups.isNotEmpty() && searchQuery.isBlank()) {
           item {
@@ -1309,6 +1330,88 @@ private fun StreamLinkSection(
           }
         }
       }
+    }
+  }
+}
+
+/**
+ * Mockup `.seg`: a recessed paper groove holding one raised card key per tab; the active
+ * key takes the vermilion label, inactive ones the secondary ink.
+ */
+@Composable
+private fun PaperSegmentedTabs(
+  tabs: List<String>,
+  selectedIndex: Int,
+  onSelect: (Int) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val colors = LocalPaperColors.current
+  val grooveShape = RoundedCornerShape(12.dp)
+  val keyShape = RoundedCornerShape(9.dp)
+  Row(
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 14.dp)
+        .paperInset(grooveShape, colors)
+        .padding(4.dp),
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
+  ) {
+    tabs.forEachIndexed { index, label ->
+      val selected = index == selectedIndex
+      Box(
+        modifier =
+          Modifier
+            .weight(1f)
+            .clip(keyShape)
+            .then(if (selected) Modifier.paperRaise(keyShape, colors, elevation = 2.dp) else Modifier)
+            .clickable { onSelect(index) }
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = label,
+          fontSize = 13.sp,
+          fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+          color = if (selected) colors.red else colors.inkSecondary,
+          maxLines = 1,
+        )
+      }
+    }
+  }
+}
+
+/** Mockup `.sec`: letter-spaced tertiary section title with the count on the right. */
+@Composable
+private fun PaperSectionHeader(
+  title: String,
+  count: String?,
+  modifier: Modifier = Modifier,
+) {
+  val colors = LocalPaperColors.current
+  Row(
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .padding(start = 22.dp, end = 22.dp, top = 20.dp, bottom = 10.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    Text(
+      text = title,
+      fontSize = 12.5.sp,
+      letterSpacing = 3.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = colors.inkTertiary,
+      modifier = Modifier.alignByBaseline(),
+    )
+    if (count != null) {
+      Text(
+        text = count,
+        fontSize = 11.5.sp,
+        letterSpacing = 1.sp,
+        color = colors.inkSecondary,
+        modifier = Modifier.alignByBaseline(),
+      )
     }
   }
 }

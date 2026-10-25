@@ -116,6 +116,13 @@ object SnapshotScreen : Screen {
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
+    val libraryHost = app.gyrolet.mpvrx.ui.browser.library.LocalLibraryPaneHost.current
+    LaunchedEffect(libraryHost?.searchRequests) {
+      if (libraryHost != null && libraryHost.searchRequests > 0 && !isSearching) isSearching = true
+    }
+    LaunchedEffect(libraryHost?.sortRequests) {
+      if (libraryHost != null && libraryHost.sortRequests > 0) showSortDialog = true
+    }
     var folderSelection by remember { mutableStateOf(SelectionState<Long>()) }
     var captureSelection by remember { mutableStateOf(SelectionState<Long>()) }
     var confirmFolderDelete by remember { mutableStateOf(false) }
@@ -281,6 +288,9 @@ object SnapshotScreen : Screen {
 
     Scaffold(
       containerColor = wallpaperAwareBackgroundColor(),
+      contentWindowInsets =
+        if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
+        else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
       topBar = {
         when {
           folderSelection.isInSelectionMode ->
@@ -353,9 +363,12 @@ object SnapshotScreen : Screen {
               },
               shape = RoundedCornerShape(28.dp),
               tonalElevation = 6.dp,
+              windowInsets =
+                if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
+                else androidx.compose.material3.SearchBarDefaults.windowInsets,
             )
 
-          else ->
+          libraryHost == null ->
             BrowserTopBar(
               title = stringResource(R.string.ui_snapshots),
               isInSelectionMode = false,
@@ -382,6 +395,19 @@ object SnapshotScreen : Screen {
                 }
               },
             )
+        }
+      },
+      floatingActionButton = {
+        if (!folderSelection.isInSelectionMode && !captureSelection.isInSelectionMode) {
+          app.gyrolet.mpvrx.ui.theme.paper.PaperFab(
+            icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.FolderAdd,
+            contentDescription = stringResource(R.string.snapshot_new_folder),
+            onClick = {
+              nameError = null
+              nameDialog = NameDialogState(folderId = null, initialName = "")
+            },
+            modifier = Modifier.padding(bottom = app.gyrolet.mpvrx.ui.browser.fab.FabPlacement.scaffoldBottomPadding()),
+          )
         }
       },
     ) { paddingValues ->
@@ -513,6 +539,7 @@ private fun SnapshotLibraryContent(
         items(folders, key = { "folder_${it.id}" }) { folder ->
           SnapshotFolderListItem(
             name = folder.name,
+            captureCount = folder.captureCount,
             isSelected = isFolderSelected(folder.id),
             onClick = { onFolderClick(folder) },
             onLongClick = { onFolderLongClick(folder) },
@@ -573,6 +600,7 @@ private fun SnapshotLibraryContent(
               row.forEach { folder ->
                 SnapshotFolderGridItem(
                   name = folder.name,
+                  captureCount = folder.captureCount,
                   isSelected = isFolderSelected(folder.id),
                   onClick = { onFolderClick(folder) },
                   onLongClick = { onFolderLongClick(folder) },

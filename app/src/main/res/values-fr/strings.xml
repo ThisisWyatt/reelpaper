@@ -1122,6 +1122,32 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="ui_home">Accueil</string>
   <string name="ui_recents">Récents</string>
   <string name="ui_playlists">Listes de lecture</string>
+  <string name="ui_library">Collection</string>
+  <string name="profile_seal">Privé</string>
+  <string name="profile_media_tag">Archives multimédia</string>
+  <string name="profile_archive_title">Archives de projection locales</string>
+  <string name="profile_privacy_note">Privé · sur cet appareil uniquement</string>
+  <string name="profile_privacy_explanation">L\'historique et les statistiques restent sur cet appareil et ne sont jamais envoyés.</string>
+  <string name="profile_motto">Chaque projection laisse une trace</string>
+  <string name="profile_count_items">%1$d éléments</string>
+  <string name="profile_count_shots">%1$d captures</string>
+  <string name="profile_screened_today">Projeté aujourd\'hui</string>
+  <string name="profile_screened_yesterday">Projeté hier</string>
+  <string name="profile_screened_days_ago">Projeté il y a %1$d jours</string>
+  <string name="profile_local_media">Médias locaux</string>
+  <string name="profile_duration_minutes">%1$d min</string>
+  <string name="profile_duration_hours">%1$d h</string>
+  <string name="profile_duration_hours_minutes">%1$d h %2$d min</string>
+  <string name="profile_duration_seconds">%1$d s</string>
+  <string name="profile_unit_minutes">min</string>
+  <string name="profile_unit_times">lectures</string>
+  <string name="watch_stats_total_sessions">Lectures totales</string>
+  <string name="watch_stats_by_watch_time">Par temps de visionnage</string>
+  <string name="network_stamp_connected">Connecté</string>
+  <string name="network_stamp_failed">Échec de connexion</string>
+  <string name="network_stamp_offline">Hors ligne</string>
+  <string name="library_summary_playlists">%1$d listes · %2$d vidéos</string>
+  <string name="library_summary_snapshots">%1$d captures · %2$d dossiers</string>
   <string name="ui_network">Réseau</string>
   <string name="ui_pinned_folder">Dossier épinglé</string>
   <string name="ui_pin_videos">Épingler les vidéos</string>
@@ -1210,7 +1236,9 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="ui_quick_play">Lecture rapide</string>
   <string name="ui_open_file">Ouvrir un fichier</string>
   <string name="ui_open_link">Ouvrir un lien</string>
-  <string name="ui_search_folders_and_videos">Rechercher des dossiers et des vidéos...</string>
+  <string name="ui_search_folders_and_videos">Rechercher des dossiers ou des vidéos</string>
+  <string name="home_brand_tag">Lecteur vidéo privé</string>
+  <string name="home_all_folders">Tous les dossiers</string>
   <string name="ui_pinned">Épinglé</string>
   <string name="ui_rename_failed">Échec du renommage</string>
   <string name="ui_deleted_successfully">Suppression réussie</string>
@@ -1218,6 +1246,21 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="ui_play_recently_played_or_first_video">Lire la vidéo récente ou la première</string>
   <string name="ui_videos">Vidéos</string>
   <string name="ui_add_connection">Ajouter une connexion</string>
+  <string name="folder_new_count_short">%1$d nouv.</string>
+  <string name="ui_network_tag">Réseaux locaux et flux distants</string>
+  <string name="ui_saved_connections">Connexions enregistrées</string>
+  <string name="ui_connections_count">%1$d au total</string>
+  <string name="ui_add_media">Ajouter un média</string>
+  <string name="ui_auto_connect">Connexion auto</string>
+  <string name="ui_optional">Facultatif</string>
+  <string name="network_name_placeholder">ex. : iMac</string>
+  <string name="network_server_info">Informations du serveur</string>
+  <string name="network_auto_connect_hint">Tente de se connecter à ce serveur au démarrage du lecteur</string>
+  <string name="network_test_connection">Tester la connexion</string>
+  <string name="network_testing">Test de connexion…</string>
+  <string name="network_test_success">Connexion réussie</string>
+  <string name="network_test_failed">Échec de la connexion : %1$s</string>
+  <string name="network_test_unknown_error">Erreur inconnue</string>
   <string name="ui_local_network">Réseau local</string>
   <string name="ui_no_network_connections">Aucune connexion réseau</string>
   <string name="ui_add_smb_ftp_or_webdav_connections_to_browse_network_files">Ajoutez des connexions SMB, FTP ou WebDAV pour parcourir les fichiers réseau</string>
@@ -2242,6 +2285,8 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <!-- Snapshots (frame capture) -->
   <string name="ui_snapshots">Captures</string>
   <string name="ui_profile">Profil</string>
+  <string name="pref_nav_library_title">Afficher l’onglet Collection</string>
+  <string name="pref_nav_library_summary">Playlists et captures réunies dans un même hub</string>
   <string name="pref_nav_profile_title">Afficher l\'onglet Profil</string>
   <string name="pref_nav_profile_summary">Regrouper Récents, Playlists et Captures dans un seul onglet</string>
   <string name="profile_view_all">Tout afficher</string>
@@ -2844,4 +2889,21 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="pref_persistent_status_micro_battery">Afficher la petite icône de batterie</string>
   <string name="pref_persistent_status_est_prefix">Est.</string>
   <string name="pref_persistent_status_time_unknown">—</string>
+
+  <!-- Paper sort & view dialog -->
+  <string name="sort_order">Ordre de tri</string>
+  <string name="view_mode_label">Mode d\'affichage</string>
+  <string name="options_section">Options</string>
+  <string name="view_mode_folder">Dossier</string>
+  <string name="view_mode_tree">Arborescence</string>
+  <string name="view_mode_library">Médiathèque</string>
+  <string name="grid_columns_range">Colonnes de grille (%1$d – %2$d)</string>
+  <string name="folder_grid_columns">Colonnes de dossiers</string>
+  <string name="video_grid_columns">Colonnes vidéo</string>
+  <string name="sort_type_title">Titre</string>
+  <string name="sort_type_date">Date</string>
+  <string name="sort_type_size">Taille</string>
+  <string name="sort_type_count">Nombre</string>
+  <string name="generic_close">Fermer</string>
+  <string name="ui_images">Images</string>
 </resources>

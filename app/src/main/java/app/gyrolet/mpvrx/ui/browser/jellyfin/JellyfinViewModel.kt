@@ -32,7 +32,6 @@ import app.gyrolet.mpvrx.domain.jellyfin.JellyfinServer
 import app.gyrolet.mpvrx.domain.jellyfin.JellyfinSortBy
 import app.gyrolet.mpvrx.domain.jellyfin.JellyfinSortOrder
 import app.gyrolet.mpvrx.domain.playbackstate.repository.PlaybackStateRepository
-import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.AudioPreferences
 import app.gyrolet.mpvrx.preferences.BrowserPreferences
 import app.gyrolet.mpvrx.preferences.SubtitlesPreferences
@@ -158,7 +157,6 @@ class JellyfinViewModel(
   private val subtitlesPreferences: SubtitlesPreferences by inject()
   private val audioPreferences: AudioPreferences by inject()
   private val browserPreferences: BrowserPreferences by inject()
-  private val appearancePreferences: AppearancePreferences by inject()
   private val downloadManager: AppDownloadManager by inject()
 
   private var loadDashboardJob: Job? = null
@@ -1706,9 +1704,6 @@ class JellyfinViewModel(
           )
         }
         loadHomeDashboard(savedServer)
-        if (!appearancePreferences.showJellyfinTab.get()) {
-          appearancePreferences.showJellyfinTab.set(true)
-        }
         onSuccess()
       } catch (e: Exception) {
         _uiState.update {
