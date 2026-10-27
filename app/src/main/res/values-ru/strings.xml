@@ -1004,6 +1004,9 @@
   <string name="ui_no_playlists_found">Плейлисты не найдены</string>
   <string name="ui_recently_played_disabled">Недавно воспроизведённые отключены</string>
   <string name="ui_no_recently_played_videos">Нет недавно воспроизведённых видео</string>
+  <string name="recent_subhead_summary">%1$d записей · только на этом устройстве</string>
+  <string name="recent_records_title">Показы</string>
+  <string name="recent_progress_percent">просмотрено %1$d%%</string>
   <string name="compressor_failed">Ошибка сжатия</string>
   <string name="sort_view_options">Сортировка и вид</string>
   <string name="ui_view_options">Параметры вида</string>
@@ -1130,6 +1133,9 @@
   <string name="ui_home">Главная</string>
   <string name="ui_recents">Недавние</string>
   <string name="ui_playlists">Плейлисты</string>
+  <string name="playlist_my_lists">Мои списки</string>
+  <string name="playlist_paper_motto">Сложены в книгу · только для вас</string>
+  <string name="playlist_subhead_summary">%1$d списков · %2$d видео</string>
   <string name="ui_library">Коллекция</string>
   <string name="profile_seal">Личное</string>
   <string name="profile_media_tag">Медиаархив</string>
@@ -1949,6 +1955,8 @@
   <string name="network_bookmark_add">Добавить папку в закладки</string>
   <string name="network_bookmark_remove">Удалить папку из закладок</string>
   <string name="network_bookmarks_title">Папки в закладках</string>
+  <string name="network_bookmarks_home_title">Сетевые закладки</string>
+  <string name="network_bookmarks_manage_short">Управление</string>
   <string name="network_bookmarks_manage">Управление папками в закладках</string>
   <string name="network_bookmarks_empty_title">Нет папок в закладках</string>
   <string name="network_bookmarks_empty_description">Добавьте удалённую папку в закладки, чтобы открывать её прямо со страницы «Сеть».</string>
@@ -2319,6 +2327,8 @@
   <string name="snapshot_empty_title">Кадров пока нет</string>
   <string name="snapshot_empty_message">Нажмите кнопку кадра на панели покадрового просмотра, чтобы сохранить момент</string>
   <string name="snapshot_search_placeholder">Поиск по кадрам</string>
+  <string name="snapshot_hub_subhead_summary">%1$d снимков · %2$d видео</string>
+  <string name="snapshot_folder_subhead_summary">%1$d снимков · из %2$d видео</string>
   <string name="snapshot_no_results">Нет кадров, соответствующих запросу</string>
   <string name="snapshot_sort_captured_at">Время захвата</string>
   <string name="snapshot_sort_video_title">Название видео</string>

@@ -910,6 +910,9 @@
   <string name="ui_no_playlists_found">कोई प्लेलिस्ट नहीं मिली</string>
   <string name="ui_recently_played_disabled">हाल ही में चलाई गई अक्षम है</string>
   <string name="ui_no_recently_played_videos">हाल ही में कोई वीडियो नहीं चलाई गई</string>
+  <string name="recent_subhead_summary">%1$d रिकॉर्ड · केवल इस डिवाइस पर</string>
+  <string name="recent_records_title">स्क्रीनिंग रिकॉर्ड</string>
+  <string name="recent_progress_percent">%1$d%% देखा</string>
   <string name="compressor_failed">कम्प्रेशन नाकाम</string>
   <string name="sort_view_options">सॉर्ट और व्यू विकल्प</string>
   <string name="ui_view_options">व्यू विकल्प</string>
@@ -1036,6 +1039,9 @@
   <string name="ui_home">होम</string>
   <string name="ui_recents">रीसेंट्स</string>
   <string name="ui_playlists">प्लेलिस्ट</string>
+  <string name="playlist_my_lists">मेरी सूचियाँ</string>
+  <string name="playlist_paper_motto">किताब की तरह जमा · बस आपके लिए</string>
+  <string name="playlist_subhead_summary">%1$d सूचियाँ · %2$d वीडियो</string>
   <string name="ui_library">संग्रह</string>
   <string name="profile_seal">निजी</string>
   <string name="profile_media_tag">मीडिया संग्रह</string>
@@ -1843,6 +1849,8 @@
   <string name="network_bookmark_add">फ़ोल्डर को बुकमार्क करें</string>
   <string name="network_bookmark_remove">फ़ोल्डर बुकमार्क हटाएँ</string>
   <string name="network_bookmarks_title">बुकमार्क किए गए फ़ोल्डर</string>
+  <string name="network_bookmarks_home_title">नेटवर्क बुकमार्क</string>
+  <string name="network_bookmarks_manage_short">प्रबंधित करें</string>
   <string name="network_bookmarks_manage">बुकमार्क किए गए फ़ोल्डर प्रबंधित करें</string>
   <string name="network_bookmarks_empty_title">कोई बुकमार्क किया गया फ़ोल्डर नहीं</string>
   <string name="network_bookmarks_empty_description">किसी रिमोट फ़ोल्डर को नेटवर्क पेज से सीधे खोलने के लिए बुकमार्क करें।</string>
@@ -2213,6 +2221,8 @@
   <string name="snapshot_empty_title">अभी कोई स्नैपशॉट नहीं</string>
   <string name="snapshot_empty_message">एक पल सहेजने के लिए फ़्रेम-दर-फ़्रेम पैनल में स्नैपशॉट बटन दबाएं</string>
   <string name="snapshot_search_placeholder">स्नैपशॉट खोजें</string>
+  <string name="snapshot_hub_subhead_summary">%1$d स्नैपशॉट · %2$d वीडियो</string>
+  <string name="snapshot_folder_subhead_summary">%1$d स्नैपशॉट · %2$d वीडियो से</string>
   <string name="snapshot_no_results">आपकी खोज से कोई स्नैपशॉट मेल नहीं खाता</string>
   <string name="snapshot_sort_captured_at">कैप्चर समय</string>
   <string name="snapshot_sort_video_title">वीडियो शीर्षक</string>

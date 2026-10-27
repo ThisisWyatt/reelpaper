@@ -992,6 +992,9 @@
   <string name="ui_no_playlists_found">プレイリストが見つかりません</string>
   <string name="ui_recently_played_disabled">最近再生した項目は無効です</string>
   <string name="ui_no_recently_played_videos">最近再生した動画はありません</string>
+  <string name="recent_subhead_summary">%1$d 件の記録 · この端末のみ</string>
+  <string name="recent_records_title">上映記録</string>
+  <string name="recent_progress_percent">%1$d%% まで視聴</string>
   <string name="compressor_failed">圧縮に失敗しました</string>
   <string name="sort_view_options">並べ替えと表示のオプション</string>
   <string name="ui_view_options">表示オプション</string>
@@ -1118,6 +1121,9 @@
   <string name="ui_home">ホーム</string>
   <string name="ui_recents">最近</string>
   <string name="ui_playlists">プレイリスト</string>
+  <string name="playlist_my_lists">マイリスト</string>
+  <string name="playlist_paper_motto">紙を重ねて一冊に · すべて私蔵</string>
+  <string name="playlist_subhead_summary">%1$d 個のリスト · %2$d 本の動画</string>
   <string name="ui_library">コレクション</string>
   <string name="profile_seal">私蔵</string>
   <string name="profile_media_tag">メディアアーカイブ</string>
@@ -1928,6 +1934,8 @@
   <string name="network_bookmark_add">フォルダーをブックマーク</string>
   <string name="network_bookmark_remove">フォルダーのブックマークを解除</string>
   <string name="network_bookmarks_title">ブックマークしたフォルダー</string>
+  <string name="network_bookmarks_home_title">ネットワークの保存</string>
+  <string name="network_bookmarks_manage_short">管理</string>
   <string name="network_bookmarks_manage">ブックマークしたフォルダーを管理</string>
   <string name="network_bookmarks_empty_title">ブックマークしたフォルダーはありません</string>
   <string name="network_bookmarks_empty_description">リモートフォルダーをブックマークすると、ネットワークページから直接開けます。</string>
@@ -2298,6 +2306,8 @@
   <string name="snapshot_empty_title">スナップショットはまだありません</string>
   <string name="snapshot_empty_message">フレーム単位のパネルでスナップショットボタンを押すと、その瞬間を残せます</string>
   <string name="snapshot_search_placeholder">スナップショットを検索</string>
+  <string name="snapshot_hub_subhead_summary">%1$d 枚のスナップ · %2$d 本の動画</string>
+  <string name="snapshot_folder_subhead_summary">%1$d 枚のスナップ · %2$d 本の動画から</string>
   <string name="snapshot_no_results">検索に一致するスナップショットはありません</string>
   <string name="snapshot_sort_captured_at">キャプチャ日時</string>
   <string name="snapshot_sort_video_title">動画タイトル</string>

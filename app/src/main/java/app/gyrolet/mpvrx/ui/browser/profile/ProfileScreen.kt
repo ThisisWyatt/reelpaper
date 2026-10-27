@@ -30,7 +30,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -38,12 +37,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -96,13 +93,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -117,6 +117,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -125,6 +126,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
+import app.gyrolet.mpvrx.database.entities.PlaylistEntity
+import app.gyrolet.mpvrx.database.repository.PlaylistRepository
 import app.gyrolet.mpvrx.domain.framecapture.FrameCapture
 import app.gyrolet.mpvrx.domain.media.model.Video
 import app.gyrolet.mpvrx.domain.thumbnail.ThumbnailRepository
@@ -138,6 +141,8 @@ import app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.components.rememberSwipePlaybackInfo
 import app.gyrolet.mpvrx.ui.browser.networkstreaming.NetworkStreamingScreen
+import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistDetailScreen
+import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistViewModel
 import app.gyrolet.mpvrx.ui.browser.recentlyplayed.RecentlyPlayedItem
 import app.gyrolet.mpvrx.ui.browser.recentlyplayed.RecentlyPlayedScreen
@@ -155,7 +160,6 @@ import app.gyrolet.mpvrx.ui.preferences.PreferencesScreen
 import app.gyrolet.mpvrx.ui.preferences.ProfileWatchStatistics
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
-import app.gyrolet.mpvrx.ui.theme.paper.dashedTopEdge
 import app.gyrolet.mpvrx.ui.theme.paper.paperInset
 import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import androidx.compose.ui.draw.shadow
@@ -286,21 +290,35 @@ object ProfileScreen : Screen {
             ProfileArchiveCard(
               name = profileName,
               avatarPath = profileImagePath,
-              recentCount = recentItems.size,
-              playlistCount = playlists.size,
-              snapshotCount = snapshots.size,
-              showNetwork = true,
               onEditProfile = {
                 haptics.tick()
                 showProfileDialog = true
               },
-              onRecents = { backStack.navigateTo(RecentlyPlayedScreen) },
-              onLibrary = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.library.LibraryScreen) },
-              onSnapshots = { backStack.navigateTo(SnapshotScreen) },
-              onMusic = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.music.MusicScreen) },
-              onJellyfin = { backStack.navigateTo(app.gyrolet.mpvrx.ui.browser.jellyfin.JellyfinScreen) },
-              onNetwork = { backStack.navigateTo(NetworkStreamingScreen) },
             )
+          }
+
+          if (playlists.isNotEmpty()) {
+            item(key = "playlists_header") {
+              SectionHeader(
+                title = stringResource(R.string.ui_playlists),
+                countText = stringResource(R.string.profile_count_items, playlists.size),
+                onViewAll = { backStack.navigateTo(PlaylistScreen) },
+              )
+            }
+            item(key = "playlists_shelf") {
+              // Mockup `.plcards`: a shelf of clip-stacked paper sheets, one per playlist.
+              LazyRow(
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 22.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+              ) {
+                items(playlists.take(SHELF_LIMIT), key = { it.playlist.id }) { entry ->
+                  ProfilePlaylistClipCard(
+                    playlist = entry.playlist,
+                    onClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
+                  )
+                }
+              }
+            }
           }
 
           item(key = "recents_header") {
@@ -332,20 +350,20 @@ object ProfileScreen : Screen {
                 )
 
               else -> {
-                // Mockup `.tstubs`: a fixed 3-column grid of tear-off ticket stubs.
-                // Playlists ride in their own section below, so only video tickets land here.
+                // Mockup `.tstubs`: a fixed 3-column grid of film frames — one dark strip,
+                // the rest developed positives. Playlists ride in their own shelf above.
                 Row(
-                  modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = 20.dp),
+                  modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                   horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                   recentShelf
                     .filterIsInstance<RecentlyPlayedItem.VideoItem>()
                     .take(3)
-                    .forEach { item ->
-                      RecentTicketCard(
+                    .forEachIndexed { index, item ->
+                      ProfileFilmFrameCard(
                         video = item.video,
-                        timestamp = item.timestamp,
                         showThumbnail = showRecentThumbnails,
+                        dark = index == 0,
                         modifier = Modifier.weight(1f),
                         onClick = { playRecent(item.video) },
                         onLongClick = {
@@ -527,23 +545,13 @@ private fun rememberProfileAvatar(path: String): ImageBitmap? {
 /**
  * 档案卡 per mockup `.profcard`: a bookplate — cream reel-emblem badge carrying the edit key,
  * the serif archive title with the privacy chip, and the vermilion 私藏 seal stamped at the
- * upper right. Below it, the `.hubgrid` shortcut cells keep Music/Jellyfin/Network reachable.
+ * upper right.
  */
 @Composable
 private fun ProfileArchiveCard(
   name: String,
   avatarPath: String,
-  recentCount: Int,
-  playlistCount: Int,
-  snapshotCount: Int,
-  showNetwork: Boolean,
   onEditProfile: () -> Unit,
-  onRecents: () -> Unit,
-  onLibrary: () -> Unit,
-  onSnapshots: () -> Unit,
-  onMusic: () -> Unit,
-  onJellyfin: () -> Unit,
-  onNetwork: () -> Unit,
 ) {
   val paperColors = LocalPaperColors.current
   val configuration = LocalConfiguration.current
@@ -553,229 +561,123 @@ private fun ProfileArchiveCard(
   // Mockup `.pav`: the user's avatar image when one is set, the reel emblem otherwise.
   val avatar = rememberProfileAvatar(avatarPath)
 
-  Column(
-    modifier = Modifier.fillMaxWidth().padding(start = horizontalPadding, end = horizontalPadding, top = 6.dp, bottom = 4.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .padding(start = horizontalPadding, end = horizontalPadding, top = 6.dp, bottom = 4.dp)
+        .paperRaise(cardShape, paperColors)
+        .border(1.dp, paperColors.cardLine, cardShape)
+        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 15.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(14.dp),
   ) {
-    Row(
-      modifier =
-        Modifier
-          .fillMaxWidth()
-          .paperRaise(cardShape, paperColors)
-          .border(1.dp, paperColors.cardLine, cardShape)
-          .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 15.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-      // .pav 藏书票徽章 + 编辑键 (22dp key on a 30dp touch target, overhanging like the mock).
-      Box(contentAlignment = Alignment.BottomEnd) {
-        Box(
-          modifier =
-            Modifier
-              .size(54.dp)
-              .clip(RoundedCornerShape(16.dp))
-              .drawBehind {
-                drawRect(
-                  Brush.radialGradient(
-                    listOf(Color(0xFFFCF4E2), Color(0xFFF0E4C8), Color(0xFFDCCBA2)),
-                    center = Offset(size.width * 0.32f, size.height * 0.24f),
-                    radius = size.width * 1.2f,
-                  ),
-                )
-              }
-              .border(1.dp, if (paperColors.isDark) paperColors.cardLine else Color(0xFFD6C49A), RoundedCornerShape(16.dp)),
-          contentAlignment = Alignment.Center,
-        ) {
-          val bitmap = avatar
-          if (bitmap != null) {
-            Image(
-              bitmap,
-              contentDescription = null,
-              contentScale = ContentScale.Crop,
-              modifier = Modifier.fillMaxSize(),
-            )
-          } else {
-            BookplateEmblem(modifier = Modifier.size(34.dp))
-          }
-        }
-        Box(
-          modifier =
-            Modifier
-              .size(30.dp)
-              .offset(x = 4.dp, y = 4.dp)
-              .clickable(onClick = onEditProfile),
-          contentAlignment = Alignment.Center,
-        ) {
-          Box(
-            modifier =
-              Modifier
-                .size(22.dp)
-                .paperRaise(CircleShape, paperColors, elevation = 2.dp)
-                .border(1.5.dp, paperColors.cardLine, CircleShape),
-            contentAlignment = Alignment.Center,
-          ) {
-            Icon(
-              Icons.RoundedFilled.Edit,
-              contentDescription = stringResource(R.string.profile_edit),
-              tint = paperColors.inkSecondary,
-              modifier = Modifier.size(11.dp),
-            )
-          }
-        }
-      }
-
-      Column(modifier = Modifier.weight(1f)) {
-        Text(
-          text = name.ifBlank { stringResource(R.string.profile_archive_title) },
-          modifier = Modifier.semantics { heading() },
-          fontFamily = FontFamily.Serif,
-          fontSize = 19.sp,
-          fontWeight = FontWeight.Bold,
-          letterSpacing = 0.5.sp,
-          color = paperColors.ink,
-          maxLines = 2,
-          overflow = TextOverflow.Ellipsis,
-        )
-        Box(
-          modifier =
-            Modifier
-              .padding(top = 7.dp)
-              .paperInset(RoundedCornerShape(999.dp), paperColors),
-        ) {
-          Text(
-            text = stringResource(R.string.profile_privacy_note),
-            fontSize = 10.sp,
-            letterSpacing = 0.5.sp,
-            color = paperColors.inkSecondary,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-          )
-        }
-      }
-
-      // .seal 朱砂「私藏」印章: 7° tilt, double vermilion ring, serif characters.
+    // .pav 藏书票徽章 + 编辑键 (22dp key on a 30dp touch target, overhanging like the mock).
+    Box(contentAlignment = Alignment.BottomEnd) {
       Box(
         modifier =
           Modifier
-            .size(46.dp)
-            .graphicsLayer { rotationZ = 7f }
-            .border(2.dp, paperColors.red.copy(alpha = 0.72f), RoundedCornerShape(9.dp))
-            .padding(2.dp)
-            .border(1.5.dp, paperColors.red.copy(alpha = 0.26f), RoundedCornerShape(7.dp))
-            .background(paperColors.red.copy(alpha = 0.05f), RoundedCornerShape(7.dp)),
-        contentAlignment = Alignment.Center,
-      ) {
-        Text(
-          text = stringResource(R.string.profile_seal),
-          fontFamily = FontFamily.Serif,
-          fontSize = 14.sp,
-          fontWeight = FontWeight.Bold,
-          lineHeight = 16.sp,
-          letterSpacing = 1.sp,
-          textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-          color = paperColors.red.copy(alpha = 0.88f),
-        )
-      }
-    }
-
-    val shortcuts = buildList {
-      add(ProfileShortcutDestination(Icons.RoundedFilled.History, stringResource(R.string.ui_recents), recentCount, onRecents))
-      add(ProfileShortcutDestination(Icons.RoundedFilled.VideoLibrary, stringResource(R.string.ui_library), playlistCount, onLibrary))
-      add(ProfileShortcutDestination(Icons.RoundedFilled.Image, stringResource(R.string.ui_snapshots), snapshotCount, onSnapshots))
-      add(ProfileShortcutDestination(Icons.RoundedFilled.Audiotrack, stringResource(R.string.ui_music), null, onMusic))
-      add(ProfileShortcutDestination(AppIcon(drawableRes = R.drawable.ic_jellyfin), stringResource(R.string.ui_jellyfin), null, onJellyfin))
-      if (showNetwork) {
-        add(ProfileShortcutDestination(PaperIcons.Globe, stringResource(R.string.ui_network), null, onNetwork))
-      }
-    }
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-      val columns = when {
-        maxWidth < 300.dp -> 1
-        maxWidth >= 680.dp -> 4
-        else -> 2
-      }
-      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        shortcuts.chunked(columns).forEach { rowShortcuts ->
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            rowShortcuts.forEach { shortcut ->
-              ProfileShortcutTile(
-                icon = shortcut.icon,
-                label = shortcut.label,
-                count = shortcut.count,
-                onClick = shortcut.onClick,
-                modifier = Modifier.weight(1f),
+            .size(54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .drawBehind {
+              drawRect(
+                Brush.radialGradient(
+                  listOf(Color(0xFFFCF4E2), Color(0xFFF0E4C8), Color(0xFFDCCBA2)),
+                  center = Offset(size.width * 0.32f, size.height * 0.24f),
+                  radius = size.width * 1.2f,
+                ),
               )
             }
-            repeat(columns - rowShortcuts.size) {
-              Spacer(modifier = Modifier.weight(1f))
-            }
-          }
+            .border(1.dp, if (paperColors.isDark) paperColors.cardLine else Color(0xFFD6C49A), RoundedCornerShape(16.dp)),
+        contentAlignment = Alignment.Center,
+      ) {
+        val bitmap = avatar
+        if (bitmap != null) {
+          Image(
+            bitmap,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+          )
+        } else {
+          BookplateEmblem(modifier = Modifier.size(34.dp))
+        }
+      }
+      Box(
+        modifier =
+          Modifier
+            .size(30.dp)
+            .offset(x = 4.dp, y = 4.dp)
+            .clickable(onClick = onEditProfile),
+        contentAlignment = Alignment.Center,
+      ) {
+        Box(
+          modifier =
+            Modifier
+              .size(22.dp)
+              .paperRaise(CircleShape, paperColors, elevation = 2.dp)
+              .border(1.5.dp, paperColors.cardLine, CircleShape),
+          contentAlignment = Alignment.Center,
+        ) {
+          Icon(
+            Icons.RoundedFilled.Edit,
+            contentDescription = stringResource(R.string.profile_edit),
+            tint = paperColors.inkSecondary,
+            modifier = Modifier.size(11.dp),
+          )
         }
       }
     }
-  }
-}
 
-/** Existing destinations and counts, with geometry kept separate from navigation behavior. */
-private data class ProfileShortcutDestination(
-  val icon: AppIcon,
-  val label: String,
-  val count: Int?,
-  val onClick: () -> Unit,
-)
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = name.ifBlank { stringResource(R.string.profile_archive_title) },
+        modifier = Modifier.semantics { heading() },
+        fontFamily = FontFamily.Serif,
+        fontSize = 19.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.5.sp,
+        color = paperColors.ink,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Box(
+        modifier =
+          Modifier
+            .padding(top = 7.dp)
+            .paperInset(RoundedCornerShape(999.dp), paperColors),
+      ) {
+        Text(
+          text = stringResource(R.string.profile_privacy_note),
+          fontSize = 10.sp,
+          letterSpacing = 0.5.sp,
+          color = paperColors.inkSecondary,
+          modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+        )
+      }
+    }
 
-/**
- * Mockup `.hubcell`: paper card with a recessed 42dp icon groove, the vermilion count in
- * ExtraBold over the secondary-ink label.
- */
-@Composable
-private fun ProfileShortcutTile(
-  icon: AppIcon,
-  label: String,
-  count: Int?,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val paperColors = LocalPaperColors.current
-  val shape = RoundedCornerShape(14.dp)
-  Row(
-    modifier =
-      modifier
-        .paperRaise(shape, paperColors)
-        .border(1.dp, paperColors.cardLine, shape)
-        .clickable(onClick = onClick)
-        .padding(horizontal = 14.dp, vertical = 12.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
+    // .seal 朱砂「私藏」印章: 7° tilt, double vermilion ring, serif characters.
     Box(
       modifier =
         Modifier
-          .size(42.dp)
-          .paperInset(RoundedCornerShape(12.dp), paperColors),
+          .size(46.dp)
+          .graphicsLayer { rotationZ = 7f }
+          .border(2.dp, paperColors.red.copy(alpha = 0.72f), RoundedCornerShape(9.dp))
+          .padding(2.dp)
+          .border(1.5.dp, paperColors.red.copy(alpha = 0.26f), RoundedCornerShape(7.dp))
+          .background(paperColors.red.copy(alpha = 0.05f), RoundedCornerShape(7.dp)),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(icon, contentDescription = null, tint = paperColors.inkSecondary, modifier = Modifier.size(20.dp))
-    }
-    Column {
-      if (count != null) {
-        Text(
-          text = count.toString(),
-          fontSize = 22.sp,
-          fontWeight = FontWeight.ExtraBold,
-          lineHeight = 24.sp,
-          color = paperColors.red,
-        )
-      }
       Text(
-        text = label,
-        fontSize = 11.5.sp,
-        letterSpacing = 0.5.sp,
-        color = paperColors.inkSecondary,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
+        text = stringResource(R.string.profile_seal),
+        fontFamily = FontFamily.Serif,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        lineHeight = 16.sp,
+        letterSpacing = 1.sp,
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        color = paperColors.red.copy(alpha = 0.88f),
       )
     }
   }
@@ -907,19 +809,182 @@ private fun ShelfEmptyCard(
 }
 
 /**
- * 放映票根 per mockup `.tstub`: a tear-off ticket — 16:10 thumbnail with a center play glyph
- * and duration chip, a dashed tear line with punched ends, then the relative screening day,
- * the vermilion time-of-day, the file name and the "duration · source" line.
+ * 播放列表剧照夹 per mockup `.plcard`: a clip-stacked paper listing — two sheets fanned out
+ * beneath a titled top sheet held by a vermilion binder clip — with the video count and the
+ * source line centred underneath.
+ */
+@Composable
+private fun ProfilePlaylistClipCard(
+  playlist: PlaylistEntity,
+  onClick: () -> Unit,
+) {
+  val paperColors = LocalPaperColors.current
+  val isFavorites = playlist.name.equals(PlaylistRepository.FAVORITES_PLAYLIST_NAME, ignoreCase = true)
+  val title =
+    when {
+      !isFavorites -> playlist.name
+      playlist.isAudio -> stringResource(R.string.playlist_favorite_songs)
+      else -> stringResource(R.string.playlist_favorite_videos)
+    }
+  val sheetBorder = if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8)
+  val sheetShape = RoundedCornerShape(4.dp)
+  val topSheetGradient =
+    if (paperColors.isDark) {
+      Brush.verticalGradient(listOf(paperColors.card, paperColors.paperInset))
+    } else {
+      Brush.verticalGradient(listOf(Color(0xFFFDFBF3), Color(0xFFF3EDDC)))
+    }
+  val underSheetGradient =
+    if (paperColors.isDark) {
+      Brush.verticalGradient(listOf(paperColors.paperInset, paperColors.card))
+    } else {
+      Brush.verticalGradient(listOf(Color(0xFFF5EDDA), Color(0xFFEDE2C9)))
+    }
+
+  Column(modifier = Modifier.width(106.dp).clickable(onClick = onClick)) {
+    // .cst: the 76dp stack area — sheets peek out below and behind the top card.
+    Box(modifier = Modifier.fillMaxWidth().height(76.dp)) {
+      ClipStackSheet(
+        gradient = underSheetGradient,
+        border = sheetBorder,
+        shape = sheetShape,
+        modifier = Modifier.offset(x = 0.dp, y = 18.dp).graphicsLayer { rotationZ = 1.2f },
+      )
+      ClipStackSheet(
+        gradient = underSheetGradient,
+        border = sheetBorder,
+        shape = sheetShape,
+        modifier = Modifier.offset(x = 2.dp, y = 9.dp).graphicsLayer { rotationZ = -1.4f },
+      )
+      Box(
+        modifier =
+          Modifier
+            .offset(x = 5.dp)
+            .size(width = 96.dp, height = 54.dp)
+            .paperRaise(sheetShape, paperColors, elevation = 4.dp)
+            .background(topSheetGradient, sheetShape)
+            .border(1.dp, sheetBorder, sheetShape),
+      ) {
+        // .cst-top::before: the ruled lines of a written listing.
+        Canvas(modifier = Modifier.fillMaxSize()) {
+          val lineColor =
+            if (paperColors.isDark) {
+              paperColors.ink.copy(alpha = 0.10f)
+            } else {
+              Color(0xFF544224).copy(alpha = 0.10f)
+            }
+          val bottom = size.height - 5.dp.toPx()
+          var y = 30.dp.toPx()
+          while (y <= bottom) {
+            drawLine(
+              color = lineColor,
+              start = Offset(7.dp.toPx(), y),
+              end = Offset(size.width - 7.dp.toPx(), y),
+              strokeWidth = 1.dp.toPx(),
+            )
+            y += 7.dp.toPx()
+          }
+        }
+        Text(
+          text = title,
+          fontFamily = FontFamily.Serif,
+          fontStyle = FontStyle.Italic,
+          fontWeight = FontWeight.Bold,
+          fontSize = 10.sp,
+          // Explicit tight line boxes: the ambient style's 24sp leading would push the caption
+          // off the design's 11dp inset.
+          lineHeight = 12.sp,
+          letterSpacing = 0.4.sp,
+          color = paperColors.ink,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+          modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 11.dp),
+        )
+      }
+      BinderClip(modifier = Modifier.offset(x = 10.dp, y = (-7).dp))
+    }
+  }
+}
+
+/** Mockup `.cst i`: one of the listing sheets fanned beneath the titled top sheet. */
+@Composable
+private fun ClipStackSheet(
+  gradient: Brush,
+  border: Color,
+  shape: Shape,
+  modifier: Modifier = Modifier,
+) {
+  val paperColors = LocalPaperColors.current
+  Box(
+    modifier =
+      modifier
+        .size(width = 96.dp, height = 54.dp)
+        .paperRaise(shape, paperColors, elevation = 1.5.dp)
+        .background(gradient, shape)
+        .border(1.dp, border, shape),
+  )
+}
+
+/** Mockup `.clip`: the vermilion long-tail clip pinning a sheet stack. */
+@Composable
+private fun BinderClip(modifier: Modifier = Modifier) {
+  Canvas(modifier = modifier.size(width = 20.dp, height = 14.dp)) {
+    val s = size.width / 20f
+    // The wire handle arcs above the clip's body and is clipped away at the bottom.
+    val handle =
+      Path().apply {
+        val left = 4.5f * s
+        val right = 15.5f * s
+        val top = 0.5f * s
+        val bottom = 7f * s
+        val radius = 5.5f * s
+        moveTo(left, bottom)
+        lineTo(left, top + radius)
+        quadraticTo(left, top, left + radius, top)
+        lineTo(right - radius, top)
+        quadraticTo(right, top, right, top + radius)
+        lineTo(right, bottom)
+      }
+    drawPath(handle, Color(0xFFC05046), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+    drawRoundRect(
+      brush = Brush.verticalGradient(listOf(Color(0xFFDE7A5E), Color(0xFFB23129), Color(0xFF9C2A22))),
+      topLeft = Offset(0f, 6f * s),
+      size = Size(20f * s, 5.5f * s),
+      cornerRadius = CornerRadius(2.8f * s),
+    )
+  }
+}
+
+/** Fallback hues (mockup `--g1/--g2`) for frames whose thumbnail is unavailable. */
+private val FILM_FRAME_GRADIENTS =
+  listOf(
+    Color(0xFFDCE6EE) to Color(0xFF7A93A8),
+    Color(0xFFE8C590) to Color(0xFF8A6B3F),
+    Color(0xFFB9A0D0) to Color(0xFF5A3F78),
+    Color(0xFFF2A24C) to Color(0xFFB23C22),
+    Color(0xFF7FB1A6) to Color(0xFF3F6B66),
+    Color(0xFF55617A) to Color(0xFF232A35),
+    Color(0xFFD98F8F) to Color(0xFF6B2A20),
+    Color(0xFFC9A0C0) to Color(0xFF6B3F66),
+    Color(0xFFEFC07A) to Color(0xFFB96A3A),
+    Color(0xFFD8E2E8) to Color(0xFF8FA3B0),
+  )
+
+/**
+ * 胶片帧 per mockup `.fframe`: a 16:10 frame with sprocket holes punched top and bottom, the
+ * play glyph and duration chip on the still, and the serif-italic file name on the film edge.
+ * The newest entry is developed as a dark strip; the rest are cream positives.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecentTicketCard(
+private fun ProfileFilmFrameCard(
   video: Video,
-  timestamp: Long,
   showThumbnail: Boolean,
+  dark: Boolean,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
   onLongClick: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   val paperColors = LocalPaperColors.current
   val thumbnailRepository = koinInject<ThumbnailRepository>()
@@ -936,36 +1001,50 @@ private fun RecentTicketCard(
     }
   }
 
-  val shape = RoundedCornerShape(9.dp)
-  val border = if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8)
+  val fallback =
+    remember(video.displayName) {
+      FILM_FRAME_GRADIENTS[Math.floorMod(video.displayName.hashCode(), FILM_FRAME_GRADIENTS.size)]
+    }
+  val duration = video.durationFormatted
+  val shape = RoundedCornerShape(8.dp)
+  val frameGradient =
+    if (dark) {
+      Brush.verticalGradient(listOf(Color(0xFF514A39), Color(0xFF322C22)))
+    } else {
+      Brush.verticalGradient(listOf(Color(0xFFFBF6E7), Color(0xFFEFE6CC)))
+    }
+
   Column(
     modifier =
       modifier
-        .fillMaxHeight()
-        .paperRaise(shape, paperColors, elevation = 5.dp)
-        .border(1.dp, border, shape)
-        .then(
-          if (paperColors.isDark) {
-            Modifier
-          } else {
-            Modifier
-              .clip(shape)
-              .drawBehind {
-                drawRect(Brush.verticalGradient(listOf(Color(0xFFFDFBF3), Color(0xFFF3EDDC))))
-              }
-          },
+        .shadow(
+          elevation = 5.dp,
+          shape = shape,
+          clip = false,
+          ambientColor = paperColors.shadowTint.copy(alpha = 0.26f),
+          spotColor = paperColors.shadowTint.copy(alpha = 0.24f),
         )
-        .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        .clip(shape)
+        .background(frameGradient)
+        .border(1.dp, if (dark) Color(0xFF282118) else Color(0xFFDACDA8), shape)
+        .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        .padding(horizontal = 5.dp, vertical = 6.dp),
   ) {
-    // .timg: 16:10 frame, inset 4dp from the card's top/side edges.
+    FilmPerfStrip(dark = dark)
+
     Box(
       modifier =
         Modifier
-          .padding(start = 4.dp, end = 4.dp, top = 4.dp)
+          .padding(horizontal = 2.dp, vertical = 5.dp)
           .fillMaxWidth()
           .aspectRatio(16f / 10f)
-          .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
-          .background(paperColors.paperInset),
+          .clip(RoundedCornerShape(3.dp))
+          .background(Brush.linearGradient(listOf(fallback.first, fallback.second)))
+          .border(
+            1.dp,
+            if (dark) Color.Black.copy(alpha = 0.55f) else Color(0xFF544224).copy(alpha = 0.32f),
+            RoundedCornerShape(3.dp),
+          ),
       contentAlignment = Alignment.Center,
     ) {
       val bitmap = thumbnail
@@ -976,83 +1055,94 @@ private fun RecentTicketCard(
           contentScale = ContentScale.Crop,
           modifier = Modifier.fillMaxSize(),
         )
-      } else {
-        Icon(
-          if (video.isAudio) Icons.RoundedFilled.Audiotrack else Icons.RoundedFilled.PlayArrow,
-          contentDescription = null,
-          tint = paperColors.inkTertiary,
-          modifier = Modifier.size(26.dp),
+      }
+      // .timg::before / ::after: the glossy highlight and the bottom vignette over the still.
+      Canvas(modifier = Modifier.matchParentSize()) {
+        drawRect(
+          Brush.radialGradient(
+            colors = listOf(Color.White.copy(alpha = if (dark) 0.18f else 0.30f), Color.Transparent),
+            center = Offset(size.width * 0.28f, size.height * 0.18f),
+            radius = size.width * 0.75f,
+          ),
+        )
+        drawRect(
+          Brush.verticalGradient(
+            colors = listOf(Color.Transparent, Color(0xFF160E08).copy(alpha = if (dark) 0.20f else 0.13f)),
+            startY = size.height * 0.7f,
+          ),
         )
       }
+      // .pg drop-shadow: a dark under-copy keeps the glyph readable on bright stills.
       Icon(
         Icons.RoundedFilled.PlayArrow,
         contentDescription = null,
-        tint = Color(0xFFFFF8E6).copy(alpha = 0.92f),
-        modifier = Modifier.size(18.dp),
+        tint = Color(0xFF160E08).copy(alpha = 0.55f),
+        modifier = Modifier.offset(y = 1.dp).size(17.dp).graphicsLayer {
+          scaleX = 1.3f
+          scaleY = 1.3f
+        },
       )
-      if (video.durationFormatted.isNotBlank() && video.durationFormatted != "--:--") {
+      Icon(
+        Icons.RoundedFilled.PlayArrow,
+        contentDescription = null,
+        tint = Color(0xFFFFF8E6).copy(alpha = 0.94f),
+        modifier = Modifier.size(17.dp),
+      )
+      if (duration.isNotBlank() && duration != "--:--") {
         Text(
-          text = video.durationFormatted,
+          text = duration,
           fontSize = 10.sp,
-          fontWeight = FontWeight.SemiBold,
+          lineHeight = 12.sp,
           color = Color(0xFFFDF6E6),
           modifier =
             Modifier
               .align(Alignment.BottomEnd)
               .padding(6.dp)
-              .background(Color(0xFF140F0A).copy(alpha = 0.55f), RoundedCornerShape(6.dp))
-              .padding(horizontal = 7.dp, vertical = 2.dp),
+              .background(Color(0xFF140F0A).copy(alpha = 0.55f), RoundedCornerShape(5.dp))
+              .padding(horizontal = 6.dp, vertical = 2.dp),
         )
       }
     }
 
-    // .tcut: dashed tear line with the two punched-out ends.
-    Box(modifier = Modifier.fillMaxWidth().padding(top = 7.dp)) {
-      Box(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp)
-            .dashedTopEdge(if (paperColors.isDark) paperColors.cardLine else Color(0xFFD3C49E)),
-      )
-      Box(
-        modifier =
-          Modifier
-            .align(Alignment.CenterStart)
-            .padding(start = 0.dp)
-            .offset(x = (-4).dp)
-            .size(9.dp)
-            .background(LocalPaperColors.current.paper, CircleShape),
-      )
-      Box(
-        modifier =
-          Modifier
-            .align(Alignment.CenterEnd)
-            .offset(x = 4.dp)
-            .size(9.dp)
-            .background(LocalPaperColors.current.paper, CircleShape),
-      )
-    }
+    FilmPerfStrip(dark = dark)
 
-    Spacer(Modifier.weight(1f))
+    Text(
+      text = video.displayName.substringBeforeLast('.'),
+      fontFamily = FontFamily.Serif,
+      fontStyle = FontStyle.Italic,
+      fontWeight = FontWeight.Bold,
+      fontSize = 10.5.sp,
+      lineHeight = 12.sp,
+      letterSpacing = 0.3.sp,
+      color = if (dark) Color(0xFFCFC3A4) else Color(0xFF8F8471),
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+      modifier = Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 5.dp, bottom = 1.dp),
+    )
+  }
+}
 
-    // .tmeta pinned to the stub bottom so the three tickets share one height.
-    Column(modifier = Modifier.padding(start = 9.dp, end = 9.dp, top = 4.dp, bottom = 9.dp)) {
-      Text(
-        text = video.displayName.substringBeforeLast('.'),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        color = paperColors.ink,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      Text(
-        text = video.durationFormatted + " · " + stringResource(R.string.profile_local_media),
-        fontSize = 9.5.sp,
-        color = paperColors.inkSecondary,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.padding(top = 4.dp),
+/** Mockup `.perf`: nine sprocket holes punched along a film edge. */
+@Composable
+private fun FilmPerfStrip(dark: Boolean) {
+  Canvas(modifier = Modifier.fillMaxWidth().height(11.dp)) {
+    val hole = 5.dp.toPx()
+    val inset = 2.dp.toPx()
+    val gap = ((size.width - inset * 2 - hole * 9) / 8f).coerceAtLeast(0f)
+    val y = (size.height - hole) / 2f
+    val holeGradient =
+      if (dark) {
+        Brush.verticalGradient(listOf(Color(0xFF8B7D60), Color(0xFFF3EDE0)), startY = y, endY = y + hole)
+      } else {
+        Brush.verticalGradient(listOf(Color(0xFFA99A77), Color(0xFFD5C7A2)), startY = y, endY = y + hole)
+      }
+    repeat(9) { index ->
+      drawRoundRect(
+        brush = holeGradient,
+        topLeft = Offset(inset + index * (hole + gap), y),
+        size = Size(hole, hole),
+        cornerRadius = CornerRadius(1.5.dp.toPx()),
       )
     }
   }

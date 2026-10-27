@@ -149,6 +149,12 @@ data class SnapshotFolderScreen(val folderId: Long) : Screen {
     }
 
     SnapshotSortDialog(isOpen = showSortDialog, onDismiss = { showSortDialog = false })
+    val folderSummary =
+      stringResource(
+        R.string.snapshot_folder_subhead_summary,
+        content.snapshots.size,
+        content.snapshots.map { it.videoUri }.distinct().size,
+      )
 
     if (confirmDelete) {
       SnapshotDeleteConfirmDialog(
@@ -268,15 +274,25 @@ data class SnapshotFolderScreen(val folderId: Long) : Screen {
             )
 
           else ->
-            BrowserTopBar(
+            // Mockup `.appbar` on a `.sh-disc.sm` badge: the folder's own tear-edge header.
+            app.gyrolet.mpvrx.ui.browser.components.PaperSubhead(
               title = content.folder?.name ?: stringResource(R.string.ui_snapshots),
-              isInSelectionMode = false,
-              selectedCount = 0,
-              totalCount = content.snapshots.size,
-              onCancelSelection = { },
+              subtitle = folderSummary,
+              icon = Icons.RoundedFilled.Image,
+              compact = true,
               onBackClick = { backStack.popSafely() },
-              onSortClick = { showSortDialog = true },
-              onSearchClick = { isSearching = true },
+              actions = {
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Search,
+                  contentDescription = stringResource(R.string.settings_search_title),
+                  onClick = { isSearching = true },
+                )
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Sort,
+                  contentDescription = stringResource(R.string.sort),
+                  onClick = { showSortDialog = true },
+                )
+              },
             )
         }
       },
@@ -328,7 +344,7 @@ data class SnapshotFolderScreen(val folderId: Long) : Screen {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
               // The mosaic justifies its own lines, so the column count is not a column count here —
               // it is how many frames a line aims for before it is scaled flush with the edge.
-              val lineWidth = maxWidth - SNAPSHOT_GRID_SPACING * 2
+              val lineWidth = maxWidth - SNAPSHOT_GRID_MARGIN * 2
               val columns = snapshotGridColumns(lineWidth, manualColumns)
               val rows =
                 remember(displayItems, columns, lineWidth) {
@@ -344,9 +360,9 @@ data class SnapshotFolderScreen(val folderId: Long) : Screen {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding =
                   PaddingValues(
-                    start = SNAPSHOT_GRID_SPACING,
-                    end = SNAPSHOT_GRID_SPACING,
-                    top = SNAPSHOT_GRID_SPACING,
+                    start = SNAPSHOT_GRID_MARGIN,
+                    end = SNAPSHOT_GRID_MARGIN,
+                    top = 20.dp,
                     bottom = bottomInset + SNAPSHOT_GRID_SPACING,
                   ),
                 verticalArrangement = Arrangement.spacedBy(SNAPSHOT_GRID_SPACING),
@@ -393,16 +409,16 @@ data class SnapshotFolderScreen(val folderId: Long) : Screen {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
               // The grid's own padding is taken off before counting columns, so a screen sitting right
               // on a column boundary does not get one column more than it can fit.
-              val columns = snapshotGridColumns(maxWidth - SNAPSHOT_GRID_SPACING * 2, manualColumns)
+              val columns = snapshotGridColumns(maxWidth - SNAPSHOT_GRID_MARGIN * 2, manualColumns)
 
               LazyVerticalGrid(
                 columns = GridCells.Fixed(columns),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding =
                   PaddingValues(
-                    start = SNAPSHOT_GRID_SPACING,
-                    end = SNAPSHOT_GRID_SPACING,
-                    top = SNAPSHOT_GRID_SPACING,
+                    start = SNAPSHOT_GRID_MARGIN,
+                    end = SNAPSHOT_GRID_MARGIN,
+                    top = 20.dp,
                     bottom = bottomInset + SNAPSHOT_GRID_SPACING,
                   ),
                 horizontalArrangement = Arrangement.spacedBy(SNAPSHOT_GRID_SPACING),

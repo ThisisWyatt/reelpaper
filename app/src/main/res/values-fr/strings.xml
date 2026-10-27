@@ -996,6 +996,9 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="ui_no_playlists_found">Aucune liste de lecture trouvée</string>
   <string name="ui_recently_played_disabled">Les lectures récentes sont désactivées</string>
   <string name="ui_no_recently_played_videos">Aucune vidéo lue récemment</string>
+  <string name="recent_subhead_summary">%1$d entrées · uniquement sur cet appareil</string>
+  <string name="recent_records_title">Projections</string>
+  <string name="recent_progress_percent">vu à %1$d%%</string>
   <string name="compressor_failed">Échec de la compression</string>
   <string name="sort_view_options">Options de tri et d’affichage</string>
   <string name="ui_view_options">Options d’affichage</string>
@@ -1122,6 +1125,9 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="ui_home">Accueil</string>
   <string name="ui_recents">Récents</string>
   <string name="ui_playlists">Listes de lecture</string>
+  <string name="playlist_my_lists">Mes listes</string>
+  <string name="playlist_paper_motto">Empilées en un livre · rien que pour vous</string>
+  <string name="playlist_subhead_summary">%1$d listes · %2$d vidéos</string>
   <string name="ui_library">Collection</string>
   <string name="profile_seal">Privé</string>
   <string name="profile_media_tag">Archives multimédia</string>
@@ -1935,6 +1941,8 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="network_bookmark_add">Ajouter le dossier aux favoris</string>
   <string name="network_bookmark_remove">Retirer le dossier des favoris</string>
   <string name="network_bookmarks_title">Dossiers favoris</string>
+  <string name="network_bookmarks_home_title">Signets réseau</string>
+  <string name="network_bookmarks_manage_short">Gérer</string>
   <string name="network_bookmarks_manage">Gérer les dossiers favoris</string>
   <string name="network_bookmarks_empty_title">Aucun dossier favori</string>
   <string name="network_bookmarks_empty_description">Ajoutez un dossier distant aux favoris pour l’ouvrir directement depuis la page Réseau.</string>
@@ -2305,6 +2313,8 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="snapshot_empty_title">Aucune capture pour l\'instant</string>
   <string name="snapshot_empty_message">Appuyez sur le bouton de capture dans le panneau image par image pour garder un moment</string>
   <string name="snapshot_search_placeholder">Rechercher des captures</string>
+  <string name="snapshot_hub_subhead_summary">%1$d captures · %2$d vidéos</string>
+  <string name="snapshot_folder_subhead_summary">%1$d captures · de %2$d vidéos</string>
   <string name="snapshot_no_results">Aucune capture ne correspond à votre recherche</string>
   <string name="snapshot_sort_captured_at">Date de capture</string>
   <string name="snapshot_sort_video_title">Titre de la vidéo</string>

@@ -18,6 +18,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,7 +44,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +61,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.shadow
 import app.gyrolet.mpvrx.ui.utils.dragElevation
@@ -78,6 +81,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.browser.components.rememberVideoSwipeActions
 import app.gyrolet.mpvrx.ui.browser.components.rememberSwipePlaybackInfo
+import app.gyrolet.mpvrx.ui.browser.components.PaperSubhead
+import app.gyrolet.mpvrx.ui.icons.PaperIcons
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
 import app.gyrolet.mpvrx.database.entities.PlaylistEntity
 import app.gyrolet.mpvrx.database.entities.PlaylistItemEntity
 import app.gyrolet.mpvrx.database.repository.PlaylistRepository
@@ -103,7 +109,6 @@ import app.gyrolet.mpvrx.ui.browser.cards.MediaSelectionGridGap
 import app.gyrolet.mpvrx.ui.browser.cards.MediaSelectionListGap
 import app.gyrolet.mpvrx.ui.browser.cards.mediaSelectionNeighbors
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
-import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBarActionButton
 import app.gyrolet.mpvrx.ui.browser.components.ExpressiveScrollBar
 import app.gyrolet.mpvrx.ui.browser.components.fastScrollGlyph
 import app.gyrolet.mpvrx.ui.browser.filesystem.FileSystemBrowserScreen
@@ -186,6 +191,8 @@ data class PlaylistDetailScreen(
     val categories by viewModel.categories.collectAsState()
     val connectionStatuses by viewModel.connectionStatuses.collectAsState()
     val videos = videoItems.map { it.video }
+    val isAudioPlaylist = playlist?.isAudio == true || videoItems.any { it.video.isAudio }
+    val paperColors = LocalPaperColors.current
     val isLoading by viewModel.isLoading.collectAsState()
     val isRefreshing = remember { mutableStateOf(false) }
     val playlistTitle =
@@ -445,6 +452,23 @@ data class PlaylistDetailScreen(
       }
     }
 
+    // Play-all entry point, shared by the subhead's vermilion play key.
+    val playAllFromMostRecent: () -> Unit = {
+      val mostRecentlyPlayedItem =
+        videoItems
+          .filter { it.playlistItem.lastPlayedAt > 0 }
+          .maxByOrNull { it.playlistItem.lastPlayedAt }
+      val itemToPlay = mostRecentlyPlayedItem ?: videoItems.firstOrNull()
+      val startIndex =
+        itemToPlay?.let { candidate ->
+          videoItems.indexOfFirst { it.playlistItem.id == candidate.playlistItem.id }
+        } ?: -1
+      if (itemToPlay != null && startIndex >= 0) {
+        coroutineScope.launch { viewModel.updatePlayHistory(itemToPlay.video.path) }
+        launchPlaylistPlayback(itemToPlay, startIndex)
+      }
+    }
+
     val bottomBarBackdrop = app.gyrolet.mpvrx.ui.browser.components.rememberBrowserBottomBarBackdrop()
     val showFloatingBottomBar = selectionManager.isInSelectionMode && !isReorderMode
 
@@ -498,22 +522,15 @@ data class PlaylistDetailScreen(
             shape = RoundedCornerShape(28.dp),
             tonalElevation = 6.dp,
           )
-        } else {
+        } else if (selectionManager.isInSelectionMode) {
           BrowserTopBar(
             title = playlistTitle,
-            isInSelectionMode = selectionManager.isInSelectionMode,
+            isInSelectionMode = true,
             selectedCount = selectionManager.selectedCount,
             totalCount = videos.size,
-            onBackClick = {
-              when {
-                isReorderMode -> isReorderMode = false
-                selectionManager.isInSelectionMode -> selectionManager.clear()
-                else -> backStack.popSafely()
-              }
-            },
+            onBackClick = { selectionManager.clear() },
             onCancelSelection = { selectionManager.clear() },
             isSingleSelection = selectionManager.isSingleSelection,
-            onSortClick = if (isReorderMode) null else ({ showSortDialog = true }),
             useRemoveIcon = true, // Remove from playlist, not delete the backing media.
             onInfoClick =
               if (
@@ -536,37 +553,44 @@ data class PlaylistDetailScreen(
             onInvertSelection = { selectionManager.invertSelection() },
             onDeselectAll = { selectionManager.clear() },
             onDeleteClick = { deleteDialogOpen.value = true },
-            additionalActions = {
-              when {
-                isReorderMode -> {
-                  BrowserTopBarActionButton(
-                    icon = Icons.RoundedFilled.Check,
-                    contentDescription =
-                      androidx.compose.ui.res.stringResource(
-                        app.gyrolet.mpvrx.R.string.ui_done_reordering,
-                      ),
-                    onClick = { isReorderMode = false },
-                    tint = MaterialTheme.colorScheme.primary,
-                  )
-                }
-                !selectionManager.isInSelectionMode && videos.isNotEmpty() -> {
-                  BrowserTopBarActionButton(
-                    icon = Icons.RoundedFilled.Search,
-                    contentDescription =
-                      androidx.compose.ui.res.stringResource(
-                        app.gyrolet.mpvrx.R.string.ui_search_videos_2,
-                      ),
+          )
+        } else {
+          // Mockup `.subhead`: card-stock band with the enamelled disc, the playlist name and
+          // its item count; the actions stay the page's own (search / reorder / play / sort).
+          PaperSubhead(
+            title = playlistTitle,
+            subtitle =
+              pluralStringResource(
+                if (isAudioPlaylist) R.plurals.folder_song_count else R.plurals.folder_video_count,
+                videos.size,
+                videos.size,
+              ),
+            icon = PaperIcons.Playlist,
+            compact = true,
+            onBackClick = {
+              if (isReorderMode) isReorderMode = false else backStack.popSafely()
+            },
+            actions = {
+              if (isReorderMode) {
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = Icons.RoundedFilled.Check,
+                  contentDescription = stringResource(R.string.ui_done_reordering),
+                  onClick = { isReorderMode = false },
+                  tint = paperColors.red,
+                )
+              } else {
+                if (videos.isNotEmpty()) {
+                  app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                    icon = PaperIcons.Search,
+                    contentDescription = stringResource(R.string.ui_search_videos_2),
                     onClick = { isSearching = true },
                   )
 
                   // M3U playlists keep source order, so they cannot be reordered.
                   if (playlist?.isM3uPlaylist != true) {
-                    BrowserTopBarActionButton(
+                    app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
                       icon = Icons.RoundedFilled.SwapVert,
-                      contentDescription =
-                        androidx.compose.ui.res.stringResource(
-                          app.gyrolet.mpvrx.R.string.ui_reorder_playlist,
-                        ),
+                      contentDescription = stringResource(R.string.ui_reorder_playlist),
                       onClick = {
                         selectedM3UFilter = M3U_FILTER_ALL
                         searchQuery = ""
@@ -578,47 +602,51 @@ data class PlaylistDetailScreen(
                     )
                   }
 
-                  BrowserTopBarActionButton(
+                  app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
                     icon = Icons.RoundedFilled.PlayArrow,
-                    contentDescription =
-                      androidx.compose.ui.res
-                        .stringResource(app.gyrolet.mpvrx.R.string.ui_play),
-                    onClick = {
-                      val mostRecentlyPlayedItem =
-                        videoItems
-                          .filter { it.playlistItem.lastPlayedAt > 0 }
-                          .maxByOrNull { it.playlistItem.lastPlayedAt }
-
-                      val itemToPlay = mostRecentlyPlayedItem ?: videoItems.firstOrNull()
-                      val startIndex =
-                        itemToPlay?.let { candidate ->
-                          videoItems.indexOfFirst { it.playlistItem.id == candidate.playlistItem.id }
-                        } ?: -1
-
-                      if (itemToPlay != null && startIndex >= 0) {
-                        coroutineScope.launch {
-                          viewModel.updatePlayHistory(itemToPlay.video.path)
-                        }
-                        launchPlaylistPlayback(itemToPlay, startIndex)
-                      }
-                    },
-                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = stringResource(R.string.ui_play),
+                    onClick = playAllFromMostRecent,
+                    tint = paperColors.red,
                   )
                 }
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = PaperIcons.Sort,
+                  contentDescription = stringResource(R.string.sort),
+                  onClick = { showSortDialog = true },
+                )
               }
             },
           )
         }
       },
-      floatingActionButton = {
+      bottomBar = {
         if (!isSearching && !isReorderMode && !selectionManager.isInSelectionMode && playlist?.isZipPlaylist != true) {
-          val isAudioPlaylist = playlist?.isAudio == true || videoItems.any { it.video.isAudio }
-          ExtendedFloatingActionButton(
-            modifier = Modifier.padding(bottom = app.gyrolet.mpvrx.ui.browser.fab.FabPlacement.scaffoldBottomPadding()),
-            onClick = { backStack.navigateTo(PlaylistAddVideosScreen(playlistId, isAudio = isAudioPlaylist)) },
-            icon = { Icon(Icons.RoundedFilled.Add, contentDescription = null) },
-              text = { Text(stringResource(if (isAudioPlaylist) R.string.playlist_add_songs else R.string.playlist_add_videos)) },
-          )
+          // Mockup `.actionbar` + `.btn-red`: full-width vermilion key docked to the bottom.
+          Column(
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .background(paperColors.paper)
+                .drawBehind {
+                  val stroke = 1.dp.toPx()
+                  drawLine(
+                    color = paperColors.line,
+                    start = Offset(0f, stroke / 2f),
+                    end = Offset(size.width, stroke / 2f),
+                    strokeWidth = stroke,
+                  )
+                }
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 16.dp),
+          ) {
+            app.gyrolet.mpvrx.ui.theme.paper.PaperSolidButton(
+              text = stringResource(if (isAudioPlaylist) R.string.playlist_add_songs else R.string.playlist_add_videos),
+              icon = Icons.RoundedFilled.Add,
+              onClick = {
+                backStack.navigateTo(PlaylistAddVideosScreen(playlistId, isAudio = isAudioPlaylist))
+              },
+            )
+          }
         }
       },
     ) { padding ->

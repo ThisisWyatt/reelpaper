@@ -875,11 +875,10 @@ object AppearancePreferencesScreen : Screen {
           }
 
           item {
-            val showLibraryTab by preferences.showLibraryTab.collectAsState()
             val showProfileTab by preferences.showProfileTab.collectAsState()
             val showNetworkTab by preferences.showNetworkTab.collectAsState()
             val savedOrder by preferences.bottomNavigationOrder.collectAsState()
-            val names = listOf("HOME", "LIBRARY", "NETWORK", "PROFILE")
+            val names = listOf("HOME", "NETWORK", "PROFILE")
             val ordered =
               listOf("HOME") +
                 (savedOrder.filter { it in names } + names)
@@ -888,7 +887,6 @@ object AppearancePreferencesScreen : Screen {
             val tabItems = ordered.map { id ->
               when (id) {
                 "HOME" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_home_title), stringResource(R.string.pref_nav_home_summary), true, required = true)
-                "LIBRARY" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_library_title), stringResource(R.string.pref_nav_library_summary), showLibraryTab, titleRes = R.string.pref_nav_library_title)
                 "NETWORK" -> ReorderableTabItem(id, stringResource(R.string.pref_nav_network_title), stringResource(R.string.pref_nav_network_summary), showNetworkTab, titleRes = R.string.pref_nav_network_title)
                 else -> ReorderableTabItem(id, stringResource(R.string.pref_nav_profile_title), stringResource(R.string.pref_nav_profile_summary), showProfileTab, titleRes = R.string.pref_nav_profile_title)
               }
@@ -898,7 +896,6 @@ object AppearancePreferencesScreen : Screen {
                 tabs = tabItems,
                 onEnabledChange = { id, enabled ->
                   when (id) {
-                    "LIBRARY" -> preferences.showLibraryTab.set(enabled)
                     "NETWORK" -> preferences.showNetworkTab.set(enabled)
                     "PROFILE" -> preferences.showProfileTab.set(enabled)
                   }

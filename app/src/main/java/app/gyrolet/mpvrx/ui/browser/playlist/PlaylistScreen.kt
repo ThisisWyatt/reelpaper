@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
@@ -34,12 +35,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import app.gyrolet.mpvrx.presentation.components.AppDialogTextButton as TextButton
 import androidx.compose.runtime.Composable
@@ -87,6 +84,8 @@ import app.gyrolet.mpvrx.ui.browser.cards.MediaSelectionListGap
 import app.gyrolet.mpvrx.ui.browser.cards.mediaSelectionNeighbors
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.components.ExpressiveScrollBar
+import app.gyrolet.mpvrx.ui.browser.components.PaperSearchSlot
+import app.gyrolet.mpvrx.ui.browser.components.PaperSubhead
 import app.gyrolet.mpvrx.ui.browser.components.fastScrollGlyph
 import app.gyrolet.mpvrx.ui.browser.dialogs.DeleteConfirmationDialog
 import app.gyrolet.mpvrx.ui.browser.dialogs.PlaylistSortDialog
@@ -96,10 +95,8 @@ import app.gyrolet.mpvrx.ui.browser.selection.SelectionManager
 import app.gyrolet.mpvrx.ui.browser.selection.rememberSelectionManager
 import app.gyrolet.mpvrx.ui.browser.sheets.PlaylistActionSheet
 import app.gyrolet.mpvrx.ui.browser.states.EmptyState
-import app.gyrolet.mpvrx.ui.components.InlineSearchBar
-import app.gyrolet.mpvrx.ui.components.themedSegmentedButtonColors
-import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
 import app.gyrolet.mpvrx.ui.theme.paper.paperInset
 import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
@@ -174,10 +171,9 @@ object PlaylistScreen : Screen {
     val navigateTab = rememberTabNavigation(pagerState)
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var isSearching by rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
-    val activeQuery = if (isSearching) searchQuery.trim() else ""
+    val activeQuery = searchQuery.trim()
 
     val playlistsByType =
       remember(playlistsWithCount, sortType, sortOrder) {
@@ -226,12 +222,6 @@ object PlaylistScreen : Screen {
     val deletableSelection = selectedPlaylists.filterNot { viewModel.isProtectedPlaylist(it.playlist) }
     val singleRenamable = selectedPlaylists.singleOrNull()?.takeUnless { viewModel.isProtectedPlaylist(it.playlist) }
 
-    LaunchedEffect(isSearching) {
-      if (isSearching) {
-        focusRequester.requestFocus()
-        keyboardController?.show()
-      }
-    }
     LaunchedEffect(pagerState.settledPage, pagerState.isScrollInProgress) {
       if (!pagerState.isScrollInProgress) {
         MediaLibraryType.entries.getOrNull(pagerState.settledPage)?.let { type ->
@@ -254,7 +244,10 @@ object PlaylistScreen : Screen {
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
     val libraryHost = app.gyrolet.mpvrx.ui.browser.library.LocalLibraryPaneHost.current
     LaunchedEffect(libraryHost?.searchRequests) {
-      if (libraryHost != null && libraryHost.searchRequests > 0 && !isSearching) isSearching = true
+      if (libraryHost != null && libraryHost.searchRequests > 0) {
+        focusRequester.requestFocus()
+        keyboardController?.show()
+      }
     }
     LaunchedEffect(libraryHost?.sortRequests) {
       if (libraryHost != null && libraryHost.sortRequests > 0) showSortDialog = true
@@ -262,14 +255,8 @@ object PlaylistScreen : Screen {
     var showPlaylistActionSheet by remember { mutableStateOf(false) }
     var showCreateAudioDialog by rememberSaveable { mutableStateOf(false) }
 
-    BackHandler(enabled = selectionManager.isInSelectionMode || isSearching) {
-      when {
-        selectionManager.isInSelectionMode -> selectionManager.clear()
-        else -> {
-          isSearching = false
-          searchQuery = ""
-        }
-      }
+    BackHandler(enabled = selectionManager.isInSelectionMode || searchQuery.isNotEmpty()) {
+      if (selectionManager.isInSelectionMode) selectionManager.clear() else searchQuery = ""
     }
     NavigationBarSelectionEffect(selectionManager.isInSelectionMode)
     FabScrollHelper.trackScrollForFabVisibility(
@@ -293,51 +280,51 @@ object PlaylistScreen : Screen {
         if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
         else androidx.compose.material3.ScaffoldDefaults.contentWindowInsets,
       topBar = {
-        if (isSearching) {
-          InlineSearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            onSearch = { },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            inputFieldModifier = Modifier.focusRequester(focusRequester),
-            placeholder = { Text(stringResource(R.string.ui_search_playlists)) },
-            leadingIcon = {
-              Icon(Icons.RoundedFilled.Search, contentDescription = stringResource(R.string.settings_search_title))
-            },
-            trailingIcon = {
-              IconButton(
-                onClick = {
-                  isSearching = false
-                  searchQuery = ""
-                },
-              ) {
-                Icon(Icons.RoundedFilled.Close, contentDescription = stringResource(R.string.generic_cancel))
-              }
-            },
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
-            windowInsets =
-              if (libraryHost != null) androidx.compose.foundation.layout.WindowInsets(0)
-              else androidx.compose.material3.SearchBarDefaults.windowInsets,
-          )
-        } else if (libraryHost == null) {
-          BrowserTopBar(
-            title = stringResource(R.string.ui_playlists),
-            isInSelectionMode = selectionManager.isInSelectionMode,
-            selectedCount = selectionManager.selectedCount,
-            totalCount = currentPlaylists.size,
-            onBackClick = if (LocalIsMainTabPage.current) null else ({ backStack.popSafely() }),
-            onCancelSelection = { selectionManager.clear() },
-            isSingleSelection = selectionManager.isSingleSelection,
-            onSortClick = { showSortDialog = true },
-            onSearchClick = { isSearching = true },
-            onSettingsClick = { backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen) },
-            onRenameClick = singleRenamable?.let { target -> { renameTarget = target.playlist } },
-            onDeleteClick = if (deletableSelection.isEmpty()) null else ({ showDeleteDialog = true }),
-            onSelectAll = { selectionManager.selectAll() },
-            onInvertSelection = { selectionManager.invertSelection() },
-            onDeselectAll = { selectionManager.clear() },
-          )
+        if (libraryHost == null) {
+          if (selectionManager.isInSelectionMode) {
+            BrowserTopBar(
+              title = stringResource(R.string.ui_playlists),
+              isInSelectionMode = true,
+              selectedCount = selectionManager.selectedCount,
+              totalCount = currentPlaylists.size,
+              onBackClick = if (LocalIsMainTabPage.current) null else ({ backStack.popSafely() }),
+              onCancelSelection = { selectionManager.clear() },
+              isSingleSelection = selectionManager.isSingleSelection,
+              onRenameClick = singleRenamable?.let { target -> { renameTarget = target.playlist } },
+              onDeleteClick = if (deletableSelection.isEmpty()) null else ({ showDeleteDialog = true }),
+              onSelectAll = { selectionManager.selectAll() },
+              onInvertSelection = { selectionManager.invertSelection() },
+              onDeselectAll = { selectionManager.clear() },
+            )
+          } else {
+            // Mockup `.subhead`: card-stock band with the enamelled disc and the live counts.
+            PaperSubhead(
+              title = stringResource(R.string.ui_playlists),
+              subtitle =
+                stringResource(
+                  R.string.playlist_subhead_summary,
+                  playlistsWithCount.size,
+                  playlistsWithCount.sumOf { it.itemCount },
+                ),
+              icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Playlist,
+              onBackClick = if (LocalIsMainTabPage.current) null else ({ backStack.popSafely() }),
+              actions = {
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Search,
+                  contentDescription = stringResource(R.string.settings_search_title),
+                  onClick = {
+                    focusRequester.requestFocus()
+                    keyboardController?.show()
+                  },
+                )
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Sort,
+                  contentDescription = stringResource(R.string.sort),
+                  onClick = { showSortDialog = true },
+                )
+              },
+            )
+          }
         }
       },
       floatingActionButton = {
@@ -361,6 +348,15 @@ object PlaylistScreen : Screen {
             .padding(paddingValues)
             .onSizeChanged { contentWidthDp = with(density) { it.width.toDp().value.toInt() } },
       ) {
+        // Mockup `.search`: the page keeps a permanent recessed query slot.
+        PaperSearchSlot(
+          query = searchQuery,
+          onQueryChange = { searchQuery = it },
+          placeholder = stringResource(R.string.ui_search_playlists),
+          focusRequester = focusRequester,
+          modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+        )
+
         // Mockup `.seg`: recessed paper groove; the active type rises on a card key in vermilion.
         val segColors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
         Row(
@@ -447,6 +443,13 @@ object PlaylistScreen : Screen {
                 isRefreshing = isRefreshing,
                 onRefresh = { viewModel.refresh(scanLocalFiles = true).join() },
                 selectionManager = selectionManager,
+                headerContent = {
+                  MyListsHeader(
+                    sortLabel = stringResource(playlistSortLabelRes(sortType)),
+                    onSortClick = { showSortDialog = true },
+                  )
+                },
+                footerContent = { PlaylistMotto() },
                 onPlaylistClick = { item ->
                   if (selectionManager.isInSelectionMode) {
                     selectionManager.toggleFromUser(item)
@@ -588,6 +591,8 @@ object PlaylistScreen : Screen {
     onPlaylistRename: (PlaylistWithCount) -> Unit,
     onPlaylistDelete: (PlaylistWithCount) -> Unit,
     isPlaylistProtected: (PlaylistWithCount) -> Boolean,
+    headerContent: @Composable () -> Unit,
+    footerContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     isInSelectionMode: Boolean = false,
   ) {
@@ -646,6 +651,7 @@ object PlaylistScreen : Screen {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
           ) {
+            item(key = "lists_header", span = { GridItemSpan(maxLineSpan) }) { headerContent() }
             items(count = playlistsWithCount.size, key = { playlistsWithCount[it].playlist.id }) { index ->
               val playlistWithCount = playlistsWithCount[index]
               val neighbors = mediaSelectionNeighbors(index, playlistsWithCount.size, folderGridColumns) { n -> selectionManager.isSelected(playlistsWithCount[n]) }
@@ -673,6 +679,7 @@ object PlaylistScreen : Screen {
                   },
               )
             }
+            item(key = "lists_motto", span = { GridItemSpan(maxLineSpan) }) { footerContent() }
           }
           if (hasEnoughItems && scrollbarAlpha > 0.01f) {
             ExpressiveScrollBar(
@@ -694,6 +701,7 @@ object PlaylistScreen : Screen {
             contentPadding = PaddingValues(top = 4.dp, bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(22.dp),
           ) {
+            item(key = "lists_header") { headerContent() }
             items(count = playlistsWithCount.size, key = { playlistsWithCount[it].playlist.id }) { index ->
               val playlistWithCount = playlistsWithCount[index]
               val neighbors = mediaSelectionNeighbors(index, playlistsWithCount.size, 1) { n -> selectionManager.isSelected(playlistsWithCount[n]) }
@@ -709,6 +717,7 @@ object PlaylistScreen : Screen {
                 isGridMode = false,
               )
             }
+            item(key = "lists_motto") { footerContent() }
           }
           if (hasEnoughItems && scrollbarAlpha > 0.01f) {
             ExpressiveScrollBar(
@@ -725,4 +734,54 @@ object PlaylistScreen : Screen {
       }
     }
   }
+}
+
+/** Mockup `.sec`: the page's own list heading, with the active sort as its right-hand action. */
+@Composable
+private fun MyListsHeader(
+  sortLabel: String,
+  onSortClick: () -> Unit,
+) {
+  val colors = LocalPaperColors.current
+  Row(
+    modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 20.dp, bottom = 10.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    Text(
+      text = stringResource(R.string.playlist_my_lists),
+      modifier = Modifier.alignByBaseline(),
+      fontSize = 12.5.sp,
+      lineHeight = 15.sp,
+      letterSpacing = 3.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = colors.inkTertiary,
+    )
+    Text(
+      text = sortLabel,
+      modifier =
+        Modifier
+          .alignByBaseline()
+          .clip(RoundedCornerShape(8.dp))
+          .clickable(onClick = onSortClick)
+          .padding(horizontal = 2.dp, vertical = 2.dp),
+      fontSize = 11.5.sp,
+      lineHeight = 14.sp,
+      letterSpacing = 1.sp,
+      color = colors.inkSecondary,
+    )
+  }
+}
+
+/** The page's closing line (`叠纸成册 · 皆为私藏`). */
+@Composable
+private fun PlaylistMotto() {
+  Text(
+    text = stringResource(R.string.playlist_paper_motto),
+    fontSize = 11.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 2.sp,
+    color = LocalPaperColors.current.inkTertiary,
+    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+    modifier = Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp),
+  )
 }

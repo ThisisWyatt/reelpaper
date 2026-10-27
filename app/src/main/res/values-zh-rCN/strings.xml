@@ -994,6 +994,9 @@
   <string name="ui_no_playlists_found">未找到播放列表</string>
   <string name="ui_recently_played_disabled">最近播放已禁用</string>
   <string name="ui_no_recently_played_videos">没有最近播放的视频</string>
+  <string name="recent_subhead_summary">%1$d 条记录 · 仅存本机</string>
+  <string name="recent_records_title">放映记录</string>
+  <string name="recent_progress_percent">看至 %1$d%%</string>
   <string name="compressor_failed">压缩失败</string>
   <string name="sort_view_options">排序与视图</string>
   <string name="ui_view_options">视图选项</string>
@@ -1120,6 +1123,9 @@
   <string name="ui_home">主页</string>
   <string name="ui_recents">最近</string>
   <string name="ui_playlists">播放列表</string>
+  <string name="playlist_my_lists">我的列表</string>
+  <string name="playlist_paper_motto">叠纸成册 · 皆为私藏</string>
+  <string name="playlist_subhead_summary">%1$d 个列表 · %2$d 个视频</string>
   <string name="ui_library">收藏</string>
   <string name="profile_seal">私藏</string>
   <string name="profile_media_tag">媒体档案</string>
@@ -1953,6 +1959,8 @@
   <string name="network_bookmark_add">收藏文件夹</string>
   <string name="network_bookmark_remove">取消收藏文件夹</string>
   <string name="network_bookmarks_title">收藏文件夹</string>
+  <string name="network_bookmarks_home_title">网络收藏文件夹</string>
+  <string name="network_bookmarks_manage_short">管理</string>
   <string name="network_bookmarks_manage">管理收藏文件夹</string>
   <string name="network_bookmarks_empty_title">暂无收藏文件夹</string>
   <string name="network_bookmarks_empty_description">收藏远程文件夹后，可从“网络”页面直接打开。</string>
@@ -2304,6 +2312,8 @@
   <string name="snapshot_empty_title">还没有快照</string>
   <string name="snapshot_empty_message">在逐帧面板中点击快照按钮，收藏精彩瞬间</string>
   <string name="snapshot_search_placeholder">搜索快照</string>
+  <string name="snapshot_hub_subhead_summary">%1$d 张快照 · %2$d 个视频</string>
+  <string name="snapshot_folder_subhead_summary">%1$d 张快照 · 来自 %2$d 个视频</string>
   <string name="snapshot_no_results">没有匹配的快照</string>
   <string name="snapshot_sort_captured_at">捕获时间</string>
   <string name="snapshot_sort_video_title">视频标题</string>

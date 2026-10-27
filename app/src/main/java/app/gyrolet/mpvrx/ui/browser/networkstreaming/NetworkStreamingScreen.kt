@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import app.gyrolet.mpvrx.ui.utils.NavigationPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -114,7 +112,6 @@ import app.gyrolet.mpvrx.ui.torrent.saveViewedFileIndices
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import app.gyrolet.mpvrx.ui.utils.popSafely
-import app.gyrolet.mpvrx.ui.utils.rememberTabNavigation
 import app.gyrolet.mpvrx.utils.media.SharedUrlExtractor
 import app.gyrolet.mpvrx.utils.media.MediaUtils
 import kotlinx.coroutines.Dispatchers
@@ -124,6 +121,9 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
 private const val VIEWED_TORRENT_FILES_PREFS = "torrent_viewed_files"
+
+/** Mockup `.netcard` inline rotations: each paper card rests a hair off square. */
+private val NETWORK_CARD_TILTS = listOf(-1f, 0.9f, -0.9f, 1f)
 
 private enum class NetworkTab(val titleResId: Int) {
   LOCAL_NETWORK(R.string.ui_local_network),
@@ -298,8 +298,6 @@ object NetworkStreamingScreen : Screen {
       searchQuery = ""
     }
 
-    val pagerState = rememberPagerState { NetworkTab.entries.size }
-    val navigateTab = rememberTabNavigation(pagerState)
 
     val headerContainerColor =
       if (app.gyrolet.mpvrx.ui.theme.LocalAppWallpaperActive.current) {
@@ -404,37 +402,16 @@ object NetworkStreamingScreen : Screen {
             }
           }
 
-          // Mockup `.seg`: recessed paper groove with a raised card key for the active tab.
-          PaperSegmentedTabs(
-            tabs = NetworkTab.entries.map { stringResource(it.titleResId) },
-            selectedIndex = pagerState.currentPage.coerceIn(0, NetworkTab.entries.lastIndex),
-            onSelect = { index ->
-              if (pagerState.currentPage != index) navigationHaptics.selection(true)
-              navigateTab(index)
-            },
-          )
         }
       },
       floatingActionButton = {
         // Mockup `.fab`: round vermilion key with the globe-plus mark (circles never take a step).
-        when (pagerState.currentPage) {
-          NetworkTab.LOCAL_NETWORK.ordinal -> {
-            PaperFab(
-              icon = PaperIcons.NetPlus,
-              contentDescription = stringResource(R.string.ui_add_connection),
-              onClick = { showAddSheet = true },
-              modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
-            )
-          }
-          NetworkTab.MEDIA.ordinal -> {
-            PaperFab(
-              icon = Icons.RoundedFilled.Add,
-              contentDescription = stringResource(R.string.ui_add_media),
-              onClick = { showAddMediaDialog = true },
-              modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
-            )
-          }
-        }
+        PaperFab(
+          icon = PaperIcons.NetPlus,
+          contentDescription = stringResource(R.string.ui_add_connection),
+          onClick = { showAddSheet = true },
+          modifier = Modifier.padding(bottom = FabPlacement.scaffoldBottomPadding()),
+        )
       },
     ) { padding ->
       Box(
@@ -443,126 +420,28 @@ object NetworkStreamingScreen : Screen {
             .fillMaxSize()
             .padding(padding),
       ) {
-        NavigationPager(
-          state = pagerState,
-          modifier =
-            Modifier
-              .fillMaxSize(),
-          userScrollEnabled = true,
-          beyondViewportPageCount = 1,
-          allowNestedSwipes = true,
-        ) { page ->
-          when (NetworkTab.entries[page]) {
-            NetworkTab.LOCAL_NETWORK -> {
-              LocalNetworkContent(
-                connections = filteredConnections,
-                bookmarks = filteredFolderBookmarks,
-                connectionStatuses = connectionStatuses,
-                onConnect = { viewModel.connect(it) },
-                onDisconnect = { viewModel.disconnect(it) },
-                onEdit = { editingConnection = it },
-                onDelete = { viewModel.deleteConnection(it) },
-                onBrowse = { conn, status ->
-                  if (status?.isConnected == true) {
-                    backstack.navigateTo(
-                      NetworkBrowserScreen(
-                        connectionId = conn.id,
-                        connectionName = conn.name,
-                        currentPath = "/",
-                      ),
-                    )
-                  }
-                },
-                onAutoConnectChange = { conn, autoConnect ->
-                  viewModel.updateConnection(conn.copy(autoConnect = autoConnect))
-                },
-                onOpenBookmark = { item ->
-                  backstack.navigateTo(
-                    NetworkBrowserScreen(
-                      connectionId = item.connection.id,
-                      connectionName = item.connection.name,
-                      currentPath = item.bookmark.path,
-                    ),
-                  )
-                },
-                onManageBookmarks = { backstack.navigateTo(NetworkBookmarksScreen) },
+        LocalNetworkContent(
+          connections = filteredConnections,
+          connectionStatuses = connectionStatuses,
+          onConnect = { viewModel.connect(it) },
+          onDisconnect = { viewModel.disconnect(it) },
+          onEdit = { editingConnection = it },
+          onDelete = { viewModel.deleteConnection(it) },
+          onBrowse = { conn, status ->
+            if (status?.isConnected == true) {
+              backstack.navigateTo(
+                NetworkBrowserScreen(
+                  connectionId = conn.id,
+                  connectionName = conn.name,
+                  currentPath = "/",
+                ),
               )
             }
-            NetworkTab.MEDIA -> {
-              MediaContent(
-                mediaGroups = filteredMediaGroups,
-                searchQuery = searchQuery,
-                recentLinks = filteredRecentLinks,
-                isPreparingLink =
-                  showYtdlpInstallPrompt ||
-                    showYtdlpInstallProgress ||
-                    linkPlaybackJob?.isActive == true,
-                onPlayLink = { url ->
-                  val playableSource = normalizeTorrentSource(url) ?: url.trim()
-                  if (isTorrentSource(playableSource)) {
-                    showTorrentPicker = true
-                    torrentPickerViewModel.open(TorrentSelectionInput(source = playableSource))
-                  } else {
-                    playLinkGatingYtdlp(playableSource)
-                  }
-                },
-                onPlayRecent = { entry ->
-                  viewModel.recordExistingLinkPlayed(entry.stableKey)
-                  MediaUtils.playFile(
-                    source = entry.canonicalSourceUri,
-                    context = context,
-                    launchSource = "network_recent",
-                    title = entry.fileName,
-                  )
-                },
-                onSaveToMedia = { entry ->
-                  val playableSource = normalizeTorrentSource(entry.canonicalSourceUri) ?: entry.canonicalSourceUri.trim()
-                  if (isTorrentSource(playableSource)) {
-                    showTorrentPicker = true
-                    torrentPickerViewModel.open(TorrentSelectionInput(source = playableSource, title = entry.fileName))
-                  } else {
-                    when (linkDownloadCoordinator.enqueue(playableSource, entry.fileName)) {
-                      app.gyrolet.mpvrx.domain.download.LinkDownloadCoordinator.Route.UNSUPPORTED ->
-                        android.widget.Toast
-                          .makeText(context, R.string.downloads_location_invalid, android.widget.Toast.LENGTH_SHORT)
-                          .show()
-                      else ->
-                        android.widget.Toast
-                          .makeText(context, R.string.downloads_started, android.widget.Toast.LENGTH_SHORT)
-                          .show()
-                    }
-                  }
-                },
-                onDeleteRecent = viewModel::deleteStreamEntry,
-                onPlayMedia = { entry ->
-                  val playableSource = normalizeTorrentSource(entry.canonicalSourceUri) ?: entry.canonicalSourceUri.trim()
-                  if (isTorrentSource(playableSource)) {
-                    MediaUtils.playFile(
-                      source = entry.canonicalSourceUri,
-                      context = context,
-                      launchSource = "network_torrent",
-                      title = entry.fileName,
-                      torrentFileIndex = entry.fileIndex,
-                    )
-                  } else {
-                    viewModel.recordExistingLinkPlayed(entry.stableKey)
-                    MediaUtils.playFile(
-                      source = entry.canonicalSourceUri,
-                      context = context,
-                      launchSource = "network_media",
-                      title = entry.fileName,
-                    )
-                  }
-                },
-                onDeleteMediaFile = viewModel::deleteStreamEntry,
-                onDeleteMediaGroup = { viewModel.deleteMediaGroup(it) },
-              )
-            }
-            NetworkTab.SYNC_PLAY -> {
-              SyncPlayContent()
-            }
-          }
-        }
+          },
+          onAutoConnectChange = { conn, autoConnect ->
+            viewModel.updateConnection(conn.copy(autoConnect = autoConnect))
+          },
+        )
       }
 
       AddConnectionSheet(
@@ -752,7 +631,6 @@ private fun AddMediaDialog(
 @Composable
 private fun LocalNetworkContent(
   connections: List<NetworkConnection>,
-  bookmarks: List<ResolvedNetworkFolderBookmark>,
   connectionStatuses: Map<Long, ConnectionStatus>,
   onConnect: (NetworkConnection) -> Unit,
   onDisconnect: (NetworkConnection) -> Unit,
@@ -760,8 +638,6 @@ private fun LocalNetworkContent(
   onDelete: (NetworkConnection) -> Unit,
   onBrowse: (NetworkConnection, ConnectionStatus?) -> Unit,
   onAutoConnectChange: (NetworkConnection, Boolean) -> Unit,
-  onOpenBookmark: (ResolvedNetworkFolderBookmark) -> Unit,
-  onManageBookmarks: () -> Unit,
 ) {
   val navBarHeight = app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight.current
   val bottomOverlayClearance = maxOf(navBarHeight, app.gyrolet.mpvrx.ui.browser.NavigationBarState.miniPlayerClearance)
@@ -788,47 +664,42 @@ private fun LocalNetworkContent(
         }
       }
     } else {
-      // Mockup `.netcards`: the connection cards ride in one horizontally scrolling wallet.
-      // A plain scrolling Row (few items, no recycling needed) so that when the cards
-      // underfill the screen the group centers and both margins stay symmetric; once they
-      // overflow it scrolls start-anchored as usual.
+      // Mockup `.netcards`, folded into two columns: the cards keep their paper tilt but wrap
+      // instead of running off the right edge.
       item {
-        Row(
-          modifier =
-            Modifier
-              .fillMaxWidth()
-              .horizontalScroll(rememberScrollState())
-              .padding(horizontal = 20.dp),
-          horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+        Column(
+          modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+          verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-          connections.forEach { connection ->
-            val status = connectionStatuses[connection.id]
-            NetworkConnectionCard(
-              connection = connection,
-              onConnect = onConnect,
-              onDisconnect = onDisconnect,
-              onEdit = onEdit,
-              onDelete = onDelete,
-              onBrowse = { onBrowse(connection, status) },
-              onAutoConnectChange = onAutoConnectChange,
-              isConnected = status?.isConnected ?: false,
-              isConnecting = status?.isConnecting ?: false,
-              error = status?.error,
-            )
+          connections.chunked(2).forEachIndexed { rowIndex, row ->
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+              row.forEachIndexed { columnIndex, connection ->
+                val status = connectionStatuses[connection.id]
+                NetworkConnectionCard(
+                  connection = connection,
+                  onConnect = onConnect,
+                  onDisconnect = onDisconnect,
+                  onEdit = onEdit,
+                  onDelete = onDelete,
+                  onBrowse = { onBrowse(connection, status) },
+                  onAutoConnectChange = onAutoConnectChange,
+                  isConnected = status?.isConnected ?: false,
+                  isConnecting = status?.isConnecting ?: false,
+                  error = status?.error,
+                  tiltDeg = NETWORK_CARD_TILTS[(rowIndex * 2 + columnIndex) % NETWORK_CARD_TILTS.size],
+                  modifier = Modifier.weight(1f),
+                )
+              }
+              repeat(2 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
           }
         }
       }
     }
 
-    if (bookmarks.isNotEmpty()) {
-      item {
-        NetworkBookmarkSection(
-          bookmarks = bookmarks,
-          onOpen = onOpenBookmark,
-          onManage = onManageBookmarks,
-        )
-      }
-    }
   }
 }
 

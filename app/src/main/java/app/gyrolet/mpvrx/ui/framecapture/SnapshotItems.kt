@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,6 +98,9 @@ internal const val MIN_SNAPSHOT_GRID_COLUMNS = 3
 internal val SNAPSHOT_GRID_TARGET_CELL = 128.dp
 
 internal val SNAPSHOT_GRID_SPACING = 2.dp
+
+/** Page gutter around the snapshot grids, matching the mockup's 20dp margins. */
+internal val SNAPSHOT_GRID_MARGIN = 20.dp
 
 /** The folder glyph's box, matching the browser's folder cards so both pages read the same. */
 private const val FOLDER_GLYPH_ASPECT = 20f / 17f
@@ -282,11 +286,11 @@ fun SnapshotGridItem(
       modifier
         .shadow(
           elevation = 2.dp,
-          shape = RoundedCornerShape(10.dp),
+          shape = RectangleShape,
           ambientColor = paperColors.shadowTint.copy(alpha = if (paperColors.isDark) 0.5f else 0.28f),
           spotColor = paperColors.shadowTint.copy(alpha = if (paperColors.isDark) 0.45f else 0.24f),
         )
-        .clip(RoundedCornerShape(10.dp))
+        .clip(RectangleShape)
         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         .tvFocusHighlight(AppShapeScale.none, focusedScale = 1.03f)
         .semantics { selected = isSelected }
@@ -393,8 +397,8 @@ fun SnapshotFolderGridItem(
       )
     }
 
-    Spacer(modifier = Modifier.height(6.dp))
-
+    // The stack art leaves a band of shadow room at the bottom of its 48×50 canvas; pulling the
+    // caption up into it centres the name directly under the folder instead of floating below it.
     Text(
       text = name,
       fontSize = 15.sp,
@@ -402,7 +406,8 @@ fun SnapshotFolderGridItem(
       color = MaterialTheme.colorScheme.onSurface,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.fillMaxWidth(),
+      textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+      modifier = Modifier.fillMaxWidth().offset(y = (-10).dp),
     )
   }
 }

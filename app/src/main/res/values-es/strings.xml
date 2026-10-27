@@ -996,6 +996,9 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="ui_no_playlists_found">No se encontraron listas de reproducción</string>
   <string name="ui_recently_played_disabled">Reproducidos recientemente está desactivado</string>
   <string name="ui_no_recently_played_videos">No hay videos reproducidos recientemente</string>
+  <string name="recent_subhead_summary">%1$d registros · solo en este dispositivo</string>
+  <string name="recent_records_title">Registros de proyección</string>
+  <string name="recent_progress_percent">visto %1$d%%</string>
   <string name="compressor_failed">Error de compresión</string>
   <string name="sort_view_options">Opciones de orden y vista</string>
   <string name="ui_view_options">Opciones de vista</string>
@@ -1122,6 +1125,9 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="ui_home">Inicio</string>
   <string name="ui_recents">Recientes</string>
   <string name="ui_playlists">Listas de reproducción</string>
+  <string name="playlist_my_lists">Mis listas</string>
+  <string name="playlist_paper_motto">Apiladas en un libro · solo para ti</string>
+  <string name="playlist_subhead_summary">%1$d listas · %2$d vídeos</string>
   <string name="ui_library">Colección</string>
   <string name="profile_seal">Privado</string>
   <string name="profile_media_tag">Archivo de medios</string>
@@ -1935,6 +1941,8 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="network_bookmark_add">Añadir carpeta a marcadores</string>
   <string name="network_bookmark_remove">Quitar carpeta de marcadores</string>
   <string name="network_bookmarks_title">Carpetas marcadas</string>
+  <string name="network_bookmarks_home_title">Marcadores de red</string>
+  <string name="network_bookmarks_manage_short">Gestionar</string>
   <string name="network_bookmarks_manage">Gestionar carpetas marcadas</string>
   <string name="network_bookmarks_empty_title">No hay carpetas marcadas</string>
   <string name="network_bookmarks_empty_description">Marca una carpeta remota para abrirla directamente desde la página Red.</string>
@@ -2305,6 +2313,8 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="snapshot_empty_title">Aún no hay capturas</string>
   <string name="snapshot_empty_message">Pulsa el botón de captura en el panel fotograma a fotograma para guardar un momento</string>
   <string name="snapshot_search_placeholder">Buscar capturas</string>
+  <string name="snapshot_hub_subhead_summary">%1$d capturas · %2$d vídeos</string>
+  <string name="snapshot_folder_subhead_summary">%1$d capturas · de %2$d vídeos</string>
   <string name="snapshot_no_results">Ninguna captura coincide con tu búsqueda</string>
   <string name="snapshot_sort_captured_at">Fecha de captura</string>
   <string name="snapshot_sort_video_title">Título del vídeo</string>

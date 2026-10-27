@@ -81,8 +81,23 @@ class BrowserPreferences(
       defaultLayoutMode = MediaLayoutMode.GRID,
       inheritGlobalLayout = false,
     )
-  val recentView = BrowserPageViewPreferences(preferenceStore, "recent")
-  val playlistView = BrowserPageViewPreferences(preferenceStore, "playlist_library", folderDefaults = true)
+  // The recents page is designed as projection tickets, so it owns its layout instead of
+  // inheriting the browser's folder grid.
+  val recentView =
+    BrowserPageViewPreferences(
+      preferenceStore,
+      "recent",
+      inheritGlobalLayout = false,
+    )
+  // The playlists page is designed as stacked paper cards, so it owns its layout instead of
+  // inheriting the browser's folder grid.
+  val playlistView =
+    BrowserPageViewPreferences(
+      preferenceStore,
+      "playlist_library",
+      folderDefaults = true,
+      inheritGlobalLayout = false,
+    )
   val playlistItemView = BrowserPageViewPreferences(preferenceStore, "playlist_item")
   val showPlaylistLocation = preferenceStore.getBoolean("show_playlist_location", true)
   val showPlaylistCategory = preferenceStore.getBoolean("show_playlist_category", true)
@@ -196,8 +211,9 @@ class BrowserPageViewPreferences internal constructor(
    */
   defaultLayoutMode: MediaLayoutMode = MediaLayoutMode.LIST,
   /**
-   * Whether an unset page layout is seeded from the browser's global `media_layout_mode`. Snapshots
-   * opt out so their grid default is not dragged to the list by an unrelated setting.
+   * Whether an unset page layout is seeded from the browser's global `media_layout_mode`. The
+   * snapshot and playlist pages opt out so a grid default of their own is not dragged to the
+   * list (or vice versa) by an unrelated setting.
    */
   inheritGlobalLayout: Boolean = true,
 ) {

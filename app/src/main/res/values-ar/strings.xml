@@ -1008,6 +1008,9 @@
   <string name="ui_no_playlists_found">لم يتم العثور على قوائم تشغيل</string>
   <string name="ui_recently_played_disabled">تم تعطيل سجل التشغيل الأخير</string>
   <string name="ui_no_recently_played_videos">لا توجد مقاطع فيديو تم تشغيلها مؤخرًا</string>
+  <string name="recent_subhead_summary">%1$d سجلات · على هذا الجهاز فقط</string>
+  <string name="recent_records_title">سجلات العرض</string>
+  <string name="recent_progress_percent">شوهد %1$d%%</string>
   <string name="compressor_failed">فشل الضغط</string>
   <string name="sort_view_options">خيارات الترتيب والعرض</string>
   <string name="ui_view_options">خيارات العرض</string>
@@ -1134,6 +1137,9 @@
   <string name="ui_home">الرئيسية</string>
   <string name="ui_recents">الأخيرة</string>
   <string name="ui_playlists">قوائم التشغيل</string>
+  <string name="playlist_my_lists">قوائمي</string>
+  <string name="playlist_paper_motto">مكدّسة ككتاب · لعينيك فقط</string>
+  <string name="playlist_subhead_summary">%1$d قوائم · %2$d مقاطع فيديو</string>
   <string name="ui_library">المكتبة</string>
   <string name="profile_seal">خاص</string>
   <string name="profile_media_tag">أرشيف الوسائط</string>
@@ -1961,6 +1967,8 @@
   <string name="network_bookmark_add">وضع إشارة مرجعية للمجلد</string>
   <string name="network_bookmark_remove">إزالة إشارة المجلد المرجعية</string>
   <string name="network_bookmarks_title">المجلدات ذات الإشارات المرجعية</string>
+  <string name="network_bookmarks_home_title">المفضلة على الشبكة</string>
+  <string name="network_bookmarks_manage_short">إدارة</string>
   <string name="network_bookmarks_manage">إدارة المجلدات ذات الإشارات المرجعية</string>
   <string name="network_bookmarks_empty_title">لا توجد مجلدات ذات إشارات مرجعية</string>
   <string name="network_bookmarks_empty_description">ضع إشارة مرجعية على مجلد بعيد لفتحه مباشرة من صفحة الشبكة.</string>
@@ -2331,6 +2339,8 @@
   <string name="snapshot_empty_title">لا توجد لقطات بعد</string>
   <string name="snapshot_empty_message">اضغط زر اللقطة في لوحة التنقل إطارًا بإطار لحفظ لحظة مميزة</string>
   <string name="snapshot_search_placeholder">البحث في اللقطات</string>
+  <string name="snapshot_hub_subhead_summary">%1$d لقطات · %2$d مقاطع فيديو</string>
+  <string name="snapshot_folder_subhead_summary">%1$d لقطات · من %2$d مقاطع فيديو</string>
   <string name="snapshot_no_results">لا توجد لقطات تطابق بحثك</string>
   <string name="snapshot_sort_captured_at">وقت الالتقاط</string>
   <string name="snapshot_sort_video_title">عنوان الفيديو</string>

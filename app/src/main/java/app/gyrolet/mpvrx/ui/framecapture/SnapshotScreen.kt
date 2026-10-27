@@ -14,6 +14,7 @@ import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.domain.framecapture.FolderWriteResult
@@ -117,9 +119,6 @@ object SnapshotScreen : Screen {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showSortDialog by rememberSaveable { mutableStateOf(false) }
     val libraryHost = app.gyrolet.mpvrx.ui.browser.library.LocalLibraryPaneHost.current
-    LaunchedEffect(libraryHost?.searchRequests) {
-      if (libraryHost != null && libraryHost.searchRequests > 0 && !isSearching) isSearching = true
-    }
     LaunchedEffect(libraryHost?.sortRequests) {
       if (libraryHost != null && libraryHost.sortRequests > 0) showSortDialog = true
     }
@@ -132,6 +131,9 @@ object SnapshotScreen : Screen {
     var nameDialog by remember { mutableStateOf<NameDialogState?>(null) }
     var nameError by remember { mutableStateOf<String?>(null) }
     val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(libraryHost?.searchRequests) {
+      if (libraryHost != null && libraryHost.searchRequests > 0) isSearching = true
+    }
 
     LaunchedEffect(isSearching) {
       if (isSearching) focusRequester.requestFocus()
@@ -144,6 +146,11 @@ object SnapshotScreen : Screen {
     // cannot run inside a remember calculation lambda.
     val foldersLabel = stringResource(R.string.snapshot_section_folders)
     val snapshotsLabel = stringResource(R.string.snapshot_section_snapshots)
+    val snapshotVideoCount = remember(library.allCaptures) {
+      library.allCaptures.map { it.videoUri }.distinct().size
+    }
+    val librarySummary =
+      stringResource(R.string.snapshot_hub_subhead_summary, library.allCaptures.size, snapshotVideoCount)
 
     val visibleFolders =
       remember(library.folders, query, folderSortType, folderSortOrder, searching) {
@@ -369,30 +376,23 @@ object SnapshotScreen : Screen {
             )
 
           libraryHost == null ->
-            BrowserTopBar(
+            // Mockup `.subhead`: enamelled photo disc, the library counts and the tear edge.
+            app.gyrolet.mpvrx.ui.browser.components.PaperSubhead(
               title = stringResource(R.string.ui_snapshots),
-              isInSelectionMode = false,
-              selectedCount = 0,
-              totalCount = library.folders.size + library.rootCaptures.size,
-              onCancelSelection = { },
+              subtitle = librarySummary,
+              icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Photo,
               onBackClick = if (isMainTabPage) null else ({ backStack.popSafely() }),
-              onSortClick = { showSortDialog = true },
-              onSearchClick = { isSearching = true },
-              onSettingsClick = {
-                backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen)
-              },
-              additionalActions = {
-                IconButton(
-                  onClick = {
-                    nameError = null
-                    nameDialog = NameDialogState(folderId = null, initialName = "")
-                  },
-                ) {
-                  Icon(
-                    Icons.RoundedFilled.CreateNewFolder,
-                    contentDescription = stringResource(R.string.snapshot_new_folder),
-                  )
-                }
+              actions = {
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Search,
+                  contentDescription = stringResource(R.string.settings_search_title),
+                  onClick = { isSearching = true },
+                )
+                app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                  icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Sort,
+                  contentDescription = stringResource(R.string.sort),
+                  onClick = { showSortDialog = true },
+                )
               },
             )
         }
@@ -438,6 +438,7 @@ object SnapshotScreen : Screen {
               manualColumns = if (manualGrid) (if (landscape) gridColumnsLandscape else gridColumnsPortrait) else 0,
               bottomInset = bottomInset,
               foldersLabel = foldersLabel,
+              foldersTrailing = librarySummary,
               snapshotsLabel = snapshotsLabel,
               // Section labels exist only to tell search results apart. Without a search there are no
               // sections — just the folders, and then the loose pictures — and a heading over either
@@ -516,6 +517,7 @@ private fun SnapshotLibraryContent(
   manualColumns: Int,
   bottomInset: Dp,
   foldersLabel: String,
+  foldersTrailing: String,
   snapshotsLabel: String,
   showSectionLabels: Boolean,
   isFolderSelected: (Long) -> Boolean,
@@ -533,8 +535,8 @@ private fun SnapshotLibraryContent(
       verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
       if (folders.isNotEmpty()) {
-        if (showSectionLabels) {
-          item(key = "foldersHeader") { SectionHeader(foldersLabel, Modifier.padding(top = 8.dp, bottom = 4.dp)) }
+        item(key = "foldersHeader") {
+          SectionHeader(foldersLabel, foldersTrailing, Modifier.padding(top = 8.dp, bottom = 4.dp))
         }
         items(folders, key = { "folder_${it.id}" }) { folder ->
           SnapshotFolderListItem(
@@ -548,7 +550,7 @@ private fun SnapshotLibraryContent(
         item(key = "foldersGap") { Spacer(Modifier.height(12.dp)) }
       }
       if (showSectionLabels && captures.isNotEmpty()) {
-        item(key = "snapshotsHeader") { SectionHeader(snapshotsLabel, Modifier.padding(bottom = 4.dp)) }
+        item(key = "snapshotsHeader") { SectionHeader(snapshotsLabel, modifier = Modifier.padding(bottom = 4.dp)) }
       }
       items(captures, key = { "capture_${it.id}" }) { capture ->
         val thumbnail = rememberSnapshotThumbnail(capture, thumbnails, onLoadThumbnail)
@@ -567,15 +569,15 @@ private fun SnapshotLibraryContent(
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     // The grid's own padding is taken off before counting columns, so a screen sitting right on a
     // column boundary does not get one column more than it can fit.
-    val columns = snapshotGridColumns(maxWidth - SNAPSHOT_GRID_SPACING * 2, manualColumns)
+    val columns = snapshotGridColumns(maxWidth - SNAPSHOT_GRID_MARGIN * 2, manualColumns)
     val gridPadding =
       PaddingValues(
-        start = SNAPSHOT_GRID_SPACING,
-        end = SNAPSHOT_GRID_SPACING,
+        start = SNAPSHOT_GRID_MARGIN,
+        end = SNAPSHOT_GRID_MARGIN,
         // A little more air under the app bar than between the tiles: the tight gutter is about the
         // photo rhythm, and the first row still needs to clear the bar.
-        top = 8.dp,
-        bottom = bottomInset + SNAPSHOT_GRID_SPACING,
+        top = 12.dp,
+        bottom = bottomInset + SNAPSHOT_GRID_MARGIN,
       )
 
     LazyVerticalGrid(
@@ -586,10 +588,8 @@ private fun SnapshotLibraryContent(
       verticalArrangement = Arrangement.spacedBy(SNAPSHOT_GRID_SPACING),
     ) {
       if (folders.isNotEmpty()) {
-        if (showSectionLabels) {
-          item(key = "foldersHeader", span = { GridItemSpan(maxLineSpan) }) {
-            SectionHeader(foldersLabel, Modifier.padding(top = 8.dp, bottom = 4.dp))
-          }
+        item(key = "foldersHeader", span = { GridItemSpan(maxLineSpan) }) {
+          SectionHeader(foldersLabel, foldersTrailing, Modifier.padding(top = 8.dp, bottom = 4.dp))
         }
         folders.chunked(columns).forEach { row ->
           item(key = "folderRow_${row.first().id}", span = { GridItemSpan(maxLineSpan) }) {
@@ -617,7 +617,7 @@ private fun SnapshotLibraryContent(
 
       if (showSectionLabels && captures.isNotEmpty()) {
         item(key = "snapshotsHeader", span = { GridItemSpan(maxLineSpan) }) {
-          SectionHeader(snapshotsLabel, Modifier.padding(bottom = 4.dp))
+          SectionHeader(snapshotsLabel, modifier = Modifier.padding(bottom = 4.dp))
         }
       }
 
@@ -639,15 +639,34 @@ private fun SnapshotLibraryContent(
 @Composable
 private fun SectionHeader(
   label: String,
+  trailing: String? = null,
   modifier: Modifier = Modifier,
 ) {
-  Text(
-    text = label,
-    style = MaterialTheme.typography.titleSmall,
-    fontWeight = FontWeight.SemiBold,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  val colors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
+  Row(
     modifier = modifier.fillMaxWidth(),
-  )
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    Text(
+      text = label,
+      modifier = Modifier.alignByBaseline(),
+      fontSize = 12.5.sp,
+      lineHeight = 15.sp,
+      letterSpacing = 3.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = colors.inkTertiary,
+    )
+    if (trailing != null) {
+      Text(
+        text = trailing,
+        modifier = Modifier.alignByBaseline(),
+        fontSize = 11.5.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 1.sp,
+        color = colors.inkSecondary,
+      )
+    }
+  }
 }
 
 private fun folderComparator(

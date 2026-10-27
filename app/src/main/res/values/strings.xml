@@ -1221,6 +1221,9 @@
   <string name="ui_no_playlists_found">No playlists found</string>
   <string name="ui_recently_played_disabled">Recently Played is disabled</string>
   <string name="ui_no_recently_played_videos">No recently played videos</string>
+  <string name="recent_subhead_summary">%1$d records · on this device only</string>
+  <string name="recent_records_title">Screening records</string>
+  <string name="recent_progress_percent">watched %1$d%%</string>
   <string name="compressor_failed">Compression failed</string>
   <string name="sort_view_options">Sort &amp; View Options</string>
   <string name="ui_view_options">View Options</string>
@@ -1391,6 +1394,9 @@
   <string name="ui_music">Music</string>
   <string name="ui_recents">Recents</string>
   <string name="ui_playlists">Playlists</string>
+  <string name="playlist_my_lists">My lists</string>
+  <string name="playlist_paper_motto">Stacked into a book · kept for your eyes only</string>
+  <string name="playlist_subhead_summary">%1$d lists · %2$d videos</string>
   <string name="ui_library">Library</string>
   <string name="profile_seal">Private</string>
   <string name="profile_media_tag">Media archive</string>
@@ -1579,6 +1585,8 @@
   <string name="network_bookmark_add">Bookmark folder</string>
   <string name="network_bookmark_remove">Remove folder bookmark</string>
   <string name="network_bookmarks_title">Bookmark folders</string>
+  <string name="network_bookmarks_home_title">Network bookmarks</string>
+  <string name="network_bookmarks_manage_short">Manage</string>
   <string name="network_bookmarks_manage">Manage bookmark folders</string>
   <string name="network_bookmarks_empty_title">No bookmarked folders</string>
   <string name="network_bookmarks_empty_description">Bookmark a remote folder to open it directly from the Network page.</string>
@@ -2549,6 +2557,8 @@
   <string name="snapshot_empty_title">No snapshots yet</string>
   <string name="snapshot_empty_message">Tap the snapshot button in the frame-by-frame panel to keep a moment</string>
   <string name="snapshot_search_placeholder">Search snapshots</string>
+  <string name="snapshot_hub_subhead_summary">%1$d snapshots · %2$d videos</string>
+  <string name="snapshot_folder_subhead_summary">%1$d snapshots · from %2$d videos</string>
   <string name="snapshot_no_results">No snapshots match your search</string>
 
   <string name="snapshot_sort_captured_at">Capture time</string>

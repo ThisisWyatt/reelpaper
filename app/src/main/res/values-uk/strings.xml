@@ -1063,6 +1063,9 @@
   <string name="ui_no_playlists_found">Списків відтворення не знайдено</string>
   <string name="ui_recently_played_disabled">Історію відтворення вимкнено</string>
   <string name="ui_no_recently_played_videos">Немає нещодавно відтворених відео</string>
+  <string name="recent_subhead_summary">%1$d записів · лише на цьому пристрої</string>
+  <string name="recent_records_title">Покази</string>
+  <string name="recent_progress_percent">переглянуто %1$d%%</string>
   <string name="compressor_failed">Помилка стиснення</string>
   <string name="sort_view_options">Параметри сортування та вигляду</string>
   <string name="ui_view_options">Параметри вигляду</string>
@@ -1226,6 +1229,9 @@
   <string name="ui_music">Музика</string>
   <string name="ui_recents">Нещодавні</string>
   <string name="ui_playlists">Списки відтворення</string>
+  <string name="playlist_my_lists">Мої списки</string>
+  <string name="playlist_paper_motto">Складені в книгу · лише для вас</string>
+  <string name="playlist_subhead_summary">%1$d списків · %2$d відео</string>
   <string name="ui_library">Колекція</string>
   <string name="profile_seal">Приватне</string>
   <string name="profile_media_tag">Медіаархів</string>
@@ -1414,6 +1420,8 @@
   <string name="network_bookmark_add">Закріпити папку</string>
   <string name="network_bookmark_remove">Видалити закладку папки</string>
   <string name="network_bookmarks_title">Закладки папок</string>
+  <string name="network_bookmarks_home_title">Мережеві закладки</string>
+  <string name="network_bookmarks_manage_short">Керування</string>
   <string name="network_bookmarks_manage">Керування закладками папок</string>
   <string name="network_bookmarks_empty_title">Немає закладок папок</string>
   <string name="network_bookmarks_empty_description">Додайте віддалену папку до закладок, щоб відкривати її безпосередньо з вкладки «Мережа».</string>
@@ -2330,6 +2338,8 @@
   <string name="snapshot_empty_title">Знімків ще немає</string>
   <string name="snapshot_empty_message">Торкніться кнопки знімка на панелі покадрової навігації, щоб зберегти момент</string>
   <string name="snapshot_search_placeholder">Пошук знімків</string>
+  <string name="snapshot_hub_subhead_summary">%1$d знімків · %2$d відео</string>
+  <string name="snapshot_folder_subhead_summary">%1$d знімків · з %2$d відео</string>
   <string name="snapshot_no_results">Немає знімків, що відповідають запиту</string>
   <string name="snapshot_sort_captured_at">Час створення</string>
   <string name="snapshot_sort_video_title">Назва відео</string>

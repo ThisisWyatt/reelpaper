@@ -64,6 +64,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -331,6 +332,15 @@ data class VideoListScreen(
     }
 
     val displayFolderName = videos.firstOrNull()?.bucketDisplayName ?: folderName
+    val folderBytes = remember(sortedVideos) { sortedVideos.sumOf { it.size } }
+    val folderSubtitle =
+      buildString {
+        append(pluralStringResource(R.plurals.folder_video_count, sortedVideos.size, sortedVideos.size))
+        if (folderBytes > 0) {
+          append(" · ")
+          append(android.text.format.Formatter.formatShortFileSize(context, folderBytes))
+        }
+      }
 
     // FAB visibility state
     val isFabVisible = remember { mutableStateOf(true) }
@@ -392,50 +402,59 @@ data class VideoListScreen(
             shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
             tonalElevation = 6.dp,
           )
-        } else {
+        } else if (selectionManager.isInSelectionMode) {
           BrowserTopBar(
-          title = displayFolderName,
-          isInSelectionMode = selectionManager.isInSelectionMode,
-          selectedCount = selectionManager.selectedCount,
-          totalCount = sortedVideosWithInfo.size,
-          onBackClick = {
-            if (selectionManager.isInSelectionMode) {
-              selectionManager.clear()
-            } else {
+            title = displayFolderName,
+            isInSelectionMode = true,
+            selectedCount = selectionManager.selectedCount,
+            totalCount = sortedVideosWithInfo.size,
+            onBackClick = { selectionManager.clear() },
+            onCancelSelection = { selectionManager.clear() },
+            isSingleSelection = selectionManager.isSingleSelection,
+            onInfoClick = showSelectionInfo,
+            onShareClick = { selectionManager.shareSelected() },
+            onPlayClick = { selectionManager.playSelected() },
+            onSelectAll = { selectionManager.selectAll() },
+            onInvertSelection = { selectionManager.invertSelection() },
+            onDeselectAll = { selectionManager.clear() },
+            onMoveToSecureClick = {
+              if (!secureFolderPreferences.isPinSet()) {
+                backstack.navigateTo(SecureFolderGateScreen)
+              } else if (secureFolderPreferences.dontAskBeforeMove.get()) {
+                moveSelectedToSecureFolder()
+              } else {
+                moveToSecureConfirmOpen.value = true
+              }
+            },
+          )
+        } else {
+          // Mockup `.appbar` on a `.sh-disc.sm` badge: same tear-edge header as the二级页.
+          app.gyrolet.mpvrx.ui.browser.components.PaperSubhead(
+            title = displayFolderName,
+            subtitle = folderSubtitle,
+            icon = Icons.RoundedFilled.Folder,
+            compact = true,
+            onBackClick = {
               if (onBack != null) {
                 onBack()
               } else {
                 backstack.popSafely()
               }
-            }
-          },
-          onCancelSelection = { selectionManager.clear() },
-          onSortClick = { sortDialogOpen.value = true },
-          onSearchClick = { internalIsSearching = true },
-          onSettingsClick =
-            if (isDualPane) {
-              null
-            } else {
-              { backstack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen) }
             },
-          onTitleDoubleTap = { backstack.navigateTo(SecureFolderGateScreen) },
-          onTitleLongPress = { backstack.navigateTo(SecureFolderGateScreen) },
-          isSingleSelection = selectionManager.isSingleSelection,
-          onInfoClick = showSelectionInfo,
-          onShareClick = { selectionManager.shareSelected() },
-          onPlayClick = { selectionManager.playSelected() },
-          onSelectAll = { selectionManager.selectAll() },
-          onInvertSelection = { selectionManager.invertSelection() },
-          onDeselectAll = { selectionManager.clear() },
-          onMoveToSecureClick = {
-            if (!secureFolderPreferences.isPinSet()) {
-              backstack.navigateTo(SecureFolderGateScreen)
-            } else if (secureFolderPreferences.dontAskBeforeMove.get()) {
-              moveSelectedToSecureFolder()
-            } else {
-              moveToSecureConfirmOpen.value = true
-            }
-          },
+            onTitleDoubleTap = { backstack.navigateTo(SecureFolderGateScreen) },
+            onTitleLongPress = { backstack.navigateTo(SecureFolderGateScreen) },
+            actions = {
+              app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Search,
+                contentDescription = stringResource(R.string.settings_search_title),
+                onClick = { internalIsSearching = true },
+              )
+              app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Sort,
+                contentDescription = stringResource(R.string.sort),
+                onClick = { sortDialogOpen.value = true },
+              )
+            },
           )
         }
       },

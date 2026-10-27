@@ -1498,24 +1498,12 @@ private fun FolderListContent(
 @Composable
 private fun HomeFoldersHeader(
   totalVideoCount: Int,
-  onSearchClick: () -> Unit,
   inGrid: Boolean = false,
 ) {
   val colors = app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors.current
   Column {
-    app.gyrolet.mpvrx.ui.theme.paper.PaperSearchSlot(
-      placeholder = stringResource(R.string.ui_search_folders_and_videos),
-      onClick = onSearchClick,
-      modifier =
-        Modifier
-          .fillMaxWidth()
-          .padding(
-            start = if (inGrid) 0.dp else 20.dp,
-            end = if (inGrid) 0.dp else 20.dp,
-            top = if (inGrid) 0.dp else 4.dp,
-            bottom = 8.dp,
-          ),
-    )
+    // 网络收藏文件夹 rides above the local folders, per the mockup home.
+    HomeNetworkBookmarksSection(inGrid = inGrid)
     Row(
       modifier =
         Modifier
@@ -1618,7 +1606,6 @@ private fun GridContent(
         item(key = "home_header", span = { GridItemSpan(maxLineSpan) }) {
           HomeFoldersHeader(
             totalVideoCount = totalVideoCount,
-            onSearchClick = onSearchActivate,
             inGrid = true,
           )
         }
@@ -1748,7 +1735,6 @@ private fun ListContent(
         item(key = "home_header") {
           HomeFoldersHeader(
             totalVideoCount = totalVideoCount,
-            onSearchClick = onSearchActivate,
           )
         }
       }

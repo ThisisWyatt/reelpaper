@@ -16,7 +16,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import app.gyrolet.mpvrx.ui.browser.fab.FabPlacement
 import app.gyrolet.mpvrx.ui.browser.fab.FabScrollHelper
-import app.gyrolet.mpvrx.ui.components.themedSegmentedButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -30,9 +29,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import app.gyrolet.mpvrx.ui.utils.NavigationPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -41,9 +39,6 @@ import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
@@ -83,7 +78,6 @@ import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.BrowserPreferences
 import app.gyrolet.mpvrx.preferences.GesturePreferences
 import app.gyrolet.mpvrx.preferences.MediaLayoutMode
-import app.gyrolet.mpvrx.preferences.MediaLibraryType
 import app.gyrolet.mpvrx.preferences.RecentSortType
 import app.gyrolet.mpvrx.preferences.SortOrder
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
@@ -109,9 +103,36 @@ import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import app.gyrolet.mpvrx.ui.utils.popSafely
-import app.gyrolet.mpvrx.ui.utils.rememberTabNavigation
 import app.gyrolet.mpvrx.utils.media.MediaUtils
 import app.gyrolet.mpvrx.utils.sort.SortUtils
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import app.gyrolet.mpvrx.ui.browser.cards.SelectionIndicator
+import app.gyrolet.mpvrx.ui.theme.paper.LocalPaperColors
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import app.gyrolet.mpvrx.ui.theme.paper.paperRaise
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -144,16 +165,11 @@ object RecentlyPlayedScreen : Screen {
       sortRecentItems(recentItems, sortType, sortOrder)
     }
     val isLoading by viewModel.isLoading.collectAsState()
-    var recentlyPlayedFilter by rememberSaveable { mutableStateOf(MediaLibraryType.Video) }
-    val videoItems =
+    // The screen only lists video history; audio history is not surfaced here.
+    val filteredRecentItems =
       remember(sortedRecentItems) {
         sortedRecentItems.filterNot(::isRecentlyPlayedItemAudio)
       }
-    val audioItems =
-      remember(sortedRecentItems) {
-        sortedRecentItems.filter(::isRecentlyPlayedItemAudio)
-      }
-    val filteredRecentItems = if (recentlyPlayedFilter == MediaLibraryType.Audio) audioItems else videoItems
     val deleteDialogOpen = rememberSaveable { mutableStateOf(false) }
     val deleteFilesCheckbox = rememberSaveable { mutableStateOf(false) }
     val advancedPreferences = koinInject<AdvancedPreferences>()
@@ -231,12 +247,8 @@ object RecentlyPlayedScreen : Screen {
 
     // Track scroll for FAB visibility - create per-tab states so swiping between
     // Video/Audio doesn't share scroll position, then expose whichever pair is active.
-    val videoListState = remember { LazyListState() }
-    val videoGridState = remember { LazyGridState() }
-    val audioListState = remember { LazyListState() }
-    val audioGridState = remember { LazyGridState() }
-    val listState = if (recentlyPlayedFilter == MediaLibraryType.Audio) audioListState else videoListState
-    val gridState = if (recentlyPlayedFilter == MediaLibraryType.Audio) audioGridState else videoGridState
+    val listState = remember { LazyListState() }
+    val gridState = remember { LazyGridState() }
     app.gyrolet.mpvrx.ui.browser.fab.FabScrollHelper.trackScrollForFabVisibility(
       listState = listState,
       gridState = if (mediaLayoutMode == MediaLayoutMode.GRID) gridState else null,
@@ -245,54 +257,47 @@ object RecentlyPlayedScreen : Screen {
       onExpandedChange = { isFabExpanded.value = it },
     )
 
-    // Swipe between the Video/Audio tabs, kept in sync with the segmented buttons.
-    val pagerState = rememberPagerState(initialPage = recentlyPlayedFilter.ordinal) { MediaLibraryType.entries.size }
-    val navigateTab = rememberTabNavigation(pagerState)
-    LaunchedEffect(pagerState.settledPage, pagerState.isScrollInProgress) {
-      if (!pagerState.isScrollInProgress) {
-        MediaLibraryType.entries.getOrNull(pagerState.settledPage)?.let { type ->
-          if (recentlyPlayedFilter != type) {
-            selectionManager.clear()
-            recentlyPlayedFilter = type
-          }
-        }
-      }
-    }
-    LaunchedEffect(recentlyPlayedFilter) {
-      navigateTab(recentlyPlayedFilter.ordinal)
-    }
-
     Scaffold(
       modifier = Modifier.onSizeChanged { size ->
         contentWidthDp = with(density) { size.width.toDp().value.toInt() }
       },
       containerColor = app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor(),
       topBar = {
-        BrowserTopBar(
-          title = stringResource(R.string.pref_advanced_enable_recently_played_title),
-          isInSelectionMode = selectionManager.isInSelectionMode,
-          selectedCount = selectionManager.selectedCount,
-          totalCount = filteredRecentItems.size,
-          onBackClick =
-            if (app.gyrolet.mpvrx.ui.browser.LocalIsMainTabPage.current) {
-              null
-            } else {
-              { backStack.popSafely() }
+        if (selectionManager.isInSelectionMode) {
+          BrowserTopBar(
+            title = stringResource(R.string.pref_advanced_enable_recently_played_title),
+            isInSelectionMode = true,
+            selectedCount = selectionManager.selectedCount,
+            totalCount = filteredRecentItems.size,
+            onBackClick = { selectionManager.clear() },
+            onCancelSelection = { selectionManager.clear() },
+            isSingleSelection = selectionManager.isSingleSelection,
+            onSelectAll = { selectionManager.selectAll() },
+            onInvertSelection = { selectionManager.invertSelection() },
+            onDeselectAll = { selectionManager.clear() },
+            onDeleteClick = { deleteDialogOpen.value = true },
+          )
+        } else {
+          // Mockup `.subhead`: enamelled clock disc, the record count and the sort key.
+          app.gyrolet.mpvrx.ui.browser.components.PaperSubhead(
+            title = stringResource(R.string.pref_advanced_enable_recently_played_title),
+            subtitle = stringResource(R.string.recent_subhead_summary, filteredRecentItems.size),
+            icon = Icons.RoundedFilled.History,
+            onBackClick =
+              if (app.gyrolet.mpvrx.ui.browser.LocalIsMainTabPage.current) {
+                null
+              } else {
+                { backStack.popSafely() }
+              },
+            actions = {
+              app.gyrolet.mpvrx.ui.theme.paper.PaperIconButton(
+                icon = app.gyrolet.mpvrx.ui.icons.PaperIcons.Sort,
+                contentDescription = stringResource(R.string.sort),
+                onClick = { showSortDialog = true },
+              )
             },
-          onCancelSelection = { selectionManager.clear() },
-          onSortClick = { showSortDialog = true },
-          onSettingsClick = {
-            backStack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen)
-          },
-          isSingleSelection = selectionManager.isSingleSelection,
-          onInfoClick = null, // No info in recently played
-          onShareClick = null,
-          onPlayClick = null,
-          onSelectAll = { selectionManager.selectAll() },
-          onInvertSelection = { selectionManager.invertSelection() },
-          onDeselectAll = { selectionManager.clear() },
-          onDeleteClick = { deleteDialogOpen.value = true },
-        )
+          )
+        }
       },
       floatingActionButton = {
         val isFabShouldBeVisible =
@@ -438,38 +443,6 @@ object RecentlyPlayedScreen : Screen {
       Column(
         modifier = Modifier.fillMaxSize(),
       ) {
-        if (enableRecentlyPlayed) {
-          SingleChoiceSegmentedButtonRow(
-            modifier =
-              Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-          ) {
-            MediaLibraryType.entries.forEachIndexed { index, type ->
-              SegmentedButton(
-                selected = recentlyPlayedFilter == type,
-                onClick = {
-                  if (recentlyPlayedFilter != type) {
-                    selectionManager.clear()
-                    recentlyPlayedFilter = type
-                  }
-                },
-                shape = SegmentedButtonDefaults.itemShape(index, MediaLibraryType.entries.size),
-                colors = themedSegmentedButtonColors(),
-              ) {
-                Text(
-                  text =
-                    if (type == MediaLibraryType.Audio) {
-                      stringResource(R.string.ui_audio_tab)
-                    } else {
-                      stringResource(R.string.ui_videos)
-                    },
-                )
-              }
-            }
-          }
-        }
-
         Box(
           modifier =
             Modifier
@@ -502,69 +475,64 @@ object RecentlyPlayedScreen : Screen {
           }
         }
 
-        else -> {
-          NavigationPager(
-            state = pagerState,
+        filteredRecentItems.isEmpty() -> {
+          Box(
             modifier = Modifier.fillMaxSize(),
-            allowNestedSwipes = true,
-          ) { page ->
-            val pageType = MediaLibraryType.entries.getOrNull(page) ?: MediaLibraryType.Video
-            val pageIsAudio = pageType == MediaLibraryType.Audio
-            val pageItems = if (pageIsAudio) audioItems else videoItems
-            val pageListState = if (pageIsAudio) audioListState else videoListState
-            val pageGridState = if (pageIsAudio) audioGridState else videoGridState
-
-            if (pageItems.isEmpty()) {
-              Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-              ) {
-                EmptyState(
-                  icon = Icons.RoundedFilled.History,
-                  title =
-                    if (pageIsAudio) {
-                      stringResource(R.string.ui_no_audio_found)
-                    } else {
-                      stringResource(R.string.ui_no_recently_played_videos)
-                    },
-                  message = "Items you play will appear here",
-                )
-              }
-            } else {
-              RecentItemsContent(
-                onChanged = { coroutineScope.launch { viewModel.refresh() } },
-                onRefresh = viewModel::refresh,
-                recentItems = pageItems,
-                selectionManager = selectionManager,
-                onVideoClick = { video ->
-                  coroutineScope.launch {
-                    val playableVideo = viewModel.resolvePlayableRecentVideo(video)
-                    if (playableVideo != null) {
-                      // Always play individual videos without creating a playlist.
-                      MediaUtils.playFile(playableVideo, context, "recently_played")
-                    } else {
-                      Toast
-                        .makeText(
-                          context,
-                          context.getString(app.gyrolet.mpvrx.R.string.ui_recent_file_no_longer_exists),
-                          Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                  }
-                },
-                onPlaylistClick = { playlistItem ->
-                  // Navigate to playlist detail screen
-                  backStack.navigateTo(PlaylistDetailScreen(playlistItem.playlist.id))
-                },
-                modifier = Modifier,
-                isInSelectionMode = selectionManager.isInSelectionMode,
-                isAudioTab = pageIsAudio,
-                listState = pageListState,
-                gridState = pageGridState,
-                availableWidthDp = contentWidthDp,
-              )
-            }
+            contentAlignment = Alignment.Center,
+          ) {
+            EmptyState(
+              icon = Icons.RoundedFilled.History,
+              title = stringResource(R.string.ui_no_recently_played_videos),
+              message = "Items you play will appear here",
+            )
           }
+        }
+
+        else -> {
+          RecentItemsContent(
+            onChanged = { coroutineScope.launch { viewModel.refresh() } },
+            onRefresh = viewModel::refresh,
+            recentItems = filteredRecentItems,
+            selectionManager = selectionManager,
+            onVideoClick = { video ->
+              coroutineScope.launch {
+                val playableVideo = viewModel.resolvePlayableRecentVideo(video)
+                if (playableVideo != null) {
+                  // Always play individual videos without creating a playlist.
+                  MediaUtils.playFile(playableVideo, context, "recently_played")
+                } else {
+                  Toast
+                    .makeText(
+                      context,
+                      context.getString(app.gyrolet.mpvrx.R.string.ui_recent_file_no_longer_exists),
+                      Toast.LENGTH_SHORT,
+                    ).show()
+                }
+              }
+            },
+            onPlaylistClick = { playlistItem ->
+              // Navigate to playlist detail screen
+              backStack.navigateTo(PlaylistDetailScreen(playlistItem.playlist.id))
+            },
+            modifier = Modifier,
+            isInSelectionMode = selectionManager.isInSelectionMode,
+            listState = listState,
+            gridState = gridState,
+            availableWidthDp = contentWidthDp,
+            headerContent = {
+              RecentRecordsHeader(
+                sortLabel =
+                  stringResource(
+                    if (sortType == RecentSortType.LastPlayed) {
+                      R.string.video_swipe_last_played
+                    } else {
+                      R.string.ui_name
+                    },
+                  ),
+                onSortClick = { showSortDialog = true },
+              )
+            },
+          )
         }
       }
       }
@@ -573,7 +541,7 @@ object RecentlyPlayedScreen : Screen {
       RecentSortDialog(
         isOpen = showSortDialog,
         onDismiss = { showSortDialog = false },
-        isAudioTab = recentlyPlayedFilter == MediaLibraryType.Audio,
+        isAudioTab = false,
         availableWidthDp = contentWidthDp,
       )
 
@@ -675,11 +643,11 @@ private fun RecentItemsContent(
   onPlaylistClick: suspend (RecentlyPlayedItem.PlaylistItem) -> Unit,
   modifier: Modifier = Modifier,
   isInSelectionMode: Boolean = false,
-  isAudioTab: Boolean = false,
   listState: LazyListState,
   gridState: LazyGridState,
   onChanged: () -> Unit,
   onRefresh: suspend () -> Unit,
+  headerContent: @Composable () -> Unit,
   availableWidthDp: Int? = null,
 ) {
   val swipeActions = rememberVideoSwipeActions(onChanged = onChanged)
@@ -716,7 +684,6 @@ private fun RecentItemsContent(
   val manualGridColumnsEnabled by viewPreferences.manualGridColumnsEnabled.collectAsState()
   val videoGridColumnsPortrait by viewPreferences.gridColumnsPortrait.collectAsState()
   val videoGridColumnsLandscape by viewPreferences.gridColumnsLandscape.collectAsState()
-  val audioCoverArtSize by viewPreferences.audioCoverArtSize.collectAsState()
   val configuration = androidx.compose.ui.platform.LocalConfiguration.current
   val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
   val screenWidthDp = (availableWidthDp ?: configuration.screenWidthDp).dp
@@ -741,12 +708,10 @@ private fun RecentItemsContent(
       val cellWidth =
         (screenWidthDp - contentHorizontalPadding * 2 - itemSpacing * (computedVideoColumns - 1)) / computedVideoColumns
       (cellWidth - 8.dp).coerceAtLeast(1.dp)
-    } else if (isAudioTab) {
-      audioCoverArtSize.dp
     } else {
       160.dp
     }
-  val aspect = if (isAudioTab) 1f else if (isGridMode) 16f / 10f else 16f / 9f
+  val aspect = if (isGridMode) 16f / 10f else 16f / 9f
   val thumbWidthPx = with(density) { thumbWidthDp.roundToPx() }
   val thumbHeightPx = (thumbWidthPx / aspect).toInt()
   val videoCardUiConfig =
@@ -860,6 +825,7 @@ private fun RecentItemsContent(
           horizontalArrangement = Arrangement.spacedBy(MediaSelectionGridGap),
           verticalArrangement = Arrangement.spacedBy(MediaSelectionGridGap),
         ) {
+          item(key = "records_header", span = { GridItemSpan(maxLineSpan) }) { headerContent() }
           items(
             count = recentItems.size,
             key = { index -> recentlyPlayedItemKey(recentItems[index]) },
@@ -998,6 +964,7 @@ private fun RecentItemsContent(
               bottom = bottomClearance,
             ),
         ) {
+          item(key = "records_header") { headerContent() }
           items(
             count = recentItems.size,
             key = { index -> recentlyPlayedItemKey(recentItems[index]) },
@@ -1013,11 +980,14 @@ private fun RecentItemsContent(
             }
             when (val item = recentItems[index]) {
               is RecentlyPlayedItem.VideoItem -> {
-                VideoCard(
+                val playbackInfo = swipePlaybackInfo[item.video.path]
+                RecentRecordRow(
                   video = item.video,
-                  progressPercentage = null,
+                  timestamp = item.timestamp,
+                  progressPercentage = playbackInfo?.progressPercentage,
+                  isWatched = playbackInfo?.isWatched == true,
                   isSelected = selectionManager.isSelected(item),
-                  selectionNeighbors = neighbors,
+                  showThumbnail = showVideoThumbnails,
                   onClick = {
                     if (selectionManager.isInSelectionMode) {
                       selectionManager.toggleFromUser(item)
@@ -1026,27 +996,6 @@ private fun RecentItemsContent(
                     }
                   },
                   onLongClick = { selectionManager.handleLongClick(item) },
-                  onThumbClick =
-                    if (tapThumbnailToSelect) {
-                      { selectionManager.toggleFromUser(item) }
-                    } else {
-                      {
-                        if (selectionManager.isInSelectionMode) {
-                          selectionManager.toggleFromUser(item)
-                        } else {
-                          onVideoClick(item.video)
-                        }
-                      }
-                    },
-                  isGridMode = false,
-                  onSwipeAction =
-                    swipeActions.video.takeUnless { selectionManager.isInSelectionMode || isInSelectionMode },
-                  isWatched = swipePlaybackInfo[item.video.path]?.isWatched == true,
-                  isOldAndUnplayed = swipePlaybackInfo[item.video.path]?.isOldAndUnplayed == true,
-                  thumbnailWidthPx = if (isAudioTab) with(density) { audioCoverArtSize.dp.roundToPx() } else null,
-                  thumbnailHeightPx = if (isAudioTab) with(density) { audioCoverArtSize.dp.roundToPx() } else null,
-                  showSubtitleIndicator = showSubtitleIndicator,
-                  uiConfig = videoCardUiConfig,
                 )
               }
 
@@ -1119,6 +1068,290 @@ private fun RecentItemsContent(
         }
       }
     }
+  }
+}
+
+/** Mockup `.sec`: the page's own heading, with the active sort as its right-hand action. */
+@Composable
+private fun RecentRecordsHeader(
+  sortLabel: String,
+  onSortClick: () -> Unit,
+) {
+  val colors = LocalPaperColors.current
+  Row(
+    modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 20.dp, bottom = 10.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    Text(
+      text = stringResource(R.string.recent_records_title),
+      modifier = Modifier.alignByBaseline(),
+      fontSize = 12.5.sp,
+      lineHeight = 15.sp,
+      letterSpacing = 3.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = colors.inkTertiary,
+    )
+    Text(
+      text = sortLabel,
+      modifier =
+        Modifier
+          .alignByBaseline()
+          .clip(RoundedCornerShape(8.dp))
+          .clickable(onClick = onSortClick)
+          .padding(horizontal = 2.dp, vertical = 2.dp),
+      fontSize = 11.5.sp,
+      lineHeight = 14.sp,
+      letterSpacing = 1.sp,
+      color = colors.inkSecondary,
+    )
+  }
+}
+
+/**
+ * 放映票根 per mockup `.rstub`: a cream ticket holding the 92×64 still (play glyph, duration
+ * chip, resume bar), a punched tear line, the screening day and time, the file name and the
+ * "duration · progress" line, with the vermilion play key on the right.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RecentRecordRow(
+  video: Video,
+  timestamp: Long,
+  progressPercentage: Float?,
+  isWatched: Boolean,
+  isSelected: Boolean,
+  showThumbnail: Boolean,
+  onClick: () -> Unit,
+  onLongClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val paperColors = LocalPaperColors.current
+  val thumbnailRepository = koinInject<ThumbnailRepository>()
+  val density = LocalDensity.current
+  val thumbWidthPx = with(density) { 92.dp.roundToPx() }
+  val thumbHeightPx = with(density) { 64.dp.roundToPx() }
+  var thumbnail by remember(video.path, showThumbnail) {
+    mutableStateOf(
+      if (showThumbnail) thumbnailRepository.peekThumbnailFromMemory(video, thumbWidthPx, thumbHeightPx) else null,
+    )
+  }
+  LaunchedEffect(video.path, showThumbnail) {
+    if (showThumbnail && thumbnail == null) {
+      thumbnail = thumbnailRepository.getThumbnail(video, thumbWidthPx, thumbHeightPx)
+    }
+  }
+
+  val zone = remember { ZoneId.systemDefault() }
+  val playedOn = remember(timestamp, zone) { Instant.ofEpochMilli(timestamp).atZone(zone).toLocalDate() }
+  val today = LocalDate.now(zone)
+  val dayLabel =
+    when (playedOn) {
+      today -> stringResource(R.string.profile_screened_today)
+      today.minusDays(1) -> stringResource(R.string.profile_screened_yesterday)
+      else -> stringResource(R.string.profile_screened_days_ago, ChronoUnit.DAYS.between(playedOn, today).toInt())
+    }
+  val timeLabel =
+    remember(timestamp) {
+      DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(timestamp).atZone(zone))
+    }
+  // A finished screening fills the bar even when the stored position was cleared.
+  val progress = if (isWatched) 1f else (progressPercentage ?: 0f).coerceIn(0f, 1f)
+  val progressText =
+    when {
+      isWatched -> stringResource(R.string.video_swipe_finished)
+      progress > 0f -> stringResource(R.string.recent_progress_percent, (progress * 100).roundToInt())
+      else -> null
+    }
+  val duration = video.durationFormatted
+  val shape = RoundedCornerShape(11.dp)
+  val borderColor = if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8)
+  val cardGradient =
+    if (paperColors.isDark) {
+      Brush.verticalGradient(listOf(paperColors.card, paperColors.paperInset))
+    } else {
+      Brush.verticalGradient(listOf(Color(0xFFFDFBF3), Color(0xFFF3EDDC)))
+    }
+
+  Box(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+    Row(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .paperRaise(shape, paperColors, elevation = 4.dp)
+          .background(cardGradient, shape)
+          .border(
+            if (isSelected) 1.5.dp else 1.dp,
+            if (isSelected) paperColors.red else borderColor,
+            shape,
+          )
+          .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+          .padding(start = 9.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      // .rthumb: 92×64 still with the play glyph, the duration chip and the resume bar.
+      Box(
+        modifier =
+          Modifier
+            .size(width = 92.dp, height = 64.dp)
+            .clip(RoundedCornerShape(7.dp))
+            .background(if (paperColors.isDark) paperColors.paperInset else Color(0xFFEAE2CD))
+            .border(1.dp, Color.Black.copy(alpha = 0.10f), RoundedCornerShape(7.dp)),
+        contentAlignment = Alignment.Center,
+      ) {
+        val bitmap = thumbnail
+        if (bitmap != null) {
+          androidx.compose.foundation.Image(
+            bitmap.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+          )
+        }
+        Icon(
+          Icons.RoundedFilled.PlayArrow,
+          contentDescription = null,
+          tint = Color(0xFFFFF8E6).copy(alpha = 0.9f),
+          modifier = Modifier.size(18.dp),
+        )
+        if (duration.isNotBlank() && duration != "--:--") {
+          Text(
+            text = duration,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            color = Color(0xFFFDF6E6),
+            modifier =
+              Modifier
+                .align(Alignment.BottomEnd)
+                .padding(6.dp)
+                .background(Color(0xFF140F0A).copy(alpha = 0.55f), RoundedCornerShape(5.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+          )
+        }
+        Box(
+          modifier =
+            Modifier
+              .align(Alignment.BottomStart)
+              .fillMaxWidth()
+              .height(3.5.dp)
+              .background(Color(0xFF140F0A).copy(alpha = 0.38f)),
+        ) {
+          if (progress > 0f) {
+            Box(
+              modifier =
+                Modifier
+                  .fillMaxHeight()
+                  .fillMaxWidth(progress)
+                  .background(
+                    Brush.horizontalGradient(
+                      if (isWatched) {
+                        listOf(Color(0xFF7B9460), Color(0xFF5F7A4A))
+                      } else {
+                        listOf(Color(0xFFD65444), Color(0xFFE8B45F))
+                      },
+                    ),
+                  ),
+            )
+          }
+        }
+      }
+
+      RecentPerforation(modifier = Modifier.width(27.dp).height(64.dp))
+
+      Column(modifier = Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+          Text(
+            text = dayLabel,
+            fontSize = 8.5.sp,
+            lineHeight = 10.sp,
+            letterSpacing = 1.5.sp,
+            color = paperColors.inkTertiary,
+          )
+          Text(
+            text = timeLabel,
+            fontSize = 12.5.sp,
+            lineHeight = 15.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.5.sp,
+            color = paperColors.red,
+            modifier = Modifier.padding(start = 7.dp),
+          )
+        }
+        Text(
+          text = video.displayName.substringBeforeLast('.'),
+          fontSize = 13.sp,
+          lineHeight = 16.sp,
+          fontWeight = FontWeight.Bold,
+          color = paperColors.ink,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          modifier = Modifier.padding(top = 4.5.dp),
+        )
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+          Text(
+            text = duration,
+            fontSize = 10.5.sp,
+            lineHeight = 13.sp,
+            color = paperColors.inkSecondary,
+          )
+          if (progressText != null) {
+            Text(
+              text = " · $progressText",
+              fontSize = 10.5.sp,
+              lineHeight = 13.sp,
+              fontWeight = if (isWatched) FontWeight.Bold else FontWeight.Normal,
+              color = if (isWatched) paperColors.green else paperColors.inkSecondary,
+            )
+          }
+        }
+      }
+
+      // .rplay: raised paper key, circles never take a step.
+      Box(
+        modifier =
+          Modifier
+            .padding(start = 8.dp)
+            .size(38.dp)
+            .paperRaise(CircleShape, paperColors, elevation = 2.dp)
+            .border(1.dp, borderColor, CircleShape),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(
+          Icons.RoundedFilled.PlayArrow,
+          contentDescription = stringResource(R.string.ui_play),
+          tint = paperColors.red,
+          modifier = Modifier.size(15.dp),
+        )
+      }
+    }
+
+    SelectionIndicator(selected = isSelected, modifier = Modifier.align(Alignment.TopEnd))
+  }
+}
+
+/** Mockup `.rper`: the dashed tear line between still and text, punched at both ends. */
+@Composable
+private fun RecentPerforation(modifier: Modifier = Modifier) {
+  val paperColors = LocalPaperColors.current
+  val dashColor = if (paperColors.isDark) paperColors.cardLine else Color(0xFFD3C49E)
+  val holeColor = paperColors.paper
+  androidx.compose.foundation.Canvas(modifier = modifier) {
+    val centerX = size.width / 2f
+    val dash = 4.dp.toPx()
+    val gap = 3.dp.toPx()
+    val stroke = 1.5.dp.toPx()
+    var y = 9.dp.toPx()
+    val endY = size.height - 9.dp.toPx()
+    while (y < endY) {
+      drawLine(
+        color = dashColor,
+        start = Offset(centerX, y),
+        end = Offset(centerX, (y + dash).coerceAtMost(endY)),
+        strokeWidth = stroke,
+      )
+      y += dash + gap
+    }
+    drawCircle(holeColor, radius = 4.5.dp.toPx(), center = Offset(centerX, 0f))
+    drawCircle(holeColor, radius = 4.5.dp.toPx(), center = Offset(centerX, size.height))
   }
 }
 

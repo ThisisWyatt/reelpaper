@@ -996,6 +996,9 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="ui_no_playlists_found">Keine Wiedergabelisten gefunden</string>
   <string name="ui_recently_played_disabled">„Kürzlich wiedergegeben“ ist deaktiviert</string>
   <string name="ui_no_recently_played_videos">Keine kürzlich wiedergegebenen Videos</string>
+  <string name="recent_subhead_summary">%1$d Einträge · nur auf diesem Gerät</string>
+  <string name="recent_records_title">Vorführungen</string>
+  <string name="recent_progress_percent">gesehen %1$d%%</string>
   <string name="compressor_failed">Komprimierung fehlgeschlagen</string>
   <string name="sort_view_options">Sortier- &amp; Ansichtsoptionen</string>
   <string name="ui_view_options">Ansichtsoptionen</string>
@@ -1122,6 +1125,9 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="ui_home">Startseite</string>
   <string name="ui_recents">Zuletzt</string>
   <string name="ui_playlists">Wiedergabelisten</string>
+  <string name="playlist_my_lists">Meine Listen</string>
+  <string name="playlist_paper_motto">Zu einem Buch gestapelt · nur für dich</string>
+  <string name="playlist_subhead_summary">%1$d Listen · %2$d Videos</string>
   <string name="ui_library">Sammlung</string>
   <string name="profile_seal">Privat</string>
   <string name="profile_media_tag">Medienarchiv</string>
@@ -1935,6 +1941,8 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="network_bookmark_add">Ordner als Lesezeichen speichern</string>
   <string name="network_bookmark_remove">Ordner-Lesezeichen entfernen</string>
   <string name="network_bookmarks_title">Lesezeichenordner</string>
+  <string name="network_bookmarks_home_title">Netzwerk-Lesezeichen</string>
+  <string name="network_bookmarks_manage_short">Verwalten</string>
   <string name="network_bookmarks_manage">Lesezeichenordner verwalten</string>
   <string name="network_bookmarks_empty_title">Keine Ordner als Lesezeichen gespeichert</string>
   <string name="network_bookmarks_empty_description">Speichere einen Remote-Ordner als Lesezeichen, um ihn direkt über die Netzwerkseite zu öffnen.</string>
@@ -2305,6 +2313,8 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="snapshot_empty_title">Noch keine Schnappschüsse</string>
   <string name="snapshot_empty_message">Tippe im Einzelbild-Panel auf die Schnappschuss-Schaltfläche, um einen Moment festzuhalten</string>
   <string name="snapshot_search_placeholder">Schnappschüsse suchen</string>
+  <string name="snapshot_hub_subhead_summary">%1$d Aufnahmen · %2$d Videos</string>
+  <string name="snapshot_folder_subhead_summary">%1$d Aufnahmen · aus %2$d Videos</string>
   <string name="snapshot_no_results">Keine Schnappschüsse passen zu deiner Suche</string>
   <string name="snapshot_sort_captured_at">Aufnahmezeit</string>
   <string name="snapshot_sort_video_title">Videotitel</string>

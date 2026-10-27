@@ -84,6 +84,8 @@ fun NetworkConnectionCard(
   isConnected: Boolean = false,
   isConnecting: Boolean = false,
   error: String? = null,
+  /** Extra resting rotation in degrees; the mockup fans the cards a touch. */
+  tiltDeg: Float? = null,
 ) {
   val colors = LocalPaperColors.current
   var isPressed by remember { mutableStateOf(false) }
@@ -95,7 +97,7 @@ fun NetworkConnectionCard(
     label = "NetworkConnectionCardScale",
   )
   // 每张名片微旋一点，叠纸隐喻 (mockup rotates each card a touch).
-  val tilt = remember(connection.id) { (((connection.id % 5) - 2) * 0.4f).toFloat() }
+  val tilt = remember(connection.id, tiltDeg) { tiltDeg ?: (((connection.id % 5) - 2) * 0.4f).toFloat() }
 
   // Mockup stamp states: ok (green) / err (red) / off (grey); connecting borrows the red.
   val stampRes =
@@ -132,7 +134,6 @@ fun NetworkConnectionCard(
 
   Box(
     modifier
-      .width(172.dp)
       .height(150.dp)
       .graphicsLayer(scaleX = scale, scaleY = scale, rotationZ = tilt)
       .pointerInput(Unit) {

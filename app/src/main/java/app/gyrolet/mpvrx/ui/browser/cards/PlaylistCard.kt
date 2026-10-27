@@ -287,7 +287,7 @@ fun PlaylistCard(
   val cardShape = RoundedCornerShape(14.dp)
   val countLine = androidx.compose.ui.res.pluralStringResource(R.plurals.folder_video_count, itemCount, itemCount)
 
-  Box(modifier = modifier.padding(start = 12.dp, end = 20.dp)) {
+  Box(modifier = modifier.padding(start = 20.dp, end = 28.dp)) {
     // 错位的两张纸 (mock ::before/::after) — deliberate stack-paper metaphor.
     Box(
       modifier =

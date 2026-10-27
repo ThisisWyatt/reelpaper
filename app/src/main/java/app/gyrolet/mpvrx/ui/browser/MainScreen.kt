@@ -221,7 +221,6 @@ object MainScreen : Screen {
     val duration = navigationDurationMillis(animSpeed)
     val reduceMotion = AppMotion.shouldReduceMotion()
     var persistentSelectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-    val showLibraryTab by appearancePreferences.showLibraryTab.collectAsState()
     val showProfileTab by appearancePreferences.showProfileTab.collectAsState()
     val showNetworkTab by appearancePreferences.showNetworkTab.collectAsState()
     val liquidGlassEnabled by appearancePreferences.liquidGlassEnabled.collectAsState()
@@ -248,9 +247,8 @@ object MainScreen : Screen {
 
     val bottomNavigationOrder by appearancePreferences.bottomNavigationOrder.collectAsState()
     val visibleTabs =
-      remember(showLibraryTab, showProfileTab, showNetworkTab, bottomNavigationOrder) {
+      remember(showProfileTab, showNetworkTab, bottomNavigationOrder) {
         mainNavigationTabs(
-          showLibrary = showLibraryTab,
           showProfile = showProfileTab,
           showNetwork = showNetworkTab,
           order = bottomNavigationOrder,
@@ -656,17 +654,15 @@ private const val ADJACENT_TAB_IDLE_MS = 1_200L
 
 /**
  * Bottom-navigation tab order. Home is the permanent root so Back never exits directly from another
- * tab. The Profile tab absorbs Recents, Playlists and Snapshots, which stay reachable from inside it.
+ * tab. Playlists and snapshots live in the Profile tab — the Library hub is no longer a dock key.
  */
 internal fun mainNavigationTabs(
-  showLibrary: Boolean,
   showProfile: Boolean,
   showNetwork: Boolean,
   order: List<String> = emptyList(),
 ): List<MainScreen.MainTab> {
   val available = buildList {
     add(MainScreen.MainTab.HOME)
-    if (showLibrary) add(MainScreen.MainTab.LIBRARY)
     if (showNetwork) add(MainScreen.MainTab.NETWORK)
     if (showProfile) add(MainScreen.MainTab.PROFILE)
   }
