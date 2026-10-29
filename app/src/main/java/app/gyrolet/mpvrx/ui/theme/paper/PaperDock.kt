@@ -9,31 +9,33 @@
 
 package app.gyrolet.mpvrx.ui.theme.paper
 
-import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -42,21 +44,25 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.gyrolet.mpvrx.ui.browser.MainScreen
 import app.gyrolet.mpvrx.ui.browser.MainTabIcon
 import app.gyrolet.mpvrx.ui.browser.mainNavigationLabel
+import kotlin.math.roundToInt
 
 /**
- * 悬浮纸坞 — floating paper dock with four keys.
+ * 悬浮纸坞 — floating paper dock of equal-width, icon-only paper slips.
  *
- * Mockup rules (`.tabbar` / `.tab`): non-active keys show an icon only; the
- * active key gets an inset groove, a vermilion icon and an expanding label
- * (flex-grow 1 → 1.85), so switching never changes the dock height — only the
- * active key grows while its neighbours shrink.
+ * Mockup rules (`.tabbar` / `.tab`): every visible tab is an equal-width slip, so switching
+ * tabs never moves the layout; the active slip carries a 朱砂墨印纸贴 — the same sticker
+ * material as the page-head disc badge — that keeps its warm paper colours in dark mode
+ * because it is a physical sticker, not a re-tinted surface. The dock width follows the
+ * number of visible tabs (the appearance page's tab switches).
+ *
+ * Motion: the stamp slides to the new slip with a spring overshoot and the icon pops as it
+ * becomes current. The stamp never fades in or out — a cross-fade shows the near-white card
+ * through the sticker and reads as a white box flashing on the incoming tab.
  */
 @Composable
 internal fun PaperDock(
@@ -68,39 +74,77 @@ internal fun PaperDock(
   if (visibleTabs.isEmpty()) return
   val colors = LocalPaperColors.current
   val density = LocalDensity.current
-  val dockShape = RoundedCornerShape(18.dp)
+  val dockShape = RoundedCornerShape(16.dp)
+  val stampShape = RoundedCornerShape(12.dp)
+  val dockWidth =
+    DockPadding * 2 + DockTabWidth * visibleTabs.size + DockTabGap * (visibleTabs.size - 1)
+  val selectedIndex = visibleTabs.indexOf(selectedTab)
+  val stampIndex by animateFloatAsState(
+    targetValue = selectedIndex.coerceAtLeast(0).toFloat(),
+    animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+    label = "dock_stamp_index",
+  )
+  val tabStepPx = with(density) { (DockTabWidth + DockTabGap).toPx() }
 
   Box(
     modifier
-      .width(DockWidth)
-      .height(58.dp)
+      .width(dockWidth)
+      .height(DockPadding * 2 + DockTabHeight)
       .onGloballyPositioned { coordinates ->
         NavigationBarMetricsPublisher.publish(coordinates, density)
       }
+      // Mockup `--raise` + `0 8px 22px`: one soft float and one ambient layer, no three-ply stack.
       .shadow(
-        elevation = 10.dp,
+        elevation = 8.dp,
         shape = dockShape,
-        ambientColor = Color(0xFF544224).copy(alpha = 0.20f),
-        spotColor = Color(0xFF544224).copy(alpha = 0.16f),
+        ambientColor = AmbientShadow.copy(alpha = if (colors.isDark) 0.34f else 0.12f),
+        spotColor = AmbientShadow.copy(alpha = if (colors.isDark) 0.30f else 0.10f),
       )
-      .clip(dockShape)
-      .background(colors.card)
+      .paperRaise(dockShape, colors, elevation = 2.dp)
       .border(1.dp, colors.cardLine, dockShape)
-      .padding(6.dp),
+      .padding(DockPadding),
   ) {
-    Row {
+    if (selectedIndex >= 0) {
+      Box(
+        Modifier
+          .offset { IntOffset((tabStepPx * stampIndex).roundToInt(), 0) }
+          .width(DockTabWidth)
+          .height(DockTabHeight)
+          .shadow(
+            elevation = 2.dp,
+            shape = stampShape,
+            ambientColor = AmbientShadow.copy(alpha = 0.22f),
+            spotColor = AmbientShadow.copy(alpha = 0.22f),
+          )
+          .clip(stampShape)
+          .drawWithCache {
+            val stampBrush =
+              Brush.radialGradient(
+                colorStops = arrayOf(0f to StampHighlight, 0.6f to StampMid, 1f to StampEdge),
+                center = Offset(size.width * 0.32f, size.height * 0.24f),
+                // Mockup gradient is a 120%×120% ellipse; a circle at 0.95×width keeps both the
+                // upper-left light and the lower-right falloff where the ellipse puts them.
+                radius = size.width * 0.95f,
+              )
+            val highlightHeight = 1.dp.toPx()
+            onDrawBehind {
+              drawRect(stampBrush)
+              // inset 0 1px 0 rgba(255,255,255,.8)
+              drawRect(
+                color = Color.White.copy(alpha = 0.8f),
+                size = Size(size.width, highlightHeight),
+              )
+            }
+          }
+          .border(1.dp, StampBorder, stampShape),
+      )
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(DockTabGap)) {
       visibleTabs.forEach { tab ->
-        val active = tab == selectedTab
-        val weight by animateFloatAsState(
-          targetValue = if (active) 1.85f else 1f,
-          animationSpec = tween(320, easing = CubicBezierEasing(0.45f, 1.25f, 0.4f, 1f)),
-          label = "dock_key_weight_${tab.name}",
-        )
         PaperDockKey(
           tab = tab,
-          active = active,
+          active = tab == selectedTab,
           onClick = { onTabSelected(tab) },
-          modifier = Modifier.weight(weight),
         )
       }
     }
@@ -117,40 +161,43 @@ private fun PaperDockKey(
   val colors = LocalPaperColors.current
   val interaction = remember { MutableInteractionSource() }
   val pressed by interaction.collectIsPressedAsState()
-  val scale by animateFloatAsState(
-    targetValue = if (pressed) 0.93f else 1f,
-    animationSpec = tween(120),
-    label = "dock_key_scale",
+  val keyShape = RoundedCornerShape(12.dp)
+  // 0 → 1 as the key becomes current; the spring overshoots, so the icon pops rather than eases.
+  val activation by animateFloatAsState(
+    targetValue = if (active) 1f else 0f,
+    animationSpec = spring(dampingRatio = 0.55f, stiffness = 520f),
+    label = "dock_key_activation",
   )
-  val keyShape = RoundedCornerShape(14.dp)
-  val tint = if (active) colors.red else colors.inkTertiary
-  // The label slot hugs the measured text so icon↔label spacing stays 5dp in every locale.
-  val label = mainNavigationLabel(tab)
-  val textMeasurer = rememberTextMeasurer()
-  val density = LocalDensity.current
-  val labelSlotWidth =
-    remember(label, density) {
-      val layout =
-        textMeasurer.measure(
-          label,
-          androidx.compose.ui.text.TextStyle(
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-          ),
-        )
-      with(density) { layout.size.width.toDp() }
+  val tint by animateColorAsState(
+    targetValue = if (active) colors.red else colors.inkTertiary,
+    animationSpec = tween(220),
+    label = "dock_key_tint",
+  )
+  val pressAlpha by animateFloatAsState(
+    targetValue = if (pressed) 1f else 0f,
+    animationSpec = tween(160),
+    label = "dock_key_press",
+  )
+  val iconScale by animateFloatAsState(
+    targetValue = if (pressed) 0.88f else 1f,
+    animationSpec = tween(140),
+    label = "dock_key_icon_scale",
+  )
+  val pressColor =
+    if (colors.isDark) {
+      Color.White.copy(alpha = 0.05f * pressAlpha)
+    } else {
+      PressTint.copy(alpha = 0.07f * pressAlpha)
     }
-  val labelWidth by animateDpAsState(
-    targetValue = if (active) labelSlotWidth else 0.dp,
-    animationSpec = tween(320, easing = CubicBezierEasing(0.45f, 1.25f, 0.4f, 1f)),
-    label = "dock_key_label_width",
-  )
 
   Box(
     modifier
-      .height(46.dp)
-      .then(if (active) Modifier.paperInset(keyShape, colors) else Modifier)
+      .width(DockTabWidth)
+      .height(DockTabHeight)
+      .clip(keyShape)
+      .drawWithCache {
+        onDrawBehind { if (pressAlpha > 0f) drawRect(pressColor) }
+      }
       .clickable(
         interactionSource = interaction,
         indication = null,
@@ -160,35 +207,34 @@ private fun PaperDockKey(
       .semantics { selected = active },
     contentAlignment = Alignment.Center,
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+    Box(
+      Modifier.graphicsLayer {
+        val iconPop = 1f + 0.08f * activation
+        scaleX = iconScale * iconPop
+        scaleY = iconScale * iconPop
+        translationY = -1.dp.toPx() * activation
+      },
     ) {
-      Box(Modifier.padding(end = if (labelWidth > 0.dp) 5.dp else 0.dp)) {
-        MainTabIcon(tab, tint, null, 21.dp)
-      }
-      Box(
-        Modifier
-          .width(labelWidth)
-          .widthIn(max = labelSlotWidth),
-        contentAlignment = Alignment.Center,
-      ) {
-        Text(
-          text = label,
-          color = tint,
-          fontWeight = FontWeight.Bold,
-          fontSize = 11.sp,
-          letterSpacing = 1.sp,
-          maxLines = 1,
-          overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
-        )
-      }
+      // The slip carries no visible label, so the tab name moves into the icon's description.
+      MainTabIcon(tab, tint, mainNavigationLabel(tab), DockIconSize)
     }
   }
 }
 
-/** Mockup `.tabbar`: 286dp-wide compact dock. */
-private val DockWidth = 286.dp
+/** Mockup `.tab`: 5dp frame + 86×46dp slips with a 2dp seam (slips ~10% wider than V33). */
+private val DockPadding = 5.dp
+private val DockTabWidth = 86.dp
+private val DockTabHeight = 46.dp
+private val DockTabGap = 2.dp
+private val DockIconSize = 26.dp
+
+// 朱砂墨印纸贴 — fixed values on purpose: a physical sticker does not darken with the theme.
+private val StampHighlight = Color(0xFFFCF4E2)
+private val StampMid = Color(0xFFF0E4C8)
+private val StampEdge = Color(0xFFDCCBA2)
+private val StampBorder = Color(0xFFD6C49A)
+private val PressTint = Color(0xFF786030)
+private val AmbientShadow = Color(0xFF544224)
 
 /** Publishes dock metrics for the MiniPlayer beside-navigation layout. */
 private object NavigationBarMetricsPublisher {
