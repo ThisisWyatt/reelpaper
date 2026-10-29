@@ -2653,6 +2653,7 @@
   <string name="app_icon_confirm_message">ستتغير أيقونة التطبيق إلى %1$s.</string>
   <string name="app_icon_confirm_action">تغيير الأيقونة</string>
   <string name="app_icon_bg_black">أسود</string>
+  <string name="app_icon_bg_paper">ورق</string>
   <string name="app_icon_bg_white">أبيض</string>
   <string name="app_icon_bg_charcoal">فحمي</string>
   <string name="app_icon_bg_indigo">نيلي</string>
@@ -2663,6 +2664,7 @@
   <string name="app_icon_bg_mint">نعناعي</string>
   <string name="app_icon_bg_ember">جمري</string>
   <string name="app_icon_logo_solid">بنفسجي موحّد</string>
+  <string name="app_icon_logo_ink">لفافة حبر</string>
   <string name="app_icon_logo_gradient">بنفسجي متدرّج</string>
   <string name="app_icon_logo_white">أبيض</string>
   <string name="app_icon_logo_black">أسود</string>

@@ -36,92 +36,142 @@ import androidx.compose.ui.unit.dp
  * them to the actual canvas size, so callers only pick a dp size.
  */
 
-/** 胶片盘 Logo 徽章 — 珐琅软浮, used in page top bars. */
+/**
+ * V6 墨卷 Logo 徽章 —— 一纸 · 一卷 · 一键：米纸卡上放同心墨卷、纸芯与朱砂播放键。
+ * 1024 基准坐标按画布尺寸缩放到任意 dp。
+ */
 @Composable
 fun ReelPaperLogoBadge(modifier: Modifier = Modifier, size: Dp = 34.dp) {
-  val colors = LocalPaperColors.current
   Canvas(modifier.size(size)) {
     val w = this.size.width
-    val h = this.size.height
-    val corner = w * (10f / 34f)
+    val s = w / 1024f
+    fun r(units: Float) = units * s
+    val center = Offset(w / 2f, w / 2f)
+    val corner = androidx.compose.ui.geometry.CornerRadius(w * (225f / 1024f), w * (225f / 1024f))
 
-    // Enamel badge: red vertical gradient + dark border.
+    // ① 纸卡：米纸竖向渐变 + 纸边 + 受光内边一线。
     drawRoundRect(
+      brush = Brush.verticalGradient(listOf(Color(0xFFF8F2E4), Color(0xFFEDE3CB))),
+      size = Size(w, w),
+      cornerRadius = corner,
+    )
+    drawRoundRect(
+      color = Color(0xFFDACBA6),
+      size = Size(w, w),
+      cornerRadius = corner,
+      style = Stroke(width = 1.dp.toPx()),
+    )
+
+    // ② 墨卷：外缘 / 卷面 / 卷层线 / 釉光，共用同一圆心。
+    drawCircle(Color(0xFF1F1A12), radius = r(310f), center = center)
+    drawCircle(
       brush =
-        Brush.verticalGradient(
-          listOf(Color(0xFFD65444), colors.red, Color(0xFF9C2A22)),
+        Brush.linearGradient(
+          colors = listOf(Color(0xFF514A3C), Color(0xFF37312A), Color(0xFF241F16)),
+          start = Offset(0f, 0f),
+          end = Offset(w * 0.8f, w),
         ),
-      topLeft = Offset(0f, 0f),
-      size = Size(w, h),
-      cornerRadius = androidx.compose.ui.geometry.CornerRadius(corner, corner),
+      radius = r(300f),
+      center = center,
     )
-    drawRoundRect(
-      color = colors.redDark,
-      topLeft = Offset(0f, 0f),
-      size = Size(w, h),
-      cornerRadius = androidx.compose.ui.geometry.CornerRadius(corner, corner),
-      style = Stroke(width = w * 0.03f),
+    drawCircle(
+      color = Color(0xFFF0E8D2).copy(alpha = 0.09f),
+      radius = r(236f),
+      center = center,
+      style = Stroke(r(3.5f)),
+    )
+    drawArc(
+      color = Color(0xFFFFF4E0).copy(alpha = 0.15f),
+      startAngle = 190f,
+      sweepAngle = 90f,
+      useCenter = false,
+      topLeft = Offset(center.x - r(270f), center.y - r(270f)),
+      size = Size(r(540f), r(540f)),
+      style = Stroke(width = r(15f), cap = StrokeCap.Round),
     )
 
-    // Film-reel emblem, symbol viewBox 9..39 (30 units) rendered at 22/34 of the badge.
-    val pad = w * (6f / 34f)
-    val icon = w - pad * 2f
-    val s = icon / 30f
-    // Symbol coordinates are in 9..39; the icon origin is symbol (9,9).
-    fun sx(v: Float) = (v - 9f) * s
-    translate(pad, pad) {
-      val disc = Brush.radialGradient(
-        listOf(Color(0xFFFCF4E2), Color(0xFFF5EAD1), Color(0xFFE2CFA9)),
-        center = Offset(icon * 0.5f + icon * 0.14f, icon * 0.5f - icon * 0.11f),
-        radius = icon * 0.95f,
-      )
-      drawCircle(brush = disc, radius = icon / 2f, center = Offset(icon / 2f, icon / 2f))
-      // Engraved ring.
-      drawCircle(
-        color = Color(0xFF7E211B).copy(alpha = 0.15f),
-        radius = 12.3f * s,
-        center = Offset(icon / 2f, icon / 2f),
-        style = Stroke(width = 1f * s),
-      )
-      // Top-left sheen arc: M13.54 17.49 A12.3 12.3 → 21.03 12.07 (circle r12.3 at disc center).
-      val arc =
-        Path().apply {
-          moveTo(sx(13.54f), sx(17.49f))
-          arcTo(
-            rect = Rect(sx(24f) - 12.3f * s, sx(24f) - 12.3f * s, sx(24f) + 12.3f * s, sx(24f) + 12.3f * s),
-            startAngleDegrees = 212f,
-            sweepAngleDegrees = 44f,
-            forceMoveTo = false,
-          )
-        }
-      drawPath(arc, Color.White.copy(alpha = 0.6f), style = Stroke(1.5f * s, cap = StrokeCap.Round))
-      val hole =
+    // ③ 纸芯：暗环 + 微凹的米色卷芯 + 上缘一道凹影。
+    drawCircle(Color(0xFF16110B), radius = r(210f), center = center)
+    drawCircle(
+      brush =
         Brush.radialGradient(
-          listOf(Color(0xFF7E211B), Color(0xFF93281F), Color(0xFFB03E2C)),
-        )
-      listOf(
-        Offset(sx(24f), sx(15.2f)),
-        Offset(sx(16.38f), sx(28.4f)),
-        Offset(sx(31.62f), sx(28.4f)),
-      ).forEach { c ->
-        drawCircle(brush = hole, radius = 2.9f * s, center = c)
-      }
-      // Play wing with its light edge line.
-      val wing =
-        Path().apply {
-          moveTo(sx(20.66f), sx(19.36f))
-          lineTo(sx(20.66f), sx(28.64f))
-          lineTo(sx(29.07f), sx(24f))
-          close()
-        }
-      drawPath(wing, brush = hole)
-      drawLine(
-        Color.White.copy(alpha = 0.3f),
-        Offset(sx(20.66f), sx(19.36f)),
-        Offset(sx(20.66f), sx(28.64f)),
-        strokeWidth = 1f * s,
+          colors = listOf(Color(0xFFF8F1DF), Color(0xFFEFE4C6), Color(0xFFDDCCA4)),
+          center = Offset(center.x, center.y - r(204f) * 0.36f),
+          radius = r(204f) * 1.2f,
+        ),
+      radius = r(204f),
+      center = center,
+    )
+    drawCircle(
+      color = Color(0xFF7E643C).copy(alpha = 0.28f),
+      radius = r(204f),
+      center = center,
+      style = Stroke(r(2.5f)),
+    )
+    drawArc(
+      color = Color(0xFF604623).copy(alpha = 0.20f),
+      startAngle = 204.4f,
+      sweepAngle = 131.2f,
+      useCenter = false,
+      topLeft = Offset(center.x - r(192f), center.y - r(192f)),
+      size = Size(r(384f), r(384f)),
+      style = Stroke(width = r(14f), cap = StrokeCap.Round),
+    )
+
+    // ④ 朱砂键：与 App 内播放键同形，圆心落轴、指向右侧。
+    fun keyX(px: Float) = (540.5f + 16f * (px - 14.2f)) * s
+    fun keyY(py: Float) = (512f + 16f * (py - 12f)) * s
+    val key =
+      roundedTriangle(
+        a = Offset(keyX(8f), keyY(5.1f)),
+        b = Offset(keyX(20.3f), keyY(12f)),
+        c = Offset(keyX(8f), keyY(18.9f)),
+        radius = 19.2f * s,
       )
+    drawPath(
+      path = key,
+      brush =
+        Brush.radialGradient(
+          colors =
+            listOf(
+              Color(0xFFE26B52),
+              Color(0xFFDC5A45),
+              Color(0xFFB23129),
+              Color(0xFF9A2A20),
+              Color(0xFF86241D),
+            ),
+          center = Offset(keyX(11.9f), keyY(7.9f)),
+          radius = 320f * s,
+        ),
+    )
+    drawPath(key, Color(0xFF7E211B), style = Stroke(width = 6.4f * s))
+  }
+}
+
+/** Rounded triangle for the play key — the V6 mark's corners, small enough to stay crisp. */
+private fun roundedTriangle(
+  a: Offset,
+  b: Offset,
+  c: Offset,
+  radius: Float,
+): Path {
+  val vertices = listOf(a, b, c)
+  fun towards(from: Offset, to: Offset): Offset {
+    val dx = to.x - from.x
+    val dy = to.y - from.y
+    val length = kotlin.math.hypot(dx, dy).coerceAtLeast(0.001f)
+    val t = (radius / length).coerceAtMost(0.5f)
+    return Offset(from.x + dx * t, from.y + dy * t)
+  }
+  return Path().apply {
+    val startPoint = towards(a, b)
+    moveTo(startPoint.x, startPoint.y)
+    vertices.indices.forEach { index ->
+      val vertex = vertices[index]
+      val next = vertices[(index + 1) % vertices.size]
+      quadraticTo(vertex.x, vertex.y, towards(next, vertex).x, towards(next, vertex).y)
     }
+    close()
   }
 }
 

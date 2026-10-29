@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  V6 图标 · 背景层：米纸竖向渐变（受光内边一线 + 底缘一道浅划痕），整块铺满自适应画布，
+  形状交给启动器蒙版。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0 H108 V108 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="0"
+                android:endY="108"
+                android:startX="0"
+                android:startY="0"
+                android:type="linear">
+                <item android:color="#FFF8F2E4" android:offset="0" />
+                <item android:color="#FFF2E9D5" android:offset="0.55" />
+                <item android:color="#FFEDE3CB" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M27.6,106 H80.4"
+        android:strokeColor="#1A6E5028"
+        android:strokeLineCap="round"
+        android:strokeWidth="0.53" />
+</vector>

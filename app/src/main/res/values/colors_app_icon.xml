@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_bg_black">#FF000000</color>
+    <color name="icon_bg_paper">#FFF3EDE0</color>
     <color name="icon_bg_white">#FFFFFFFF</color>
     <color name="icon_bg_charcoal">#FF1E2026</color>
     <color name="icon_bg_indigo">#FF1F2A6B</color>

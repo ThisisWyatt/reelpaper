@@ -2738,6 +2738,7 @@
   <string name="app_icon_name_combined" translatable="false">%1$s · %2$s</string>
 
   <string name="app_icon_bg_black">Black</string>
+  <string name="app_icon_bg_paper">Paper</string>
   <string name="app_icon_bg_white">White</string>
   <string name="app_icon_bg_charcoal">Charcoal</string>
   <string name="app_icon_bg_indigo">Indigo</string>
@@ -2762,6 +2763,7 @@
   <string name="app_icon_bg_wallpaper">Wallpaper colors</string>
 
   <string name="app_icon_logo_solid">Solid purple</string>
+  <string name="app_icon_logo_ink">Ink roll</string>
   <string name="app_icon_logo_gradient">Gradient purple</string>
   <string name="app_icon_logo_white">White</string>
   <string name="app_icon_logo_black">Black</string>

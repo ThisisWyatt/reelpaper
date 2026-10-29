@@ -2571,6 +2571,7 @@
   <string name="app_icon_confirm_message">Піктограма застосунку зміниться на %1$s.</string>
   <string name="app_icon_confirm_action">Змінити піктограму</string>
   <string name="app_icon_bg_black">Чорний</string>
+  <string name="app_icon_bg_paper">Папір</string>
   <string name="app_icon_bg_white">Білий</string>
   <string name="app_icon_bg_charcoal">Вугільний</string>
   <string name="app_icon_bg_indigo">Індиго</string>
@@ -2581,6 +2582,7 @@
   <string name="app_icon_bg_mint">М’ятний</string>
   <string name="app_icon_bg_ember">Жарина</string>
   <string name="app_icon_logo_solid">Однотонний фіолетовий</string>
+  <string name="app_icon_logo_ink">Рулон туші</string>
   <string name="app_icon_logo_gradient">Фіолетовий градієнт</string>
   <string name="app_icon_logo_white">Білий</string>
   <string name="app_icon_logo_black">Чорний</string>

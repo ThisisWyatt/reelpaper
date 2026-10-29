@@ -2607,6 +2607,7 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="app_icon_confirm_message">L’icône de votre application deviendra %1$s.</string>
   <string name="app_icon_confirm_action">Changer l’icône</string>
   <string name="app_icon_bg_black">Noir</string>
+  <string name="app_icon_bg_paper">Papier</string>
   <string name="app_icon_bg_white">Blanc</string>
   <string name="app_icon_bg_charcoal">Anthracite</string>
   <string name="app_icon_bg_indigo">Indigo</string>
@@ -2617,6 +2618,7 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="app_icon_bg_mint">Menthe</string>
   <string name="app_icon_bg_ember">Braise</string>
   <string name="app_icon_logo_solid">Violet uni</string>
+  <string name="app_icon_logo_ink">Rouleau d\'encre</string>
   <string name="app_icon_logo_gradient">Dégradé violet</string>
   <string name="app_icon_logo_white">Blanc</string>
   <string name="app_icon_logo_black">Noir</string>

@@ -2593,6 +2593,7 @@
   <string name="app_icon_confirm_message">您的桌面图标将更改为 %1$s。</string>
   <string name="app_icon_confirm_action">更改图标</string>
   <string name="app_icon_bg_black">黑色</string>
+  <string name="app_icon_bg_paper">纸</string>
   <string name="app_icon_bg_white">白色</string>
   <string name="app_icon_bg_charcoal">炭灰色</string>
   <string name="app_icon_bg_indigo">靛蓝色</string>
@@ -2603,6 +2604,7 @@
   <string name="app_icon_bg_mint">薄荷绿</string>
   <string name="app_icon_bg_ember">余烬色</string>
   <string name="app_icon_logo_solid">纯紫色</string>
+  <string name="app_icon_logo_ink">墨卷</string>
   <string name="app_icon_logo_gradient">紫色渐变</string>
   <string name="app_icon_logo_white">白色</string>
   <string name="app_icon_logo_black">黑色</string>

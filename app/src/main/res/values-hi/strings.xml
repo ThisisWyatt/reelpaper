@@ -2511,6 +2511,7 @@
   <string name="app_icon_confirm_message">आपका लॉन्चर आइकन %1$s में बदल जाएगा।</string>
   <string name="app_icon_confirm_action">आइकन बदलें</string>
   <string name="app_icon_bg_black">काला</string>
+  <string name="app_icon_bg_paper">कागज़</string>
   <string name="app_icon_bg_white">सफ़ेद</string>
   <string name="app_icon_bg_charcoal">चारकोल</string>
   <string name="app_icon_bg_indigo">नील</string>
@@ -2521,6 +2522,7 @@
   <string name="app_icon_bg_mint">पुदीना</string>
   <string name="app_icon_bg_ember">अंगारा</string>
   <string name="app_icon_logo_solid">एकरंगी बैंगनी</string>
+  <string name="app_icon_logo_ink">स्याही रील</string>
   <string name="app_icon_logo_gradient">बैंगनी ग्रेडिएंट</string>
   <string name="app_icon_logo_white">सफ़ेद</string>
   <string name="app_icon_logo_black">काला</string>

@@ -2595,6 +2595,7 @@
   <string name="app_icon_confirm_message">ランチャーアイコンが %1$s に変わります。</string>
   <string name="app_icon_confirm_action">アイコンを変更</string>
   <string name="app_icon_bg_black">黒</string>
+  <string name="app_icon_bg_paper">紙</string>
   <string name="app_icon_bg_white">白</string>
   <string name="app_icon_bg_charcoal">チャコール</string>
   <string name="app_icon_bg_indigo">藍色</string>
@@ -2605,6 +2606,7 @@
   <string name="app_icon_bg_mint">ミント</string>
   <string name="app_icon_bg_ember">残り火</string>
   <string name="app_icon_logo_solid">単色の紫</string>
+  <string name="app_icon_logo_ink">墨のロール</string>
   <string name="app_icon_logo_gradient">紫のグラデーション</string>
   <string name="app_icon_logo_white">白</string>
   <string name="app_icon_logo_black">黒</string>

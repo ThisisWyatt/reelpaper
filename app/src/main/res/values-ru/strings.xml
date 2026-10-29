@@ -2631,6 +2631,7 @@
   <string name="app_icon_confirm_message">Значок приложения изменится на %1$s.</string>
   <string name="app_icon_confirm_action">Изменить значок</string>
   <string name="app_icon_bg_black">Чёрный</string>
+  <string name="app_icon_bg_paper">Бумага</string>
   <string name="app_icon_bg_white">Белый</string>
   <string name="app_icon_bg_charcoal">Угольный</string>
   <string name="app_icon_bg_indigo">Индиго</string>
@@ -2641,6 +2642,7 @@
   <string name="app_icon_bg_mint">Мятный</string>
   <string name="app_icon_bg_ember">Тлеющий уголёк</string>
   <string name="app_icon_logo_solid">Однотонный фиолетовый</string>
+  <string name="app_icon_logo_ink">Рулон туши</string>
   <string name="app_icon_logo_gradient">Фиолетовый градиент</string>
   <string name="app_icon_logo_white">Белый</string>
   <string name="app_icon_logo_black">Чёрный</string>

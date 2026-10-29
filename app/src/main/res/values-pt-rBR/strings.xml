@@ -2607,6 +2607,7 @@ Reinicie o aplicativo para que todas as alterações entrem em vigor.</string>
   <string name="app_icon_confirm_message">O ícone do seu aplicativo mudará para %1$s.</string>
   <string name="app_icon_confirm_action">Alterar ícone</string>
   <string name="app_icon_bg_black">Preto</string>
+  <string name="app_icon_bg_paper">Papel</string>
   <string name="app_icon_bg_white">Branco</string>
   <string name="app_icon_bg_charcoal">Carvão</string>
   <string name="app_icon_bg_indigo">Índigo</string>
@@ -2617,6 +2618,7 @@ Reinicie o aplicativo para que todas as alterações entrem em vigor.</string>
   <string name="app_icon_bg_mint">Verde-menta</string>
   <string name="app_icon_bg_ember">Brasa</string>
   <string name="app_icon_logo_solid">Roxo sólido</string>
+  <string name="app_icon_logo_ink">Rolo de tinta</string>
   <string name="app_icon_logo_gradient">Degradê roxo</string>
   <string name="app_icon_logo_white">Branco</string>
   <string name="app_icon_logo_black">Preto</string>

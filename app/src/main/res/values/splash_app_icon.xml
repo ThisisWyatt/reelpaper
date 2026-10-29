@@ -242,4 +242,8 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_black_animated</item>
         <item name="windowSplashScreenBackground">@color/icon_bg_wallpaper</item>
     </style>
+    <style name="Theme.mpvrx.Splash.PaperInk">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_paper_ink</item>
+        <item name="windowSplashScreenBackground">@color/icon_bg_paper</item>
+    </style>
 </resources>

@@ -2607,6 +2607,7 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="app_icon_confirm_message">Dein App-Symbol wird zu %1$s geändert.</string>
   <string name="app_icon_confirm_action">Symbol ändern</string>
   <string name="app_icon_bg_black">Schwarz</string>
+  <string name="app_icon_bg_paper">Papier</string>
   <string name="app_icon_bg_white">Weiß</string>
   <string name="app_icon_bg_charcoal">Anthrazit</string>
   <string name="app_icon_bg_indigo">Indigoblau</string>
@@ -2617,6 +2618,7 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="app_icon_bg_mint">Mintgrün</string>
   <string name="app_icon_bg_ember">Glut</string>
   <string name="app_icon_logo_solid">Einfarbiges Violett</string>
+  <string name="app_icon_logo_ink">Tintenrolle</string>
   <string name="app_icon_logo_gradient">Violetter Verlauf</string>
   <string name="app_icon_logo_white">Weiß</string>
   <string name="app_icon_logo_black">Schwarz</string>

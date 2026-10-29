@@ -25,6 +25,8 @@ internal enum class IconBackground(
   @ColorRes val color: Int,
   @StringRes val label: Int,
 ) {
+  /** V6 纸面：图标底就是 App 的米纸，下同族标记只有 Ink。 */
+  Paper("Paper", R.color.icon_bg_paper, R.string.app_icon_bg_paper),
   Black("Black", R.color.icon_bg_black, R.string.app_icon_bg_black),
   White("White", R.color.icon_bg_white, R.string.app_icon_bg_white),
   Charcoal("Charcoal", R.color.icon_bg_charcoal, R.string.app_icon_bg_charcoal),
@@ -56,6 +58,8 @@ internal enum class IconMark(
   @DrawableRes val layer: Int,
   @StringRes val label: Int,
 ) {
+  /** V6 墨卷：同心卷面 + 纸芯 + 朱砂播放键（1024 骨架画进自适应安全区）。 */
+  Ink("Ink", R.drawable.ic_launcher_paper_ink_foreground, R.string.app_icon_logo_ink),
   Solid("Solid", R.drawable.ic_launcher_solid_purple_foreground, R.string.app_icon_logo_solid),
   Gradient("Gradient", R.drawable.ic_launcher_purple_foreground, R.string.app_icon_logo_gradient),
   White("White", R.drawable.ic_launcher_white_foreground, R.string.app_icon_logo_white),
@@ -89,6 +93,7 @@ internal class LauncherIcon(
       LauncherIcon(IconBackground.White, IconMark.Black, R.mipmap.ic_launcher_white_black, R.style.Theme_mpvrx_Splash_WhiteBlack),
       LauncherIcon(IconBackground.Charcoal, IconMark.Solid, R.mipmap.ic_launcher_charcoal_solid, R.style.Theme_mpvrx_Splash_CharcoalSolid),
       LauncherIcon(IconBackground.Charcoal, IconMark.Gradient, R.mipmap.ic_launcher_charcoal_gradient, R.style.Theme_mpvrx_Splash_CharcoalGradient),
+      LauncherIcon(IconBackground.Paper, IconMark.Ink, R.mipmap.ic_launcher_paper_ink, R.style.Theme_mpvrx_Splash_PaperInk),
       LauncherIcon(IconBackground.Charcoal, IconMark.White, R.mipmap.ic_launcher_charcoal_white, R.style.Theme_mpvrx_Splash_CharcoalWhite),
       LauncherIcon(IconBackground.Indigo, IconMark.Solid, R.mipmap.ic_launcher_indigo_solid, R.style.Theme_mpvrx_Splash_IndigoSolid),
       LauncherIcon(IconBackground.Indigo, IconMark.White, R.mipmap.ic_launcher_indigo_white, R.style.Theme_mpvrx_Splash_IndigoWhite),
@@ -143,8 +148,8 @@ internal class LauncherIcon(
       LauncherIcon(IconBackground.Wallpaper, IconMark.Black, R.mipmap.ic_launcher_wallpaper_black, R.style.Theme_mpvrx_Splash_WallpaperBlack),
     )
 
-    /** Black with the solid purple ribbon: what the app has always shipped with. */
-    val Default: LauncherIcon = of(IconBackground.Black, IconMark.Solid)!!
+    /** V6 墨卷纸卡：一卷墨 · 纸为芯 · 朱砂为键。 */
+    val Default: LauncherIcon = of(IconBackground.Paper, IconMark.Ink)!!
 
     fun of(background: IconBackground, mark: IconMark): LauncherIcon? =
       entries.firstOrNull { it.background == background && it.mark == mark }
