@@ -385,6 +385,14 @@ class PlaylistRepository(
   fun observePlaylistPreviewItems(playlistId: Int, limit: Int = 2): Flow<List<PlaylistItemEntity>> =
     playlistDao.observePlaylistPreviewItems(playlistId, limit)
 
+  /** Cover source entry: [coverPath] while it exists, otherwise the first entry. */
+  fun observePlaylistCoverItem(playlistId: Int, coverPath: String?): Flow<List<PlaylistItemEntity>> =
+    playlistDao.observePlaylistCoverItem(playlistId, coverPath)
+
+  suspend fun setPlaylistCover(playlistId: Int, coverPath: String?) {
+    playlistDao.updatePlaylistCover(playlistId, coverPath)
+  }
+
   suspend fun getPlaylistItems(playlistId: Int): List<PlaylistItemEntity> = playlistDao.getPlaylistItems(playlistId)
 
   fun observePlaylistItemCount(playlistId: Int): Flow<Int> = playlistDao.observePlaylistItemCount(playlistId)

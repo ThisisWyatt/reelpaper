@@ -112,6 +112,21 @@ interface PlaylistDao {
   @Query("SELECT * FROM PlaylistItemEntity WHERE playlistId = :playlistId ORDER BY position ASC, id ASC LIMIT :limit")
   fun observePlaylistPreviewItems(playlistId: Int, limit: Int = 2): Flow<List<PlaylistItemEntity>>
 
+  /**
+   * The entry a playlist's cover is drawn from: the user-picked [coverPath] while that entry is
+   * still in the playlist, otherwise the first entry.
+   */
+  @Query("""
+    SELECT * FROM PlaylistItemEntity
+    WHERE playlistId = :playlistId
+    ORDER BY CASE WHEN filePath = COALESCE(:coverPath, '') THEN 0 ELSE 1 END, position ASC, id ASC
+    LIMIT 1
+  """)
+  fun observePlaylistCoverItem(playlistId: Int, coverPath: String?): Flow<List<PlaylistItemEntity>>
+
+  @Query("UPDATE PlaylistEntity SET coverPath = :coverPath WHERE id = :playlistId")
+  suspend fun updatePlaylistCover(playlistId: Int, coverPath: String?)
+
   @Query("SELECT * FROM PlaylistItemEntity WHERE playlistId = :playlistId ORDER BY position ASC")
   suspend fun getPlaylistItems(playlistId: Int): List<PlaylistItemEntity>
 

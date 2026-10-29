@@ -78,6 +78,16 @@ internal fun HomeNetworkBookmarksSection(inGrid: Boolean = false) {
     }
   if (resolved.isEmpty()) return
 
+  val openBookmark: (ResolvedNetworkFolderBookmark) -> Unit = { bookmark ->
+    backstack.navigateTo(
+      NetworkBrowserScreen(
+        connectionId = bookmark.connection.id,
+        connectionName = bookmark.connection.name,
+        currentPath = bookmark.bookmark.path,
+      ),
+    )
+  }
+
   val colors = LocalPaperColors.current
   val horizontalPadding = if (inGrid) 2.dp else 22.dp
   Column(modifier = Modifier.fillMaxWidth()) {
@@ -114,34 +124,35 @@ internal fun HomeNetworkBookmarksSection(inGrid: Boolean = false) {
       )
     }
 
-    Column(
-      modifier =
-        Modifier
-          .fillMaxWidth()
-          .padding(start = if (inGrid) 0.dp else 20.dp, end = if (inGrid) 0.dp else 20.dp),
-      verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-      resolved.chunked(NETWORK_BOOKMARK_COLUMNS).forEach { row ->
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-          row.forEach { bookmark ->
-            HomeNetworkBookmarkCard(
-              bookmark = bookmark,
-              modifier = Modifier.weight(1f),
-              onClick = {
-                backstack.navigateTo(
-                  NetworkBrowserScreen(
-                    connectionId = bookmark.connection.id,
-                    connectionName = bookmark.connection.name,
-                    currentPath = bookmark.bookmark.path,
-                  ),
-                )
-              },
-            )
+    if (inGrid) {
+      Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        resolved.chunked(NETWORK_BOOKMARK_COLUMNS).forEach { row ->
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+          ) {
+            row.forEach { bookmark ->
+              HomeNetworkBookmarkCard(
+                bookmark = bookmark,
+                isGridMode = true,
+                modifier = Modifier.weight(1f),
+                onClick = { openBookmark(bookmark) },
+              )
+            }
+            repeat(NETWORK_BOOKMARK_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
           }
-          repeat(NETWORK_BOOKMARK_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+        }
+      }
+    } else {
+      // List mode mirrors the local folder rows, so the home page reads as one list.
+      Column(modifier = Modifier.fillMaxWidth()) {
+        resolved.forEach { bookmark ->
+          HomeNetworkBookmarkCard(
+            bookmark = bookmark,
+            isGridMode = false,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { openBookmark(bookmark) },
+          )
         }
       }
     }
@@ -151,33 +162,59 @@ internal fun HomeNetworkBookmarksSection(inGrid: Boolean = false) {
 @Composable
 private fun HomeNetworkBookmarkCard(
   bookmark: ResolvedNetworkFolderBookmark,
+  isGridMode: Boolean,
   modifier: Modifier = Modifier,
   onClick: () -> Unit,
 ) {
-  val colors = LocalPaperColors.current
-  BoxWithConstraints(modifier = modifier) {
-    PaperFolderCard(
-      name = bookmark.bookmark.folderName,
-      onClick = onClick,
-      isGridMode = true,
-    )
-    // The folder art is 48:41 inside the card; the globe sticker sits on its lower-right corner.
-    Box(
-      modifier =
-        Modifier
-          .align(Alignment.TopEnd)
-          .offset(x = 3.dp, y = maxWidth * 41f / 48f - 15.dp)
-          .size(18.dp)
-          .background(colors.red, CircleShape)
-          .border(1.5.dp, colors.card, CircleShape),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        PaperIcons.Globe,
-        contentDescription = null,
-        tint = colors.onRed,
-        modifier = Modifier.size(10.dp),
+  if (isGridMode) {
+    BoxWithConstraints(modifier = modifier) {
+      PaperFolderCard(
+        name = bookmark.bookmark.folderName,
+        onClick = onClick,
+        isGridMode = true,
+      )
+      // The folder art is 48:41 inside the card; the globe sticker sits on its lower-right corner.
+      GlobeSticker(
+        modifier =
+          Modifier
+            .align(Alignment.TopEnd)
+            .offset(x = 3.dp, y = maxWidth * 41f / 48f - 15.dp),
       )
     }
+  } else {
+    Box(modifier = modifier) {
+      PaperFolderCard(
+        name = bookmark.bookmark.folderName,
+        onClick = onClick,
+        isGridMode = false,
+      )
+      // Same sticker on the list row's folder art: 58.8×49.5 art at the row's 20dp/12dp insets.
+      GlobeSticker(
+        modifier =
+          Modifier
+            .align(Alignment.TopStart)
+            .offset(x = 66.dp, y = 49.dp),
+      )
+    }
+  }
+}
+
+@Composable
+private fun GlobeSticker(modifier: Modifier = Modifier) {
+  val colors = LocalPaperColors.current
+  Box(
+    modifier =
+      modifier
+        .size(18.dp)
+        .background(colors.red, CircleShape)
+        .border(1.5.dp, colors.card, CircleShape),
+    contentAlignment = Alignment.Center,
+  ) {
+    Icon(
+      PaperIcons.Globe,
+      contentDescription = null,
+      tint = colors.onRed,
+      modifier = Modifier.size(10.dp),
+    )
   }
 }

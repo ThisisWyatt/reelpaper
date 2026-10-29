@@ -155,8 +155,12 @@ object PlaylistScreen : Screen {
       viewModel.refresh(scanLocalFiles = true)
     }
 
-    val playlistsWithCount by viewModel.playlistsWithCount.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val allPlaylistsWithCount by viewModel.playlistsWithCount.collectAsState()
+    // The protected Favorites entries stay out of the browse lists; the heart toggle is their UI.
+    val playlistsWithCount =
+      remember(allPlaylistsWithCount, viewModel) {
+        allPlaylistsWithCount.filterNot { viewModel.isProtectedPlaylist(it.playlist) }
+      }
     val hasCompletedInitialLoad by viewModel.hasCompletedInitialLoad.collectAsState()
     val savedSortType by browserPreferences.playlistSortType.collectAsState()
     val sortOrder by browserPreferences.playlistSortOrder.collectAsState()
@@ -407,7 +411,10 @@ object PlaylistScreen : Screen {
           val allForType = playlistsByType.getValue(pageType)
           val visibleForType = visiblePlaylistsByType.getValue(pageType)
           when {
-            allForType.isEmpty() && (isLoading || !hasCompletedInitialLoad) ->
+            // Only mask the very first load: a background re-scan keeps isLoading true even
+            // though the (possibly empty) list is already known, and the favorites filter can
+            // leave a tab permanently empty.
+            allForType.isEmpty() && !hasCompletedInitialLoad ->
               Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
 
             allForType.isEmpty() ->

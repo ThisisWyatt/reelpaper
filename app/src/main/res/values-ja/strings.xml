@@ -561,6 +561,8 @@
   <string name="playlist_m3u_badge">M3U</string>
   <string name="playlist_favorite_songs">お気に入りの曲</string>
   <string name="playlist_favorite_videos">お気に入りの動画</string>
+  <string name="playlist_cover_set">カバーを設定</string>
+  <string name="playlist_cover_use_default">既定のカバーを使用</string>
   <string name="playlist_online_badge">オンライン</string>
   <string name="playlist_xtream_badge">Xtream</string>
   <string name="playlist_xtream_add_action">Xtream Codesを追加</string>

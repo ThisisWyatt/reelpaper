@@ -77,6 +77,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.browser.components.rememberVideoSwipeActions
@@ -832,6 +835,17 @@ data class PlaylistDetailScreen(
         val allSelectedBookmarked = selectedItems.isNotEmpty() && selectedItems.all { it.playlistItem.isFavorite }
         val bookmarkLabel =
           stringResource(if (allSelectedBookmarked) R.string.audiobook_delete_bookmark else R.string.audiobook_add_bookmark)
+        // A single selection can be pinned as the playlist's cover; picking the current cover
+        // restores the default instead.
+        val coverTarget = selectedItems.singleOrNull()
+        val coverLabel =
+          coverTarget?.let {
+            if (playlist?.coverPath == it.video.path) {
+              stringResource(R.string.playlist_cover_use_default)
+            } else {
+              stringResource(R.string.playlist_cover_set)
+            }
+          }
         app.gyrolet.mpvrx.ui.browser.components.BrowserBottomBar(
           backdrop = bottomBarBackdrop,
           isSelectionMode = true,
@@ -887,6 +901,20 @@ data class PlaylistDetailScreen(
                   },
                 ),
               )
+              if (coverTarget != null && coverLabel != null) {
+                add(
+                  app.gyrolet.mpvrx.ui.browser.components.BrowserBottomBarAction(
+                    icon = PaperIcons.Photo,
+                    label = coverLabel,
+                    onClick = {
+                      coroutineScope.launch {
+                        viewModel.setCover(if (playlist?.coverPath == coverTarget.video.path) null else coverTarget.video.path)
+                        selectionManager.clear()
+                      }
+                    },
+                  ),
+                )
+              }
             },
           modifier = Modifier.padding(bottom = 0.dp),
         )

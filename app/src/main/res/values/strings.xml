@@ -750,6 +750,8 @@
   <string name="playlist_m3u_badge">M3U</string>
   <string name="playlist_favorite_songs">Favourite Audio</string>
   <string name="playlist_favorite_videos">Favourite Videos</string>
+  <string name="playlist_cover_set">Set cover</string>
+  <string name="playlist_cover_use_default">Use default cover</string>
   <string name="playlist_online_badge">Online</string>
   <string name="playlist_xtream_badge">Xtream</string>
   <string name="playlist_xtream_add_action">Add Xtream Codes</string>

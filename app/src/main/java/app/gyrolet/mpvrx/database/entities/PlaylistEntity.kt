@@ -34,6 +34,11 @@ data class PlaylistEntity(
   val xtreamServerUrl: String? = null,
   val xtreamUsername: String? = null,
   val xtreamEncryptedPassword: String? = null,
+  /**
+   * filePath of the entry whose frame is used as the playlist's cover. Null keeps the default:
+   * the first entry of the playlist.
+   */
+  val coverPath: String? = null,
 ) {
   @get:Ignore
   val isZipPlaylist: Boolean

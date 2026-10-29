@@ -107,7 +107,12 @@ object LibraryScreen : Screen {
       playlistViewModel.refresh()
       onPauseOrDispose { }
     }
-    val playlists by playlistViewModel.playlistsWithCount.collectAsState()
+    val allPlaylists by playlistViewModel.playlistsWithCount.collectAsState()
+    // The protected Favorites entries stay out of the browse lists; the heart toggle is their UI.
+    val playlists =
+      remember(allPlaylists, playlistViewModel) {
+        allPlaylists.filterNot { playlistViewModel.isProtectedPlaylist(it.playlist) }
+      }
     val snapshotLibrary by snapshotViewModel.library.collectAsState()
     val playlistCount = playlists.size
     val playlistVideoCount = playlists.sumOf { it.itemCount }

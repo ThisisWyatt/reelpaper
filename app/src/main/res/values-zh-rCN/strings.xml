@@ -563,6 +563,8 @@
   <string name="playlist_m3u_badge">M3U</string>
   <string name="playlist_favorite_songs">喜爱的歌曲</string>
   <string name="playlist_favorite_videos">喜爱的视频</string>
+  <string name="playlist_cover_set">设置封面</string>
+  <string name="playlist_cover_use_default">使用默认封面</string>
   <string name="playlist_online_badge">在线</string>
   <string name="playlist_xtream_badge">Xtream</string>
   <string name="playlist_xtream_add_action">添加 Xtream Codes</string>

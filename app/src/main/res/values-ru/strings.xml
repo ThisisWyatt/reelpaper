@@ -561,6 +561,8 @@
   <string name="playlist_m3u_badge">M3U</string>
   <string name="playlist_favorite_songs">Любимые песни</string>
   <string name="playlist_favorite_videos">Любимые видео</string>
+  <string name="playlist_cover_set">Задать обложку</string>
+  <string name="playlist_cover_use_default">Использовать обложку по умолчанию</string>
   <string name="playlist_online_badge">Онлайн</string>
   <string name="playlist_xtream_badge">Xtream</string>
   <string name="playlist_xtream_add_action">Добавить Xtream Codes</string>

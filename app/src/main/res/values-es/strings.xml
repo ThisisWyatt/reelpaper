@@ -561,6 +561,8 @@ Siguiente: NEXT</string>
   <string name="playlist_m3u_badge">M3U</string>
   <string name="playlist_favorite_songs">Canciones favoritas</string>
   <string name="playlist_favorite_videos">Vídeos favoritos</string>
+  <string name="playlist_cover_set">Establecer portada</string>
+  <string name="playlist_cover_use_default">Usar portada predeterminada</string>
   <string name="playlist_online_badge">En línea</string>
   <string name="playlist_xtream_badge">Xtream</string>
   <string name="playlist_xtream_add_action">Añadir Xtream Codes</string>

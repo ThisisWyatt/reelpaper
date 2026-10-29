@@ -383,6 +383,11 @@ class PlaylistDetailViewModel(
     playlistRepository.removeItemsFromPlaylist(itemsToRemove)
   }
 
+  /** [filePath] of the entry whose frame becomes the cover; null restores the first entry. */
+  suspend fun setCover(filePath: String?) {
+    playlistRepository.setPlaylistCover(playlistId, filePath)
+  }
+
   suspend fun addVideosToPlaylist(videos: List<Video>) {
     if (_playlist.value?.isZipPlaylist == true) return
     val isAudio = _playlist.value?.isAudio ?: return

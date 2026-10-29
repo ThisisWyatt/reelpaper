@@ -26,10 +26,13 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -81,6 +84,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -101,8 +107,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -141,6 +145,7 @@ import app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.components.rememberSwipePlaybackInfo
 import app.gyrolet.mpvrx.ui.browser.networkstreaming.NetworkStreamingScreen
+import app.gyrolet.mpvrx.ui.browser.cards.resolvePlaylistItemArtwork
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistDetailScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistViewModel
@@ -219,7 +224,12 @@ object ProfileScreen : Screen {
     }
 
     val recentItems by recentsViewModel.recentItems.collectAsState()
-    val playlists by playlistViewModel.playlistsWithCount.collectAsState()
+    val allPlaylists by playlistViewModel.playlistsWithCount.collectAsState()
+    // The protected Favorites entries stay out of the browse lists; the heart toggle is their UI.
+    val playlists =
+      remember(allPlaylists, playlistViewModel) {
+        allPlaylists.filterNot { playlistViewModel.isProtectedPlaylist(it.playlist) }
+      }
     val snapshotLibrary by snapshotViewModel.library.collectAsState()
     val snapshotThumbnails by snapshotViewModel.thumbnailCache.collectAsState()
 
@@ -306,16 +316,23 @@ object ProfileScreen : Screen {
               )
             }
             item(key = "playlists_shelf") {
-              // Mockup `.plcards`: a shelf of clip-stacked paper sheets, one per playlist.
-              LazyRow(
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 22.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-              ) {
-                items(playlists.take(SHELF_LIMIT), key = { it.playlist.id }) { entry ->
-                  ProfilePlaylistClipCard(
-                    playlist = entry.playlist,
-                    onClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
-                  )
+              // Two sleeves fill the row; the rest of the shelf is reached by swiping it.
+              BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val cardWidth = ((maxWidth - PlaylistShelfPadding * 2 - PlaylistShelfGap) / 2).coerceAtLeast(120.dp)
+                LazyRow(
+                  // Matches the recents shelf exactly: the header already carries 10dp below it
+                  // and the next header 20dp above. The bookmark ribbon overhangs into that
+                  // space — the horizontal scroller only clips sideways, so it is not cut.
+                  contentPadding = PaddingValues(start = PlaylistShelfPadding, end = PlaylistShelfPadding, top = 0.dp, bottom = 0.dp),
+                  horizontalArrangement = Arrangement.spacedBy(PlaylistShelfGap),
+                ) {
+                  items(playlists.take(SHELF_LIMIT), key = { it.playlist.id }) { entry ->
+                    ProfilePlaylistSleeveCard(
+                      playlist = entry.playlist,
+                      cardWidth = cardWidth,
+                      onClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
+                    )
+                  }
                 }
               }
             }
@@ -323,6 +340,8 @@ object ProfileScreen : Screen {
 
           item(key = "recents_header") {
             SectionHeader(
+              // The playlist cards' names sit right above, so this header needs less air.
+              topPadding = 14.dp,
               title = stringResource(R.string.pref_advanced_enable_recently_played_title),
               countText =
                 if (enableRecentlyPlayed && recentItems.isNotEmpty()) {
@@ -350,21 +369,22 @@ object ProfileScreen : Screen {
                 )
 
               else -> {
-                // Mockup `.tstubs`: a fixed 3-column grid of film frames — one dark strip,
-                // the rest developed positives. Playlists ride in their own shelf above.
-                Row(
-                  modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                  horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                  recentShelf
-                    .filterIsInstance<RecentlyPlayedItem.VideoItem>()
-                    .take(3)
-                    .forEachIndexed { index, item ->
+                // Mockup `.tstubs`: film frames — the newest strip stays dark, the rest are
+                // developed positives. Three fill the row; further entries are reached by swiping.
+                val recentVideos = recentShelf.filterIsInstance<RecentlyPlayedItem.VideoItem>()
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                  val frameWidth =
+                    ((maxWidth - RecentShelfPadding * 2 - RecentShelfGap * 2) / 3).coerceAtLeast(72.dp)
+                  LazyRow(
+                    contentPadding = PaddingValues(horizontal = RecentShelfPadding),
+                    horizontalArrangement = Arrangement.spacedBy(RecentShelfGap),
+                  ) {
+                    itemsIndexed(recentVideos, key = { _, item -> item.video.path }) { index, item ->
                       ProfileFilmFrameCard(
                         video = item.video,
                         showThumbnail = showRecentThumbnails,
                         dark = index == 0,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.width(frameWidth),
                         onClick = { playRecent(item.video) },
                         onLongClick = {
                           haptics.pickup()
@@ -372,6 +392,7 @@ object ProfileScreen : Screen {
                         },
                       )
                     }
+                  }
                 }
               }
             }
@@ -725,6 +746,7 @@ private fun SectionHeader(
   title: String,
   countText: String? = null,
   onViewAll: () -> Unit,
+  topPadding: Dp = 20.dp,
 ) {
   val configuration = LocalConfiguration.current
   val isTablet = configuration.smallestScreenWidthDp >= 600
@@ -732,7 +754,7 @@ private fun SectionHeader(
   // Mockup `.sec`: letter-spaced tertiary title, with the count and 查看全部 fused into
   // one secondary-ink `.more` action on the right.
   Row(
-    modifier = Modifier.fillMaxWidth().padding(start = if (isTablet) 24.dp else 22.dp, end = if (isTablet) 24.dp else 22.dp, top = 20.dp, bottom = 10.dp),
+    modifier = Modifier.fillMaxWidth().padding(start = if (isTablet) 24.dp else 22.dp, end = if (isTablet) 24.dp else 22.dp, top = topPadding, bottom = 10.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
     Text(
@@ -809,13 +831,14 @@ private fun ShelfEmptyCard(
 }
 
 /**
- * 播放列表剧照夹 per mockup `.plcard`: a clip-stacked paper listing — two sheets fanned out
- * beneath a titled top sheet held by a vermilion binder clip — with the video count and the
- * source line centred underneath.
+ * 播放列表纸封套 per mockup `.plcard`: a cream sleeve with a printed frame line around a 16:9
+ * still, a vermilion bookmark ribbon, and the sleeve's under-copy peeking out at the bottom
+ * right. The name sits centred below on the page paper.
  */
 @Composable
-private fun ProfilePlaylistClipCard(
+private fun ProfilePlaylistSleeveCard(
   playlist: PlaylistEntity,
+  cardWidth: Dp,
   onClick: () -> Unit,
 ) {
   val paperColors = LocalPaperColors.current
@@ -826,135 +849,223 @@ private fun ProfilePlaylistClipCard(
       playlist.isAudio -> stringResource(R.string.playlist_favorite_songs)
       else -> stringResource(R.string.playlist_favorite_videos)
     }
-  val sheetBorder = if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8)
-  val sheetShape = RoundedCornerShape(4.dp)
-  val topSheetGradient =
-    if (paperColors.isDark) {
-      Brush.verticalGradient(listOf(paperColors.card, paperColors.paperInset))
-    } else {
-      Brush.verticalGradient(listOf(Color(0xFFFDFBF3), Color(0xFFF3EDDC)))
+  val stillColors =
+    remember(title) {
+      PLAYLIST_STILL_GRADIENTS[Math.floorMod(title.hashCode(), PLAYLIST_STILL_GRADIENTS.size)]
     }
-  val underSheetGradient =
+  val sleeveShape = RoundedCornerShape(9.dp)
+  val stillShape = RoundedCornerShape(5.dp)
+  val frameLine =
     if (paperColors.isDark) {
-      Brush.verticalGradient(listOf(paperColors.paperInset, paperColors.card))
+      Color(0xFFEAE2CD).copy(alpha = 0.16f)
     } else {
-      Brush.verticalGradient(listOf(Color(0xFFF5EDDA), Color(0xFFEDE2C9)))
+      Color(0xFF604C24).copy(alpha = 0.24f)
+    }
+  // Cover = the entry the playlist points at (user-picked, else the first one), resolved with the
+  // playlist page's own artwork pipeline; the gradient poster stands in until (or unless) it loads.
+  val repository = koinInject<PlaylistRepository>()
+  val thumbnailRepository = koinInject<ThumbnailRepository>()
+  val context = LocalContext.current
+  val density = LocalDensity.current
+  val coverWidthPx = with(density) { (cardWidth - PlaylistSleeveChrome).roundToPx() }
+  val coverHeightPx = (coverWidthPx * 9 / 16).coerceAtLeast(1)
+  val previewItems by
+    remember(repository, playlist.id, playlist.coverPath) {
+      repository.observePlaylistCoverItem(playlist.id, playlist.coverPath)
+    }.collectAsState(initial = emptyList())
+  val firstItem = previewItems.firstOrNull()
+  val cover by
+    produceState<Bitmap?>(
+      initialValue = null,
+      playlist.id,
+      firstItem?.filePath,
+      firstItem?.tvgLogo,
+      firstItem?.addedAt,
+      coverWidthPx,
+      coverHeightPx,
+    ) {
+      value = null
+      val item = firstItem ?: return@produceState
+      value =
+        resolvePlaylistItemArtwork(
+          context = context,
+          thumbnailRepository = thumbnailRepository,
+          item = item,
+          isAudio = playlist.isAudio,
+          thumbnailWidthPx = coverWidthPx,
+          thumbnailHeightPx = coverHeightPx,
+        )
     }
 
-  Column(modifier = Modifier.width(106.dp).clickable(onClick = onClick)) {
-    // .cst: the 76dp stack area — sheets peek out below and behind the top card.
-    Box(modifier = Modifier.fillMaxWidth().height(76.dp)) {
-      ClipStackSheet(
-        gradient = underSheetGradient,
-        border = sheetBorder,
-        shape = sheetShape,
-        modifier = Modifier.offset(x = 0.dp, y = 18.dp).graphicsLayer { rotationZ = 1.2f },
-      )
-      ClipStackSheet(
-        gradient = underSheetGradient,
-        border = sheetBorder,
-        shape = sheetShape,
-        modifier = Modifier.offset(x = 2.dp, y = 9.dp).graphicsLayer { rotationZ = -1.4f },
-      )
+  val interaction = remember { MutableInteractionSource() }
+  val pressed by interaction.collectIsPressedAsState()
+  val pressScale by animateFloatAsState(
+    targetValue = if (pressed) 0.96f else 1f,
+    animationSpec = tween(120),
+    label = "playlist_card_press_scale",
+  )
+  val pressSink by animateDpAsState(
+    targetValue = if (pressed) 1.dp else 0.dp,
+    animationSpec = tween(120),
+    label = "playlist_card_press_sink",
+  )
+
+  Column(
+    modifier =
+      Modifier
+        .width(cardWidth)
+        .graphicsLayer {
+          scaleX = pressScale
+          scaleY = pressScale
+          translationY = pressSink.toPx()
+        }
+        .clickable(
+          interactionSource = interaction,
+          indication = null,
+          onClick = onClick,
+        ),
+  ) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+      // .plpeek: the sleeve's under-copy, 3dp down and right of the front sheet.
       Box(
+        Modifier
+          .matchParentSize()
+          .offset(x = 3.dp, y = 3.dp)
+          .background(paperColors.card, sleeveShape)
+          .border(1.dp, paperColors.cardLine, sleeveShape),
+      )
+      Column(
         modifier =
           Modifier
-            .offset(x = 5.dp)
-            .size(width = 96.dp, height = 54.dp)
-            .paperRaise(sheetShape, paperColors, elevation = 4.dp)
-            .background(topSheetGradient, sheetShape)
-            .border(1.dp, sheetBorder, sheetShape),
+            .fillMaxWidth()
+            .paperRaise(sleeveShape, paperColors, elevation = 3.dp)
+            .border(1.dp, paperColors.cardLine, sleeveShape)
+            .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 9.dp),
       ) {
-        // .cst-top::before: the ruled lines of a written listing.
-        Canvas(modifier = Modifier.fillMaxSize()) {
-          val lineColor =
-            if (paperColors.isDark) {
-              paperColors.ink.copy(alpha = 0.10f)
-            } else {
-              Color(0xFF544224).copy(alpha = 0.10f)
-            }
-          val bottom = size.height - 5.dp.toPx()
-          var y = 30.dp.toPx()
-          while (y <= bottom) {
-            drawLine(
-              color = lineColor,
-              start = Offset(7.dp.toPx(), y),
-              end = Offset(size.width - 7.dp.toPx(), y),
-              strokeWidth = 1.dp.toPx(),
+        // .plstill: the frame line is an outline 2dp outside the still, drawn past the still's
+        // bounds over the sleeve's own paper.
+        Box(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .aspectRatio(16f / 9f)
+              .drawBehind {
+                val gap = 2.dp.toPx()
+                drawRoundRect(
+                  color = frameLine,
+                  topLeft = Offset(-gap, -gap),
+                  size = Size(size.width + gap * 2, size.height + gap * 2),
+                  cornerRadius = CornerRadius(7.dp.toPx()),
+                  style = Stroke(width = 1.dp.toPx()),
+                )
+              },
+        ) {
+          Box(modifier = Modifier.matchParentSize().clip(stillShape)) {
+            Box(
+              Modifier
+                .matchParentSize()
+                .background(Brush.linearGradient(listOf(stillColors.first, stillColors.second))),
             )
-            y += 7.dp.toPx()
+            val bitmap = cover
+            if (bitmap != null) {
+              Image(
+                bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+              )
+            }
+            Canvas(modifier = Modifier.matchParentSize()) {
+              drawRect(Color.White.copy(alpha = 0.30f), size = Size(size.width, 1.dp.toPx()))
+              // ::after — the vignette that seats the still in its sleeve.
+              drawRect(
+                Brush.verticalGradient(
+                  colors = listOf(Color.Transparent, Color(0xFF160E08).copy(alpha = 0.18f)),
+                  startY = size.height * 0.7f,
+                ),
+              )
+            }
           }
         }
-        Text(
-          text = title,
-          fontFamily = FontFamily.Serif,
-          fontStyle = FontStyle.Italic,
-          fontWeight = FontWeight.Bold,
-          fontSize = 10.sp,
-          // Explicit tight line boxes: the ambient style's 24sp leading would push the caption
-          // off the design's 11dp inset.
-          lineHeight = 12.sp,
-          letterSpacing = 0.4.sp,
-          color = paperColors.ink,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-          modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 11.dp),
-        )
       }
-      BinderClip(modifier = Modifier.offset(x = 10.dp, y = (-7).dp))
+      // .plribbon: the bookmark band pinned over the sleeve's top edge.
+      PlaylistRibbon(
+        modifier = Modifier.align(Alignment.TopEnd).offset(x = (-13).dp, y = (-6).dp),
+      )
+    }
+
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 7.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+      Text(
+        text = title,
+        fontFamily = FontFamily.Serif,
+        fontStyle = FontStyle.Italic,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.3.sp,
+        color = if (paperColors.isDark) Color(0xFFCFC3A4) else Color(0xFF8F8471),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
     }
   }
 }
 
-/** Mockup `.cst i`: one of the listing sheets fanned beneath the titled top sheet. */
+/** Mockup `.plribbon`: a 12×21dp bookmark band with a notched tail. */
 @Composable
-private fun ClipStackSheet(
-  gradient: Brush,
-  border: Color,
-  shape: Shape,
-  modifier: Modifier = Modifier,
-) {
-  val paperColors = LocalPaperColors.current
-  Box(
-    modifier =
-      modifier
-        .size(width = 96.dp, height = 54.dp)
-        .paperRaise(shape, paperColors, elevation = 1.5.dp)
-        .background(gradient, shape)
-        .border(1.dp, border, shape),
-  )
-}
-
-/** Mockup `.clip`: the vermilion long-tail clip pinning a sheet stack. */
-@Composable
-private fun BinderClip(modifier: Modifier = Modifier) {
-  Canvas(modifier = modifier.size(width = 20.dp, height = 14.dp)) {
-    val s = size.width / 20f
-    // The wire handle arcs above the clip's body and is clipped away at the bottom.
-    val handle =
+private fun PlaylistRibbon(modifier: Modifier = Modifier) {
+  Canvas(modifier = modifier.size(width = 12.dp, height = 21.dp)) {
+    val notch = 6.dp.toPx()
+    val band =
       Path().apply {
-        val left = 4.5f * s
-        val right = 15.5f * s
-        val top = 0.5f * s
-        val bottom = 7f * s
-        val radius = 5.5f * s
-        moveTo(left, bottom)
-        lineTo(left, top + radius)
-        quadraticTo(left, top, left + radius, top)
-        lineTo(right - radius, top)
-        quadraticTo(right, top, right, top + radius)
-        lineTo(right, bottom)
+        moveTo(0f, 0f)
+        lineTo(size.width, 0f)
+        lineTo(size.width, size.height)
+        lineTo(size.width / 2f, size.height - notch)
+        lineTo(0f, size.height)
+        close()
       }
-    drawPath(handle, Color(0xFFC05046), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
-    drawRoundRect(
-      brush = Brush.verticalGradient(listOf(Color(0xFFDE7A5E), Color(0xFFB23129), Color(0xFF9C2A22))),
-      topLeft = Offset(0f, 6f * s),
-      size = Size(20f * s, 5.5f * s),
-      cornerRadius = CornerRadius(2.8f * s),
+    drawPath(
+      path = band,
+      brush =
+        Brush.verticalGradient(
+          colorStops =
+            arrayOf(
+              0f to Color(0xFFDE7A5E),
+              0.55f to Color(0xFFB23129),
+              1f to Color(0xFF9C2A22),
+            ),
+        ),
     )
+    // ::before — the folded band highlight along the top edge.
+    drawRect(color = Color.White.copy(alpha = 0.28f), size = Size(size.width, 5.dp.toPx()))
   }
 }
+
+/** Profile playlist shelf: two sleeves per screen width; the rest is reached by swiping. */
+private val PlaylistShelfPadding = 20.dp
+private val PlaylistShelfGap = 14.dp
+
+/** Profile recents shelf: three frames per screen width; the rest is reached by swiping. */
+private val RecentShelfPadding = 20.dp
+private val RecentShelfGap = 10.dp
+
+/** Sleeve border + inner padding around the still, subtracted to size the cover request. */
+private val PlaylistSleeveChrome = 16.dp
+
+/** Fallback poster hues for playlist stills (mockup `.plstill --g1/--g2`). */
+private val PLAYLIST_STILL_GRADIENTS =
+  listOf(
+    Color(0xFFF2A24C) to Color(0xFFB23C22),
+    Color(0xFF7FB1A6) to Color(0xFF3F6B66),
+    Color(0xFF55617A) to Color(0xFF232A35),
+    Color(0xFFB9A0D0) to Color(0xFF5A3F78),
+    Color(0xFFD98F8F) to Color(0xFF6B2A20),
+    Color(0xFFC9A96A) to Color(0xFF8A6B3F),
+  )
 
 /** Fallback hues (mockup `--g1/--g2`) for frames whose thumbnail is unavailable. */
 private val FILM_FRAME_GRADIENTS =
@@ -1105,21 +1216,6 @@ private fun ProfileFilmFrameCard(
     }
 
     FilmPerfStrip(dark = dark)
-
-    Text(
-      text = video.displayName.substringBeforeLast('.'),
-      fontFamily = FontFamily.Serif,
-      fontStyle = FontStyle.Italic,
-      fontWeight = FontWeight.Bold,
-      fontSize = 10.5.sp,
-      lineHeight = 12.sp,
-      letterSpacing = 0.3.sp,
-      color = if (dark) Color(0xFFCFC3A4) else Color(0xFF8F8471),
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-      modifier = Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 5.dp, bottom = 1.dp),
-    )
   }
 }
 
@@ -1172,7 +1268,7 @@ private fun ProfilePolaroidCard(
           .clip(shape)
           .combinedClickable(onClick = onClick)
           .border(1.dp, if (paperColors.isDark) paperColors.cardLine else Color(0xFFE0D5B8), shape)
-          .padding(start = 7.dp, end = 7.dp, top = 7.dp),
+          .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 9.dp),
     ) {
       Box(
         modifier =
@@ -1222,17 +1318,6 @@ private fun ProfilePolaroidCard(
           )
         }
       }
-      Text(
-        text = capture.videoTitle.ifBlank { capture.formattedPosition },
-        fontFamily = FontFamily.Serif,
-        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-        fontSize = 12.5.sp,
-        color = paperColors.inkSecondary,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 13.dp, start = 4.dp, end = 4.dp),
-      )
     }
     // 一条米色胶带斜贴在打印纸的顶缘。
     Box(

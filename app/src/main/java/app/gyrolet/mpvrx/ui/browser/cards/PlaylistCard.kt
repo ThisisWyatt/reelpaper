@@ -134,8 +134,14 @@ fun PlaylistCard(
     remember(repository, playlist.id) {
       repository.observePlaylistPreviewItems(playlist.id, 2)
     }.collectAsState(initial = emptyList())
-  val firstItem = previewItems.firstOrNull()
-  val secondItem = previewItems.getOrNull(1)
+  // The primary thumbnail follows the user-picked cover (else the first entry); the stacked
+  // second sheet keeps showing the next entry.
+  val coverItems by
+    remember(repository, playlist.id, playlist.coverPath) {
+      repository.observePlaylistCoverItem(playlist.id, playlist.coverPath)
+    }.collectAsState(initial = emptyList())
+  val firstItem = coverItems.firstOrNull() ?: previewItems.firstOrNull()
+  val secondItem = previewItems.firstOrNull { it.id != firstItem?.id }
   val density = LocalDensity.current
   val thumbnailWidthPx =
     with(density) {
@@ -430,7 +436,7 @@ fun PlaylistCard(
   }
 }
 
-private suspend fun resolvePlaylistItemArtwork(
+internal suspend fun resolvePlaylistItemArtwork(
   context: android.content.Context,
   thumbnailRepository: ThumbnailRepository,
   item: app.gyrolet.mpvrx.database.entities.PlaylistItemEntity,
@@ -461,8 +467,8 @@ private suspend fun resolvePlaylistItemArtwork(
           durationFormatted = "",
           size = item.fileSize ?: 0L,
           sizeFormatted = "",
-          dateModified = item.addedAt / 1000L,
-          dateAdded = item.addedAt / 1000L,
+          dateModified = item.addedAt,
+          dateAdded = item.addedAt,
           mimeType = if (isAudio) "audio/*" else "video/*",
           bucketId = "",
           bucketDisplayName = "",
@@ -473,23 +479,35 @@ private suspend fun resolvePlaylistItemArtwork(
           isAudio = isAudio,
         )
 
+      // Proxy-network entries (mpvrx-network://) are not "network URLs" to the thumbnail
+      // repository, so getThumbnail() would try to decode them as local files and fail. They
+      // must go through the same connection-keyed API the playlist's own cards use.
+      suspend fun frame(): Bitmap? {
+        val reference = app.gyrolet.mpvrx.domain.network.NetworkPlaybackUri.parse(path)
+        return if (reference != null) {
+          thumbnailRepository.getThumbnailForNetworkSource(
+            connectionId = reference.connectionId,
+            path = reference.path.value,
+            widthPx = thumbnailWidthPx,
+            heightPx = thumbnailHeightPx,
+          )
+        } else {
+          thumbnailRepository.getThumbnail(media, thumbnailWidthPx, thumbnailHeightPx)
+        }
+      }
+
       when {
         // Album art is the canonical visual for audio and may be the only image available.
-        isAudio ->
-          suppliedArtwork
-            ?: thumbnailRepository.getThumbnail(media, thumbnailWidthPx, thumbnailHeightPx)
+        isAudio -> suppliedArtwork ?: frame()
 
         // For local videos, prefer a real frame generated at the playlist card's target size.
         item.licenseType.isNullOrBlank() &&
           !path.startsWith("http://", ignoreCase = true) &&
           !path.startsWith("https://", ignoreCase = true) ->
-          thumbnailRepository.getThumbnail(media, thumbnailWidthPx, thumbnailHeightPx)
-            ?: suppliedArtwork
+          frame() ?: suppliedArtwork
 
         // Network/DRM entries commonly provide their intended poster through tvgLogo.
-        else ->
-          suppliedArtwork
-            ?: thumbnailRepository.getThumbnail(media, thumbnailWidthPx, thumbnailHeightPx)
+        else -> suppliedArtwork ?: frame()
       }
     } catch (error: CancellationException) {
       throw error
